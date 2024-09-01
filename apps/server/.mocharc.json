@@ -1,0 +1,16 @@
+{
+    "extensions": [
+        "ts"
+    ],
+    "spec": [
+        "**/*.spec.ts"
+    ],
+    "node-option": [
+        "experimental-specifier-resolution=node",
+        "loader=ts-node/esm"
+    ],
+    "require": "@babel/register",
+    "extension": [
+        "ts"
+    ]
+}

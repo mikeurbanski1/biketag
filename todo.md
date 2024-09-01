@@ -1,0 +1,6 @@
+-   Make it look decent
+-   Options:
+    -   Show names
+-   Tests
+-   Split client to server and server to client message schemas
+-   Figure out where to host
