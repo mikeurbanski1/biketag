@@ -1,25 +1,26 @@
-// src/users/usersService.ts
-import { User } from './user';
-
-// A post request should not contain an id.
-export type UserCreationParams = Pick<User, 'email' | 'name' | 'phoneNumbers'>;
+import { User } from '../dal/models/users';
+import { CreateUserParams, UsersDalService } from '../dal/services/usersDalService';
 
 export class UsersService {
-    public get(id: number, name?: string): User {
-        return {
-            id,
-            email: 'jane@doe.com123',
-            name: name ?? 'Jane Doe',
-            status: 'Happy',
-            phoneNumbers: []
-        };
+    private usersDalService = new UsersDalService();
+
+    public getUsers(): User[] {
+        return this.usersDalService.getUsers();
     }
 
-    public create(userCreationParams: UserCreationParams): User {
-        return {
-            id: Math.floor(Math.random() * 10000), // Random
-            status: 'Happy',
-            ...userCreationParams
-        };
+    public getUser({ id }: { id: string }): User {
+        return this.usersDalService.getUser({ id });
+    }
+
+    public createUser(params: CreateUserParams): User {
+        return this.usersDalService.createUser(params);
+    }
+
+    public updateUser({ id, params }: { id: string; params: CreateUserParams }): User {
+        return this.usersDalService.updateUser({ id, params });
+    }
+
+    public deleteUser({ id }: { id: string }): void {
+        this.usersDalService.deleteUser({ id });
     }
 }

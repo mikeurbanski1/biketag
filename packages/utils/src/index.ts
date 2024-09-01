@@ -1,3 +1,5 @@
+import { Logger } from './logger';
+
 export const mapToRecord = <T>(map: Map<string, T>): Record<string, T> => {
     const retVal: Record<string, T> = {};
 
@@ -16,3 +18,5 @@ export const shuffleArray = <E>(array: E[]): E[] => {
 
     return array;
 };
+
+export { Logger };
