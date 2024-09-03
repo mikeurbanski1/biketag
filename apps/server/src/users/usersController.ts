@@ -6,7 +6,9 @@ import { User } from '../dal/models/users';
 import { CreateUserParams } from '../dal/services/usersDalService';
 import { UserNotFoundError } from '../common/errors';
 
-const logger = new Logger({});
+const logger = new Logger({ prefix: '[UsersController]' });
+
+type LoginParams = CreateUserParams & { id: string };
 
 @Route('users')
 export class UsersController extends Controller {
@@ -22,16 +24,38 @@ export class UsersController extends Controller {
         return this.usersService.getUsers();
     }
 
+    @Post('/login')
+    @SuccessResponse('200', 'ok')
+    public async login(@Body() requestBody: LoginParams, @Res() notFoundResponse: TsoaResponse<404, { reason: string }>, @Res() invalidResponse: TsoaResponse<400, { reason: string }>): Promise<void> {
+        const { id, name } = requestBody;
+        logger.info(`[login] id: ${id}, name: ${name}`);
+        try {
+            const user = this.usersService.getUser({ id });
+            logger.info(`[login] getUser result ${user}`);
+            if (user.name === name) {
+                return;
+            } else {
+                return invalidResponse(400, { reason: 'Incorrect name or ID' });
+            }
+        } catch (error) {
+            console.error(`[login] error ${error}`);
+            if (error instanceof UserNotFoundError) {
+                return notFoundResponse(404, { reason: error.message });
+            }
+            throw error;
+        }
+    }
+
     @Get('/{id}')
     @SuccessResponse('200', 'ok')
     public async getUser(@Path() id: string, @Res() notFoundResponse: TsoaResponse<404, { reason: string }>): Promise<User> {
-        console.log(`[getUser] id: ${id}`);
+        logger.info(`[getUser] id: ${id}`);
         try {
             const user = this.usersService.getUser({ id });
-            console.log(`[getUser] result ${user}`);
+            logger.info(`[getUser] result ${user}`);
             return user;
         } catch (error) {
-            console.error(`[getUser] error ${error}`);
+            logger.error(`[getUser] error ${error}`, { error });
             if (error instanceof UserNotFoundError) {
                 return notFoundResponse(404, { reason: error.message });
             }
@@ -42,7 +66,7 @@ export class UsersController extends Controller {
     @Post()
     @SuccessResponse('201', 'Created') // Custom success response
     public async createUser(@Body() requestBody: CreateUserParams): Promise<User> {
-        console.log(`[createUser] ${requestBody}`);
+        logger.info(`[createUser] ${requestBody}`);
         this.setStatus(201); // set return status 201
         return this.usersService.createUser(requestBody);
     }

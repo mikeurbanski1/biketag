@@ -16,244 +16,169 @@ import {
     ChangeMaxVotesClientMessage,
     EndPollMessage
 } from '@biketag/models';
+import { Logger } from '@biketag/utils';
 import './App.css';
-import { Landing } from './components/landing';
-import { VotePanel } from './components/votePanel';
-import { ResultsPanel } from './components/resultsPanel';
-import ReconnectingWebSocket from 'reconnecting-websocket';
+import { Login } from './components/login';
+import axios, { AxiosError, AxiosInstance } from 'axios';
+
+const logger = new Logger({});
 
 interface AppProps {
     url: string;
 }
 
 enum AppState {
-    NEW,
-    POLL_STARTED,
+    HOME,
+    LOGGED_IN,
     POLL_RESULTS
 }
 
 interface AppComponentState {
     state: AppState;
+    loggedIn: boolean;
     clientId: string;
+    userId?: string;
     name?: string;
-    poll?: ClientPoll;
-    pollResults?: PollResults;
-    invalidPoll: boolean;
-    voteValue?: number;
+    loginFailedMessage?: string;
+    signupFailedMessage?: string;
 }
 
 export default class App extends React.Component<AppProps, AppComponentState> {
-    private websocket!: ReconnectingWebSocket;
+    private axios: AxiosInstance;
 
     constructor(props: AppProps) {
         super(props);
+
         const { url } = props;
-        console.log('url', url);
+        logger.info('url', { url });
+        this.axios = axios.create({
+            baseURL: url
+        });
 
         const clientId = localStorage.getItem('clientId');
         const name = localStorage.getItem('userName') || undefined;
 
-        console.log('clientId and userName from local storage:', clientId, name);
+        logger.info('clientId and userName from local storage:', { clientId, name });
 
         this.state = {
-            state: AppState.NEW,
+            state: AppState.HOME,
             name,
             clientId: clientId || uuidv4(),
-            invalidPoll: false
+            loggedIn: false
         };
 
-        console.log('Client UUID:', this.state.clientId);
+        logger.info('Client UUID:', { uuid: this.state.clientId });
         localStorage.setItem('clientId', this.state.clientId);
-
-        this.send = this.send.bind(this);
-        this.startPoll = this.startPoll.bind(this);
-        this.joinPoll = this.joinPoll.bind(this);
-        this.handleStartedPoll = this.handleStartedPoll.bind(this);
-        this.handleSendVote = this.handleSendVote.bind(this);
-        this.handleNameChange = this.handleNameChange.bind(this);
-        this.handlePollInvalid = this.handlePollInvalid.bind(this);
-        this.handleChangeVoteMax = this.handleChangeVoteMax.bind(this);
-        this.handleChangeVoteMaxMessage = this.handleChangeVoteMaxMessage.bind(this);
-        this.handleEndPoll = this.handleEndPoll.bind(this);
     }
 
-    componentDidMount(): void {
-        this.websocket = new ReconnectingWebSocket(this.props.url + '/?test=true');
-        this.websocket.onopen = () => {
-            console.log('opened websocket connection');
-            const messageToSend: GreetingMessage = {
-                messageType: WebsocketMessageType.GREETING,
-                clientId: this.state.clientId
-            };
-            this.send(messageToSend);
-        };
+    // componentDidMount(): void {}
 
-        this.websocket.onclose = () => {
-            console.log('websocket connection closed');
-        };
-
-        this.websocket.onmessage = (event) => {
-            const message = JSON.parse(event.data) as WebsocketMessage;
-            console.log('got websocket message', message);
-            if (message.messageType === WebsocketMessageType.NEW_POLL_SERVER_TO_CLIENT) {
-                this.handleStartedPoll(message as NewPollServerToClientMessage);
-            } else if (message.messageType === WebsocketMessageType.POLL_COMPLETED) {
-                this.handleCompletedPoll(message as PollCompletedMessage);
-            } else if (message.messageType === WebsocketMessageType.POLL_UPDATED) {
-                this.handleUpdatedPoll(message as PollUpdatedMessage);
-            } else if (message.messageType === WebsocketMessageType.CHANGE_MAX_VOTES_CLIENT) {
-                this.handleChangeVoteMaxMessage(message as ChangeMaxVotesClientMessage);
-            } else if (message.messageType === WebsocketMessageType.POLL_INVALID) {
-                this.handlePollInvalid();
-            }
-
-            // this.setState({ state: AppState.POLL_RESULTS });
-        };
-    }
-
-    send(message: WebsocketMessage) {
-        this.websocket.send(JSON.stringify(message));
-    }
-
-    startPoll({ name, prompt, maxVotes, time }: { name: string; prompt: string; maxVotes?: number; time?: number }) {
+    handleUserDetailsChange({ name, id }: { name: string; id: string }) {
         this.setState({
-            name
-        });
-        localStorage.setItem('userName', name);
-
-        const endTime = time ? new Date().getTime() + time * 1000 : undefined;
-
-        const message: NewPollStartedMessage = {
-            messageType: WebsocketMessageType.NEW_POLL_STARTED,
             name,
-            clientId: this.state.clientId,
-            prompt,
-            maxVotes,
-            endTime
-        };
-
-        this.send(message);
-    }
-
-    joinPoll({ name, pollId }: { name: string; pollId: string }) {
-        this.setState({
-            name
-        });
-
-        localStorage.setItem('userName', name);
-
-        const message: JoinPollMessage = {
-            messageType: WebsocketMessageType.JOIN_POLL,
-            pollId,
-            clientId: this.state.clientId,
-            name
-        };
-
-        this.send(message);
-    }
-
-    handleUpdatedPoll(message: PollUpdatedMessage) {
-        const newPoll = {
-            ...this.state.poll!
-        };
-
-        if (message.connectedClients) {
-            newPoll.connectedClients = message.connectedClients;
-        }
-        if (message.currentVotes) {
-            newPoll.numVotes = message.currentVotes;
-        }
-        if (message.maxVotes) {
-            newPoll.maxVotes = message.maxVotes;
-        }
-        newPoll.hostPresent = message.hostPresent;
-
-        this.setState({
-            poll: newPoll
+            userId: id
         });
     }
 
-    handleStartedPoll(message: NewPollServerToClientMessage) {
-        this.setState({
-            state: AppState.POLL_STARTED,
-            poll: {
-                pollId: message.pollId,
-                prompt: message.prompt,
-                startedByName: message.name,
-                numVotes: message.currentVotes,
-                maxVotes: message.maxVotes,
-                connectedClients: message.connectedClients,
-                isHost: message.isHost,
-                hostPresent: message.hostPresent,
-                endTime: message.endTime
-            },
-            voteValue: message.previousVote
-        });
-    }
-
-    handleCompletedPoll(message: PollCompletedMessage) {
-        this.setState({
-            state: AppState.POLL_RESULTS,
-            pollResults: {
-                pollId: message.pollId,
-                prompt: message.prompt,
-                result: message.result,
-                votes: message.votes
+    async handleLogin({ name, id }: { name: string; id: string }) {
+        try {
+            const resp = await this.axios.request({
+                method: 'post',
+                url: '/users/login',
+                data: {
+                    id,
+                    name
+                }
+            });
+            if (resp.status === 200) {
+                this.setState({
+                    loginFailedMessage: undefined,
+                    signupFailedMessage: undefined,
+                    name,
+                    userId: id,
+                    state: AppState.LOGGED_IN
+                });
+            } else {
+                this.setState({
+                    loginFailedMessage: `Unexpected response: ${resp.status} - ${resp.statusText}`
+                });
             }
-        });
-    }
-
-    handleSendVote({ value, name }: { value: number; name: string }) {
-        const message: VoteMessage = {
-            messageType: WebsocketMessageType.VOTE,
-            value,
-            name,
-            clientId: this.state.clientId,
-            pollId: this.state.poll!.pollId
-        };
-        this.send(message);
-        this.setState({
-            voteValue: value
-        });
-    }
-
-    handleChangeVoteMax(newVoteMax: number) {
-        const message: ChangeMaxVotesMessage = {
-            messageType: WebsocketMessageType.CHANGE_MAX_VOTES,
-            pollId: this.state.poll!.pollId,
-            clientId: this.state.clientId,
-            newVoteMax
-        };
-        this.send(message);
-    }
-
-    handleChangeVoteMaxMessage(message: ChangeMaxVotesClientMessage) {
-        this.setState({
-            poll: {
-                ...this.state.poll!,
-                maxVotes: message.newVoteMax
+        } catch (err) {
+            let errorMessage: string | undefined = undefined;
+            if (err instanceof AxiosError) {
+                if (err.status === 404) {
+                    errorMessage = 'User does not exist';
+                } else if (err.status === 400) {
+                    logger.info(`[handleSignup] ${err.message} ${err.response?.statusText}`);
+                    errorMessage = 'Invalid user details entered';
+                } else {
+                    errorMessage = err.message;
+                }
             }
+            if (!errorMessage) {
+                errorMessage = 'Unknown error';
+            }
+
+            this.setState({
+                loginFailedMessage: errorMessage
+            });
+        }
+    }
+
+    async handleSignup({ name, id }: { name: string; id: string }) {
+        try {
+            const resp = await this.axios.request({
+                method: 'post',
+                url: '/users',
+                data: {
+                    name
+                }
+            });
+            if (resp.status === 201) {
+                logger.info('[handleSignup] got 201 response', { data: resp.data });
+                this.setState({
+                    loginFailedMessage: undefined,
+                    signupFailedMessage: undefined,
+                    name,
+                    userId: resp.data.id,
+                    state: AppState.LOGGED_IN
+                });
+            } else {
+                this.setState({
+                    loginFailedMessage: `Unexpected response: ${resp.status} - ${resp.statusText}`
+                });
+            }
+        } catch (err) {
+            logger.info(`[handleSignup]`, { err });
+            let errorMessage: string | undefined = undefined;
+            if (err instanceof AxiosError) {
+                if (err.status === 404) {
+                    errorMessage = 'User does not exist';
+                } else {
+                    errorMessage = err.message;
+                }
+            }
+            if (!errorMessage) {
+                errorMessage = 'Unknown error';
+            }
+
+            this.setState({
+                loginFailedMessage: errorMessage
+            });
+        }
+    }
+
+    handleLoginFailed(message: string) {
+        this.setState({
+            loginFailedMessage: message,
+            signupFailedMessage: undefined
         });
     }
 
-    handleEndPoll() {
-        const message: EndPollMessage = {
-            messageType: WebsocketMessageType.END_POLL,
-            pollId: this.state.poll!.pollId,
-            clientId: this.state.clientId
-        };
-        this.send(message);
-    }
-
-    handleNameChange(name: string) {
+    handleSignupFailed(message: string) {
         this.setState({
-            name
-        });
-    }
-
-    handlePollInvalid() {
-        this.setState({
-            invalidPoll: true
+            signupFailedMessage: message,
+            loginFailedMessage: undefined
         });
     }
 
@@ -265,31 +190,24 @@ export default class App extends React.Component<AppProps, AppComponentState> {
     render(): ReactNode {
         let inner;
 
-        if (this.state.state === AppState.NEW) {
+        if (this.state.state === AppState.HOME) {
             inner = [
-                <h1 key="h1">The Joseph Voting App</h1>,
-                <Landing
+                <h1 key="h1">Bike Tag</h1>,
+                <Login
                     key="landing"
-                    name={this.state.name}
-                    startPoll={this.startPoll}
-                    handleNameChange={this.handleNameChange}
-                    joinPoll={this.joinPoll}
-                    invalidPoll={this.state.invalidPoll}
-                ></Landing>
+                    handleUserDetailsChange={({ name, id }: { name: string; id: string }) => this.handleUserDetailsChange({ name, id })}
+                    login={({ name, id }: { name: string; id: string }) => this.handleLogin({ name, id })}
+                    signUp={({ name, id }: { name: string; id: string }) => this.handleSignup({ name, id })}
+                    loginFailedMessage={this.state.loginFailedMessage}
+                    signupFailedMessage={this.state.signupFailedMessage}
+                ></Login>
             ];
-        } else if (this.state.state === AppState.POLL_STARTED) {
+        } else if (this.state.state === AppState.LOGGED_IN) {
             inner = (
-                <VotePanel
-                    name={this.state.name}
-                    poll={this.state.poll!}
-                    voteValue={this.state.voteValue}
-                    vote={(props: { value: number; name: string }) => this.handleSendVote(props)}
-                    changeVoteMax={this.handleChangeVoteMax}
-                    endPoll={this.handleEndPoll}
-                ></VotePanel>
+                <h1 key="k1">
+                    Logged in as {this.state.name} ({this.state.userId})
+                </h1>
             );
-        } else if (this.state.state === AppState.POLL_RESULTS) {
-            inner = <ResultsPanel results={this.state.pollResults!}></ResultsPanel>;
         }
 
         return (
@@ -302,60 +220,4 @@ export default class App extends React.Component<AppProps, AppComponentState> {
         );
     }
 }
-
-// interface TheThingProps {
-//     text: string;
-//     sendMessage: (val: string) => void;
-// }
-
-// interface TheThingState {
-//     buttonValues?: string[];
-// }
-
-// type Message = {
-//     text: string;
-// };
-
-// class TheThing extends React.Component<TheThingProps, TheThingState> {
-//     constructor(props: TheThingProps) {
-//         super(props);
-//         this.state = {};
-//     }
-
-//     componentDidMount(): void {
-//         console.log('componentDidMount');
-//         axios
-//             .get('http://localhost:3001/buttons')
-//             .then((response: AxiosResponse) => {
-//                 console.log(response);
-//                 this.setState({
-//                     buttonValues: response.data
-//                 });
-//             })
-//             .catch(function (error) {
-//                 console.log(error);
-//             });
-//     }
-
-//     buttonClick(text: string): void {
-//         this.props.sendMessage(text);
-//     }
-
-//     render(): ReactNode {
-//         const buttons: JSX.Element[] = [];
-
-//         if (this.state.buttonValues) {
-//             for (let v of this.state.buttonValues) {
-//                 buttons.push(<input type="button" value={v} key={v} onClick={() => this.buttonClick(v)}></input>);
-//             }
-//         }
-
-//         return (
-//             <div>
-//                 <h1>{this.props.text || 'hi'}</h1>
-//                 {buttons}
-//             </div>
-//         );
-//     }
-// }
 

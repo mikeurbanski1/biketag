@@ -14,11 +14,11 @@ const logDefaults: LogOptions = {
 };
 
 export class Logger {
-    private readonly prefix: string | undefined;
+    private readonly prefix: string;
     private readonly logLevel: LogLevel;
     private readonly logOptions: LogOptions;
     constructor({ prefix, logLevel = LogLevel.DEBUG, logOptions = logDefaults }: { prefix?: string; logLevel?: LogLevel; logOptions?: LogOptions }) {
-        this.prefix = prefix;
+        this.prefix = prefix || '';
         this.logLevel = logLevel;
         this.logOptions = Object.assign({}, logDefaults, logOptions);
     }
@@ -32,7 +32,7 @@ export class Logger {
 
         const levelName = LogLevel[level];
 
-        const logStr = `[${levelName}] [${new Date().toISOString()}] ${message}`;
+        const logStr = `[${levelName}] [${new Date().toISOString()}] ${this.prefix} ${message}`;
         logFn(logStr);
         if (context) {
             const contextStr = this.logOptions.pretty ? JSON.stringify(context, null, 2) : JSON.stringify(context);

@@ -1,4 +1,3 @@
-import { Logger } from '@biketag/utils';
 import { UserExistsError, UserNotFoundError } from '../../common/errors';
 import { User } from '../models/users';
 
@@ -9,8 +8,6 @@ export interface CreateUserParams {
 let nextId = 1;
 const userIdMap = new Map<string, User>();
 const usernameMap = new Map<string, User>();
-
-const logger = new Logger({ prefix: 'UsersDalService' });
 
 export class UsersDalService {
     public getUsers(): User[] {
@@ -32,13 +29,11 @@ export class UsersDalService {
     }
 
     public getUser({ id }: { id: string }): User {
-        logger.info(`[getUser] `, { id });
         this.validateUserIdExists({ id });
         return userIdMap.get(id)!;
     }
 
     public updateUser({ id, params }: { id: string; params: CreateUserParams }): User {
-        logger.info(`[updateUser] `, { params, id });
         const { name } = params;
         this.validateCreateUserParams({ name });
         this.validateUserIdExists({ id });
@@ -53,7 +48,6 @@ export class UsersDalService {
     }
 
     public deleteUser({ id }: { id: string }): void {
-        logger.info(`[deleteUser] `, { id });
         this.validateUserIdExists({ id });
 
         const user = userIdMap.get(id)!;

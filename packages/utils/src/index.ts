@@ -1,4 +1,4 @@
-import { Logger } from './logger';
+import { Logger, LogLevel } from './logger';
 
 export const mapToRecord = <T>(map: Map<string, T>): Record<string, T> => {
     const retVal: Record<string, T> = {};
@@ -19,4 +19,6 @@ export const shuffleArray = <E>(array: E[]): E[] => {
     return array;
 };
 
-export { Logger };
+export const parseIfInteger = (n: string) => (parseInt(n).toString() === n ? parseInt(n) : undefined);
+
+export { Logger, LogLevel };
