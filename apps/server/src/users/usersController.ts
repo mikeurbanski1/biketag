@@ -2,13 +2,9 @@
 import { Body, Controller, Get, Path, Post, Res, Route, SuccessResponse, TsoaResponse } from 'tsoa';
 import { Logger } from '@biketag/utils';
 import { UsersService } from './usersService';
-import { User } from '../dal/models/users';
-import { CreateUserParams } from '../dal/services/usersDalService';
-import { UserNotFoundError } from '../common/errors';
+import { CreateUserParams, UserDto } from '@biketag/models';
 
 const logger = new Logger({ prefix: '[UsersController]' });
-
-type LoginParams = CreateUserParams & { id: string };
 
 @Route('users')
 export class UsersController extends Controller {
@@ -16,58 +12,42 @@ export class UsersController extends Controller {
 
     @Get('/')
     @SuccessResponse('200', 'ok')
-    public async getUsers(): Promise<User[]> {
-        logger.debug('[getUsers]');
-        logger.info('[getUsers]');
-        logger.warn('[getUsers]');
-        logger.error('[getUsers]');
+    public async getUsers(): Promise<UserDto[]> {
         return this.usersService.getUsers();
     }
 
     @Post('/login')
     @SuccessResponse('200', 'ok')
-    public async login(@Body() requestBody: LoginParams, @Res() notFoundResponse: TsoaResponse<404, { reason: string }>, @Res() invalidResponse: TsoaResponse<400, { reason: string }>): Promise<void> {
+    public async login(@Body() requestBody: UserDto, @Res() notFoundResponse: TsoaResponse<404, { reason: string }>, @Res() invalidResponse: TsoaResponse<400, { reason: string }>): Promise<void> {
         const { id, name } = requestBody;
         logger.info(`[login] id: ${id}, name: ${name}`);
-        try {
-            const user = this.usersService.getUser({ id });
-            logger.info(`[login] getUser result ${user}`);
-            if (user.name === name) {
-                return;
-            } else {
-                return invalidResponse(400, { reason: 'Incorrect name or ID' });
-            }
-        } catch (error) {
-            console.error(`[login] error ${error}`);
-            if (error instanceof UserNotFoundError) {
-                return notFoundResponse(404, { reason: error.message });
-            }
-            throw error;
+
+        const user = this.usersService.getUser({ id });
+        logger.info(`[login] getUser result`, { user });
+        if (!user || user.name !== name) {
+            return invalidResponse(400, { reason: 'Incorrect name or ID' });
         }
+        return;
     }
 
     @Get('/{id}')
     @SuccessResponse('200', 'ok')
-    public async getUser(@Path() id: string, @Res() notFoundResponse: TsoaResponse<404, { reason: string }>): Promise<User> {
+    public async getUser(@Path() id: string, @Res() notFoundResponse: TsoaResponse<404, { reason: string }>): Promise<UserDto> {
         logger.info(`[getUser] id: ${id}`);
-        try {
-            const user = this.usersService.getUser({ id });
-            logger.info(`[getUser] result ${user}`);
-            return user;
-        } catch (error) {
-            logger.error(`[getUser] error ${error}`, { error });
-            if (error instanceof UserNotFoundError) {
-                return notFoundResponse(404, { reason: error.message });
-            }
-            throw error;
+        const user = this.usersService.getUser({ id });
+        if (!user) {
+            return notFoundResponse(404, { reason: 'User does not exist' });
         }
+        logger.info(`[getUser] result ${user}`);
+        return user;
     }
 
     @Post()
     @SuccessResponse('201', 'Created') // Custom success response
-    public async createUser(@Body() requestBody: CreateUserParams): Promise<User> {
-        logger.info(`[createUser] ${requestBody}`);
-        this.setStatus(201); // set return status 201
-        return this.usersService.createUser(requestBody);
+    public async createUser(@Body() requestBody: CreateUserParams): Promise<UserDto> {
+        logger.info(`[createUser]`, { requestBody });
+        const user = this.usersService.createUser(requestBody);
+        this.setStatus(201);
+        return user;
     }
 }

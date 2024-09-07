@@ -21,4 +21,34 @@ export const shuffleArray = <E>(array: E[]): E[] => {
 
 export const parseIfInteger = (n: string) => (parseInt(n).toString() === n ? parseInt(n) : undefined);
 
+export const deleteArrayPrimitive = <T>(arr: T[], item: T): boolean => {
+    const index = arr.indexOf(item);
+    if (index !== -1) {
+        arr.splice(index, 1);
+        return true;
+    }
+    return false;
+};
+
+export const addIfMissing = <T>(arr: T[], item: T): boolean => {
+    const index = arr.indexOf(item);
+    if (index === -1) {
+        arr.push(item);
+        return true;
+    }
+    return false;
+};
+
+export const jsonReplacer = (_: unknown, value: unknown) => {
+    if (value instanceof Map) {
+        return mapToRecord(value);
+    } else if (value instanceof Set) {
+        return Array.from(value);
+    } else {
+        return value;
+    }
+};
+
+export const stringify = (value: unknown, space?: string | number) => JSON.stringify(value, jsonReplacer, space);
+
 export { Logger, LogLevel };

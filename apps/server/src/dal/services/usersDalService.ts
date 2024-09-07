@@ -1,43 +1,38 @@
 import { Logger } from '@biketag/utils';
 import { UserExistsError, UserNotFoundError } from '../../common/errors';
-import { User } from '../models/users';
-
-export interface CreateUserParams {
-    name: string;
-}
+import { CreateUserParams, UserEntity } from '@biketag/models';
 
 let nextId = 1;
-const userIdMap = new Map<string, User>();
-const usernameMap = new Map<string, User>();
+const userIdMap = new Map<string, UserEntity>();
+const userNameMap = new Map<string, UserEntity>();
 
 const logger = new Logger({ prefix: 'UsersDalService' });
 
 export class UsersDalService {
-    public getUsers(): User[] {
+    public getUsers(): UserEntity[] {
         return Array.from(userIdMap.values());
     }
 
-    public createUser({ name }: CreateUserParams): User {
+    public createUser({ name }: CreateUserParams): UserEntity {
         this.validateCreateUserParams({ name });
 
-        const user: User = {
+        const user: UserEntity = {
             id: (nextId++).toString(),
             name
         };
 
         userIdMap.set(user.id, user);
-        userIdMap.set(name, user);
+        userNameMap.set(name, user);
 
         return user;
     }
 
-    public getUser({ id }: { id: string }): User {
+    public getUser({ id }: { id: string }): UserEntity | undefined {
         logger.info(`[getUser] `, { id });
-        this.validateUserIdExists({ id });
-        return userIdMap.get(id)!;
+        return userIdMap.get(id);
     }
 
-    public updateUser({ id, params }: { id: string; params: CreateUserParams }): User {
+    public updateUser({ id, params }: { id: string; params: CreateUserParams }): UserEntity {
         logger.info(`[updateUser] `, { params, id });
         const { name } = params;
         this.validateCreateUserParams({ name });
@@ -46,9 +41,9 @@ export class UsersDalService {
         const user = userIdMap.get(id)!;
         const { name: oldName } = user;
 
-        usernameMap.delete(oldName);
+        userNameMap.delete(oldName);
         user.name = name;
-        usernameMap.set(name, user);
+        userNameMap.set(name, user);
         return user;
     }
 
@@ -58,12 +53,12 @@ export class UsersDalService {
 
         const user = userIdMap.get(id)!;
 
-        usernameMap.delete(user.name);
+        userNameMap.delete(user.name);
         userIdMap.delete(id);
     }
 
     private validateCreateUserParams({ name }: CreateUserParams): void {
-        if (usernameMap.has(name)) {
+        if (userNameMap.has(name)) {
             throw new UserExistsError(`User ${name} already exists`);
         }
     }

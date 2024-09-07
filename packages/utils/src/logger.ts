@@ -1,3 +1,5 @@
+import { stringify } from '.';
+
 export enum LogLevel {
     DEBUG = 1,
     INFO = 2,
@@ -35,7 +37,7 @@ export class Logger {
         const logStr = `[${levelName}] [${new Date().toISOString()}] ${this.prefix} ${message}`;
         logFn(logStr);
         if (context) {
-            const contextStr = this.logOptions.pretty ? JSON.stringify(context, null, 2) : JSON.stringify(context);
+            const contextStr = this.logOptions.pretty ? stringify(context, 2) : stringify(context);
             logFn(contextStr);
         }
     }

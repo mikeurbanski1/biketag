@@ -19,13 +19,11 @@ import {
 import { Logger } from '@biketag/utils';
 import './App.css';
 import { Login } from './components/login';
-import axios, { AxiosError, AxiosInstance } from 'axios';
+import { Apis, UsersApi } from './api';
 
 const logger = new Logger({});
 
-interface AppProps {
-    url: string;
-}
+interface AppProps {}
 
 enum AppState {
     HOME,
@@ -39,21 +37,14 @@ interface AppComponentState {
     clientId: string;
     userId?: string;
     name?: string;
-    loginFailedMessage?: string;
-    signupFailedMessage?: string;
 }
 
 export default class App extends React.Component<AppProps, AppComponentState> {
-    private axios: AxiosInstance;
+    private readonly usersApi = new UsersApi();
+    private readonly apis: Apis = { usersApi: this.usersApi };
 
     constructor(props: AppProps) {
         super(props);
-
-        const { url } = props;
-        logger.info('url', { url });
-        this.axios = axios.create({
-            baseURL: url
-        });
 
         const clientId = localStorage.getItem('clientId');
         const name = localStorage.getItem('userName') || undefined;
@@ -73,112 +64,12 @@ export default class App extends React.Component<AppProps, AppComponentState> {
 
     // componentDidMount(): void {}
 
-    handleUserDetailsChange({ name, id }: { name: string; id: string }) {
+    async setUser({ name, id }: { name: string; id: string }) {
+        await this.usersApi.login({ name, id });
         this.setState({
             name,
-            userId: id
-        });
-    }
-
-    async handleLogin({ name, id }: { name: string; id: string }) {
-        try {
-            const resp = await this.axios.request({
-                method: 'post',
-                url: '/users/login',
-                data: {
-                    id,
-                    name
-                }
-            });
-            if (resp.status === 200) {
-                this.setState({
-                    loginFailedMessage: undefined,
-                    signupFailedMessage: undefined,
-                    name,
-                    userId: id,
-                    state: AppState.LOGGED_IN
-                });
-            } else {
-                this.setState({
-                    loginFailedMessage: `Unexpected response: ${resp.status} - ${resp.statusText}`
-                });
-            }
-        } catch (err) {
-            let errorMessage: string | undefined = undefined;
-            if (err instanceof AxiosError) {
-                if (err.status === 404) {
-                    errorMessage = 'User does not exist';
-                } else if (err.status === 400) {
-                    logger.info(`[handleSignup] ${err.message} ${err.response?.statusText}`);
-                    errorMessage = 'Invalid user details entered';
-                } else {
-                    errorMessage = err.message;
-                }
-            }
-            if (!errorMessage) {
-                errorMessage = 'Unknown error';
-            }
-
-            this.setState({
-                loginFailedMessage: errorMessage
-            });
-        }
-    }
-
-    async handleSignup({ name, id }: { name: string; id: string }) {
-        try {
-            const resp = await this.axios.request({
-                method: 'post',
-                url: '/users',
-                data: {
-                    name
-                }
-            });
-            if (resp.status === 201) {
-                logger.info('[handleSignup] got 201 response', { data: resp.data });
-                this.setState({
-                    loginFailedMessage: undefined,
-                    signupFailedMessage: undefined,
-                    name,
-                    userId: resp.data.id,
-                    state: AppState.LOGGED_IN
-                });
-            } else {
-                this.setState({
-                    loginFailedMessage: `Unexpected response: ${resp.status} - ${resp.statusText}`
-                });
-            }
-        } catch (err) {
-            logger.info(`[handleSignup]`, { err });
-            let errorMessage: string | undefined = undefined;
-            if (err instanceof AxiosError) {
-                if (err.status === 404) {
-                    errorMessage = 'User does not exist';
-                } else {
-                    errorMessage = err.message;
-                }
-            }
-            if (!errorMessage) {
-                errorMessage = 'Unknown error';
-            }
-
-            this.setState({
-                loginFailedMessage: errorMessage
-            });
-        }
-    }
-
-    handleLoginFailed(message: string) {
-        this.setState({
-            loginFailedMessage: message,
-            signupFailedMessage: undefined
-        });
-    }
-
-    handleSignupFailed(message: string) {
-        this.setState({
-            signupFailedMessage: message,
-            loginFailedMessage: undefined
+            userId: id,
+            state: AppState.LOGGED_IN
         });
     }
 
@@ -187,33 +78,36 @@ export default class App extends React.Component<AppProps, AppComponentState> {
         window.location.reload();
     }
 
+    handleLogOut() {
+        this.setState({
+            state: AppState.HOME,
+            name: undefined,
+            userId: undefined,
+            loggedIn: false
+        });
+    }
+
     render(): ReactNode {
         let inner;
 
         if (this.state.state === AppState.HOME) {
-            inner = [
-                <h1 key="h1">Bike Tag</h1>,
-                <Login
-                    key="landing"
-                    handleUserDetailsChange={({ name, id }: { name: string; id: string }) => this.handleUserDetailsChange({ name, id })}
-                    login={({ name, id }: { name: string; id: string }) => this.handleLogin({ name, id })}
-                    signUp={({ name, id }: { name: string; id: string }) => this.handleSignup({ name, id })}
-                    loginFailedMessage={this.state.loginFailedMessage}
-                    signupFailedMessage={this.state.signupFailedMessage}
-                ></Login>
-            ];
+            inner = [<Login key="landing" setUser={({ name, id }: { name: string; id: string }) => this.setUser({ name, id })} apis={this.apis}></Login>];
         } else if (this.state.state === AppState.LOGGED_IN) {
-            inner = (
+            inner = [
                 <h1 key="k1">
                     Logged in as {this.state.name} ({this.state.userId})
-                </h1>
-            );
+                </h1>,
+                <br></br>,
+                <input type="button" name="login" value="Log out" onClick={async () => await this.handleLogOut()}></input>
+            ];
         }
 
         return (
             <div className="App">
                 <header className="App-header">
+                    <h1 key="h1">Bike Tag</h1>
                     {inner}
+                    <br></br>
                     <input type="button" name="reset-client-button" value="Reset local client ID" onClick={this.handleResetClient}></input>
                 </header>
             </div>

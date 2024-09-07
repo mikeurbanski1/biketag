@@ -1,19 +1,18 @@
 import React, { ChangeEvent, ReactNode } from 'react';
 import { parseIfInteger } from '@biketag/utils';
+import { Apis } from '../api';
 
 interface LoginState {
     name: string;
     id: string;
     canLogin: boolean;
     canSignup: boolean;
+    errorMessage?: string;
 }
 
 interface LoginProps {
-    handleUserDetailsChange: ({ id, name }: { id: string; name: string }) => void;
-    login: ({ name, id }: { name: string; id: string }) => void;
-    signUp: ({ name, id }: { name: string; id: string }) => void;
-    signupFailedMessage?: string;
-    loginFailedMessage?: string;
+    setUser: ({ name, id }: { name: string; id: string }) => void;
+    apis: Apis;
 }
 
 export class Login extends React.Component<LoginProps, LoginState> {
@@ -38,7 +37,6 @@ export class Login extends React.Component<LoginProps, LoginState> {
         newState.canLogin = this.canLogin(newState);
         newState.canSignup = this.canSignup(newState);
         this.setState(newState as LoginState);
-        this.props.handleUserDetailsChange({ id: this.state.id, name: (newState as LoginState).name });
     }
 
     private handleIdChange(event: ChangeEvent<HTMLInputElement>) {
@@ -48,7 +46,6 @@ export class Login extends React.Component<LoginProps, LoginState> {
         newState.canLogin = this.canLogin(newState);
         newState.canSignup = this.canSignup(newState);
         this.setState(newState as LoginState);
-        this.props.handleUserDetailsChange({ name: this.state.name, id: (newState as LoginState).id });
     }
 
     private canLogin(newState: Partial<LoginState>) {
@@ -61,18 +58,32 @@ export class Login extends React.Component<LoginProps, LoginState> {
         return merged.name !== '' && merged.id === '';
     }
 
-    login() {
-        this.props.login({
-            name: this.state.name,
-            id: this.state.id
-        });
+    async login() {
+        try {
+            const { name, id } = this.state;
+            await this.props.apis.usersApi.login({ name, id });
+            this.props.setUser({ name, id });
+        } catch (err) {
+            if (err instanceof Error) {
+                this.setState({
+                    errorMessage: err.message
+                });
+            }
+        }
     }
 
-    signUp() {
-        this.props.signUp({
-            name: this.state.name,
-            id: this.state.id
-        });
+    async signUp() {
+        try {
+            const { name } = this.state;
+            const { id } = await this.props.apis.usersApi.signup({ name });
+            this.props.setUser({ name, id });
+        } catch (err) {
+            if (err instanceof Error) {
+                this.setState({
+                    errorMessage: err.message
+                });
+            }
+        }
     }
 
     render(): ReactNode {
@@ -85,9 +96,9 @@ export class Login extends React.Component<LoginProps, LoginState> {
                     <input type="text" name="name" onChange={(event) => this.handleNameChange(event)} value={this.state.name}></input>
                     <br></br>
                     <input type="button" name="login" value="Login" onClick={async () => await this.login()} disabled={!this.state.canLogin}></input>
-                    <input type="button" name="signup" value="Sign Up" onClick={() => this.signUp()} disabled={!this.state.canSignup}></input>
+                    <input type="button" name="signup" value="Sign Up" onClick={async () => await this.signUp()} disabled={!this.state.canSignup}></input>
                     <br></br>
-                    <h3>{this.props.signupFailedMessage || this.props.loginFailedMessage || ''}</h3>
+                    <h3>{this.state.errorMessage || ''}</h3>
                 </span>
             </div>
         );
