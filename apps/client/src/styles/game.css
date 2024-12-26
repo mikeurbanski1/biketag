@@ -12,51 +12,57 @@
     /* height: 100%; */
 }
 
-.tag-scroller {
+/* .tag-scroller {
     display: grid;
-    /* width: 100%; */
-    /* height: 500px; */
-    /* height: 80%; */
     grid-template-columns: 15% 15% 40% 15% 15%;
     grid-template-rows: 10% 10% 60% 10% 10%;
     grid-auto-rows: 100%;
-    /* border: 1px solid #ff0000; */
-    /* overflow: scroll; */
-    /* position: relative; */
     height: 100%;
-}
+} */
 
-.top-tag {
-    grid-column: 2;
-    grid-row: 1;
-}
-
-.center-tag {
-    grid-column: 2;
-    grid-row: 2;
-    z-index: 1;
-}
-
-.bottom-tag {
-    grid-column: 2;
-    grid-row: 3;
-}
-
-.left-tag {
-    grid-column: 1;
-    grid-row: 2;
-}
-
-.right-tag {
-    grid-column: 3;
-    grid-row: 2;
+.tag-scroller {
+    position: relative;
+    border: 1px solid black;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
 }
 
 .tag-scroller > div {
-    grid-column-end: span 3;
-    grid-row-end: span 3;
-    height: 100%;
-    width: 100%;
+    height: 70%;
+    width: 70%;
+    position: absolute;
+}
+
+.top-tag {
+    left: 50%;
+    bottom: calc(85% + 25px);
+    transform: translateX(-50%);
+}
+
+.center-tag {
+    z-index: 1;
+    left: 50%;
+    top: 50%;
+    transform: translateY(-50%) translateX(-50%);
+}
+
+.bottom-tag {
+    left: 50%;
+    top: calc(85% + 25px);
+    transform: translateX(-50%);
+}
+
+.left-tag {
+    right: calc(85% + 25px);
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.right-tag {
+    left: calc(85% + 25px);
+    top: 50%;
+    transform: translateY(-50%);
 }
 
 .game-details {
