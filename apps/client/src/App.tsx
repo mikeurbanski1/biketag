@@ -6,6 +6,7 @@ import { UserDto } from '@biketag/models';
 import { Logger } from '@biketag/utils';
 
 import { ApiManager } from './api';
+import NavBar from './components/common/navBar';
 import { Landing } from './components/landing';
 import { Login } from './components/login';
 
@@ -82,6 +83,12 @@ export default class App extends React.Component<AppProps, AppComponentState> {
         this.setState({ dateOverride: dayjs(event.target.value) });
     }
 
+    /*
+    <div hidden={true}>
+                        Date override: <input aria-label="Date" type="date" defaultValue={this.state.dateOverride.format('YYYY-MM-DD')} onChange={(event) => this.handleDateChange(event)} />
+                    </div>
+                    */
+
     public render(): ReactNode {
         let inner: ReactNode;
 
@@ -91,23 +98,9 @@ export default class App extends React.Component<AppProps, AppComponentState> {
             inner = <Landing key="landing" user={this.state.user!} dateOverride={this.state.dateOverride}></Landing>;
         }
 
-        const loggedIn = this.state.user ? (
-            <span className="logged-in-text">
-                Logged in as {this.state.user.name}{' '}
-                <button className="log-out-button" name="login" value="Log out" onClick={() => this.handleLogOut()}>
-                    Log out
-                </button>
-            </span>
-        ) : undefined;
-
         return (
             <div className="App">
-                <div className="flex-column header">
-                    <div>Bike Tag! {loggedIn}</div>
-                    <div hidden={true}>
-                        Date override: <input aria-label="Date" type="date" defaultValue={this.state.dateOverride.format('YYYY-MM-DD')} onChange={(event) => this.handleDateChange(event)} />
-                    </div>
-                </div>
+                <NavBar user={this.state.user} handleLogout={() => this.handleLogOut()}></NavBar>
                 <div className="main">{inner}</div>
                 {/* <input type="button" name="reset-client-button" value="Reset local client ID" onClick={this.handleResetClient}></input> */}
             </div>
