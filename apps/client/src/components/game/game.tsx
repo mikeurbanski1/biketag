@@ -9,7 +9,7 @@ import { ApiManager } from '../../api';
 import '../../styles/game.css';
 
 import { NavHeader } from '../common/navHeader';
-import { CreateEditGame } from '../createEditGame';
+import { CreateEditGame } from './createEditGame';
 import { GameDetails } from './gameDetails';
 import { GameTagView } from './gameTagView';
 

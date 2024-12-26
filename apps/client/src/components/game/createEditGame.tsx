@@ -1,14 +1,14 @@
 import React from 'react';
 
-import '../styles/createEditGame.css';
+import '../../styles/createEditGame.css';
 
 import { CreateGameDto, GameDto, GameRoles, UserDto } from '@biketag/models';
 import { Logger } from '@biketag/utils';
 
-import { ApiManager } from '../api';
-import { UserBeingAdded } from '../models/user';
-import { NavHeader } from './common/navHeader';
-import UserSelection from './userSelection';
+import { ApiManager } from '../../api';
+import { UserBeingAdded } from '../../models/user';
+import { NavHeader } from '../common/navHeader';
+import UserSelection from '../userSelection';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const logger = new Logger({ prefix: '[CreateEditGame]' });

@@ -2,12 +2,14 @@ import dayjs, { Dayjs } from 'dayjs';
 import React, { ReactNode } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
-import { UserDto } from '@biketag/models';
+import { GameDto, GameSummary, UserDto } from '@biketag/models';
 import { Logger } from '@biketag/utils';
 
 import { ApiManager } from './api';
 import NavBar from './components/common/navBar';
-import { Landing } from './components/landing';
+import { CreateEditGame } from './components/game/createEditGame';
+import { Game } from './components/game/game';
+import GameList from './components/game/gameList';
 import { Login } from './components/login';
 
 const logger = new Logger({});
@@ -16,18 +18,21 @@ const logger = new Logger({});
 interface AppProps {}
 
 enum AppState {
+    LOGGED_OUT,
     HOME,
-    LOGGED_IN,
-    POLL_RESULTS,
+    VIEWING_GAME,
+    CREATING_GAME,
 }
 
 interface AppComponentState {
     state: AppState;
+    previousState?: AppState;
     name?: string;
     loggedIn: boolean;
     clientId: string;
     userId?: string;
     user?: UserDto;
+    game?: GameSummary;
     dateOverride: Dayjs;
 }
 
@@ -41,7 +46,7 @@ export default class App extends React.Component<AppProps, AppComponentState> {
         logger.info('clientId and userName from local storage:', { clientId, name });
 
         this.state = {
-            state: AppState.HOME,
+            state: AppState.LOGGED_OUT,
             name,
             clientId: clientId || uuidv4(),
             loggedIn: false,
@@ -58,7 +63,7 @@ export default class App extends React.Component<AppProps, AppComponentState> {
         this.setState({
             user: { name, id },
             userId: id,
-            state: AppState.LOGGED_IN,
+            state: AppState.HOME,
         });
         ApiManager.setUser({ userId: id });
     }
@@ -68,9 +73,9 @@ export default class App extends React.Component<AppProps, AppComponentState> {
     //     window.location.reload();
     // }
 
-    private handleLogOut() {
+    private handleLogout() {
         this.setState({
-            state: AppState.HOME,
+            state: AppState.LOGGED_OUT,
             userId: undefined,
             loggedIn: false,
             user: undefined,
@@ -78,9 +83,42 @@ export default class App extends React.Component<AppProps, AppComponentState> {
         ApiManager.setUser({ userId: null });
     }
 
-    private handleDateChange(event: React.ChangeEvent<HTMLInputElement>) {
-        if (!event.target['validity'].valid || !dayjs(event.target.value).isValid()) return;
-        this.setState({ dateOverride: dayjs(event.target.value) });
+    private startCreateGame() {
+        this.setState({ state: AppState.CREATING_GAME, previousState: this.state.state });
+    }
+
+    private doneCreatingGame(game?: GameDto): void {
+        const newState = game ? AppState.VIEWING_GAME : this.state.previousState!;
+        this.setState({ state: newState, previousState: undefined, game });
+    }
+
+    private setGame(game: GameSummary) {
+        this.setState({ game, state: AppState.VIEWING_GAME, previousState: this.state.state });
+    }
+
+    private doneViewingGame() {
+        this.setState({ state: AppState.HOME, previousState: undefined });
+    }
+
+    // private handleDateChange(event: React.ChangeEvent<HTMLInputElement>) {
+    //     if (!event.target['validity'].valid || !dayjs(event.target.value).isValid()) return;
+    //     this.setState({ dateOverride: dayjs(event.target.value) });
+    // }
+
+    private async deleteGame() {
+        if (this.state.game) {
+            ApiManager.gameApi.deleteGame({ gameId: this.state.game.id }).then(() => {
+                this.setState({ state: AppState.HOME, game: undefined });
+            });
+        }
+    }
+
+    private isCreatingGame(state: AppComponentState): state is AppComponentState & { user: UserDto } {
+        return state.state === AppState.CREATING_GAME;
+    }
+
+    private isViewingGame(state: AppComponentState): state is AppComponentState & { game: GameSummary; user: UserDto } {
+        return state.state === AppState.VIEWING_GAME;
     }
 
     /*
@@ -92,15 +130,28 @@ export default class App extends React.Component<AppProps, AppComponentState> {
     public render(): ReactNode {
         let inner: ReactNode;
 
-        if (this.state.state === AppState.HOME) {
+        if (this.state.state === AppState.LOGGED_OUT) {
             inner = <Login key="login" setUser={({ name, id }: { name: string; id: string }) => this.setUser({ name, id })}></Login>;
-        } else if (this.state.state === AppState.LOGGED_IN) {
-            inner = <Landing key="landing" user={this.state.user!} dateOverride={this.state.dateOverride}></Landing>;
+        } else if (this.isCreatingGame(this.state)) {
+            inner = <CreateEditGame user={this.state.user} doneCreatingGame={(game?: GameDto) => this.doneCreatingGame(game)} />;
+        } else if (this.state.state === AppState.HOME) {
+            inner = <GameList user={this.state.user!} selectGame={(game: GameSummary) => this.setGame(game)} startCreateGame={() => this.startCreateGame()} />;
+        } else if (this.isViewingGame(this.state)) {
+            inner = (
+                <Game
+                    gameId={this.state.game.id}
+                    gameName={this.state.game.name}
+                    user={this.state.user}
+                    deleteGame={() => this.deleteGame()}
+                    doneViewingGame={() => this.doneViewingGame()}
+                    dateOverride={this.state.dateOverride}
+                />
+            );
         }
 
         return (
             <div className="App">
-                <NavBar user={this.state.user} handleLogout={() => this.handleLogOut()}></NavBar>
+                <NavBar user={this.state.user} handleLogout={() => this.handleLogout()} startCreateGame={() => this.startCreateGame()}></NavBar>
                 <div className="main">{inner}</div>
                 {/* <input type="button" name="reset-client-button" value="Reset local client ID" onClick={this.handleResetClient}></input> */}
             </div>
