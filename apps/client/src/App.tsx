@@ -89,7 +89,12 @@ export default class App extends React.Component<AppProps, AppComponentState> {
 
     private doneCreatingGame(game?: GameDto): void {
         const newState = game ? AppState.VIEWING_GAME : this.state.previousState!;
-        this.setState({ state: newState, previousState: undefined, game });
+        const stateUpdate: Partial<AppComponentState> = { state: newState, previousState: undefined };
+        // set the created game as the game being viewed, otherwise do not change anything
+        if (game) {
+            stateUpdate.game = game;
+        }
+        this.setState(stateUpdate as AppComponentState);
     }
 
     private setGame(game: GameSummary) {
@@ -97,7 +102,7 @@ export default class App extends React.Component<AppProps, AppComponentState> {
     }
 
     private doneViewingGame() {
-        this.setState({ state: AppState.HOME, previousState: undefined });
+        this.setState({ state: AppState.HOME, previousState: undefined, game: undefined });
     }
 
     // private handleDateChange(event: React.ChangeEvent<HTMLInputElement>) {
@@ -151,7 +156,13 @@ export default class App extends React.Component<AppProps, AppComponentState> {
 
         return (
             <div className="App">
-                <NavBar user={this.state.user} handleLogout={() => this.handleLogout()} startCreateGame={() => this.startCreateGame()}></NavBar>
+                <NavBar
+                    user={this.state.user}
+                    backToHome={() => this.doneViewingGame()}
+                    handleLogout={() => this.handleLogout()}
+                    doneViewingGame={() => this.doneViewingGame()}
+                    startCreateGame={() => this.startCreateGame()}
+                ></NavBar>
                 <div className="main">{inner}</div>
                 {/* <input type="button" name="reset-client-button" value="Reset local client ID" onClick={this.handleResetClient}></input> */}
             </div>

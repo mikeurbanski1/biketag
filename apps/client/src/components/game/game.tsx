@@ -8,7 +8,6 @@ import { ApiManager } from '../../api';
 
 import '../../styles/game.css';
 
-import { NavHeader } from '../common/navHeader';
 import { CreateEditGame } from './createEditGame';
 import { GameDetails } from './gameDetails';
 import { GameTagView } from './gameTagView';
@@ -267,19 +266,19 @@ export class Game extends React.Component<ViewGameProps, ViewGameState> {
             );
         }
 
-        const backText = this.state.viewingGameDetails ? '← Back to tags' : '← Back to games';
-        const backOnClick = this.state.viewingGameDetails ? () => this.setState({ viewingGameDetails: false }) : () => this.props.doneViewingGame();
+        // const backText = this.state.viewingGameDetails ? '← Back to tags' : '← Back to games';
+        // const backOnClick = this.state.viewingGameDetails ? () => this.setState({ viewingGameDetails: false }) : () => this.props.doneViewingGame();
 
         return (
             <div className="game-view">
-                <NavHeader
+                {/* <NavHeader
                     leftText={backText}
                     leftOnClick={backOnClick}
                     centerText={`${this.props.gameName} ↻`}
                     centerOnClick={() => this.refreshGame()}
                     rightText={!this.state.viewingGameDetails && !this.state.loadingGame ? 'Game details →' : undefined}
                     rightOnClick={() => this.setState({ viewingGameDetails: true })}
-                />
+                /> */}
                 {innerDiv}
             </div>
         );

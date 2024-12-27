@@ -6,6 +6,8 @@ interface NavBarProps {
     user?: UserDto;
     game?: GameDto;
     handleLogout: () => void;
+    backToHome: () => void;
+    doneViewingGame: () => void;
     startCreateGame: () => void;
 }
 
@@ -14,7 +16,7 @@ interface NavBarProps {
 //     handleLogout: () => void;
 // }
 
-const MainMenu: React.FC<NavBarProps> = ({ user, handleLogout, startCreateGame }) => {
+const MainMenu: React.FC<NavBarProps> = ({ user, game, handleLogout, startCreateGame, doneViewingGame }) => {
     const [showingMenu, setShowingMenu] = useState(false);
     return (
         <div className="clickable-nav-item dropdown-header" onClick={() => setShowingMenu(!showingMenu)}>
@@ -26,7 +28,9 @@ const MainMenu: React.FC<NavBarProps> = ({ user, handleLogout, startCreateGame }
                         Log out
                     </div>
                 )}
-                <div className="clickable-text">View games</div>
+                <div className="clickable-text" onClick={doneViewingGame}>
+                    View games
+                </div>
                 <div className="clickable-text" onClick={startCreateGame}>
                     Create game
                 </div>
@@ -46,7 +50,9 @@ const MainMenu: React.FC<NavBarProps> = ({ user, handleLogout, startCreateGame }
 const NavBar: React.FC<NavBarProps> = (props) => {
     return (
         <div className="nav-bar">
-            <div className="bike-tag-title">Bike Tag!</div>
+            <div className="bike-tag-title clickable-text" onClick={props.backToHome}>
+                Bike Tag!
+            </div>
             <MainMenu {...props} />
         </div>
     );

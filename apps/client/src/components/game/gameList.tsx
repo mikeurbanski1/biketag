@@ -14,6 +14,7 @@ interface GameListProps {
 const GameList: React.FC<GameListProps> = ({ user, selectGame, startCreateGame }: GameListProps) => {
     const [games, setGames] = useState<GameSummary[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
+    const [refreshKey, setRefreshKey] = useState<number>(0);
     // const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
@@ -21,19 +22,12 @@ const GameList: React.FC<GameListProps> = ({ user, selectGame, startCreateGame }
             setGames(games);
             setLoading(false);
         });
-    });
-
-    // if (loading) {
-    //     return <div>Loading...</div>;
-    // }
-
-    // if (error) {
-    //     return <div>{error}</div>;
-    // }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [refreshKey]);
 
     return (
         <div className="landing">
-            <NavHeader centerText="Your games" rightText="Create game →" rightOnClick={startCreateGame} />
+            <NavHeader centerText="Your games  ↻" centerOnClick={() => setRefreshKey(refreshKey + 1)} rightText="Create game →" rightOnClick={startCreateGame} />
             {loading ? (
                 <div>Loading games...</div>
             ) : (
