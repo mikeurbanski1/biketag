@@ -197,6 +197,15 @@ export class TagService extends BaseService<TagDto, CreateTagParams, TagEntity, 
         await this.dalService.update({ id: tagId, updateParams: { isPending } });
     }
 
+    public async getRootTags({ gameId, page, pageSize }: { gameId: string; page: number; pageSize: number }): Promise<{ tags: TagDto[]; total: number }> {
+        this.logger.info(`[getRootTags]`, { gameId, page, pageSize });
+        const filter = { gameId, isRoot: true };
+        const { items, total } = await this.dalService.findAll({ filter, skip: (page - 1) * pageSize, limit: pageSize, returnTotal: true, sort: { forDate: 1 } });
+        const tags = await Promise.all(items.map((tag) => this.convertToDto(tag)));
+        this.logger.info(`[getRootTags] got tags`, { tags, total });
+        return { tags, total };
+    }
+
     /**
      * Checks if the given tag should be a pending tag, which means it was posted the same day as the latest root tag in the game.
      * If so, then set the posted date to be the next day, and return true. Else, return false.

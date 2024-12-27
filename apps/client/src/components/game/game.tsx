@@ -141,18 +141,26 @@ export class Game extends React.Component<ViewGameProps, ViewGameState> {
         // const latestRootTag = tag;
         // const updateParams = { latestRootTag };
         // this.props.updateGame(updateParams);
-        this.setState({
+        const stateUpdate: Partial<ViewGameState> = {
             userCanAddRootTag: false,
             userCanAddSubtag: false,
-            currentRootTag: tag,
-            currentTag: tag,
             showingAddRootTag: false,
             game: { ...this.state.game!, latestRootTag: tag },
-        });
-        ApiManager.tagApi.updateTagInCache({
-            tagId: tag.previousRootTagId,
-            update: { nextRootTagId: tag.id },
-        });
+        };
+
+        if (tag.isPending) {
+            stateUpdate.showingPendingTag = true;
+            stateUpdate.game = { ...this.state.game!, pendingRootTag: tag };
+        } else {
+            stateUpdate.currentRootTag = tag;
+            stateUpdate.currentTag = tag;
+            ApiManager.tagApi.updateTagInCache({
+                tagId: tag.previousRootTagId,
+                update: { nextRootTagId: tag.id },
+            });
+        }
+
+        this.setState(stateUpdate as ViewGameState);
     }
 
     private async createNewSubtag({ imageUrl }: { imageUrl: string }): Promise<void> {

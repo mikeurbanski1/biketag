@@ -1,4 +1,4 @@
-import { Collection, Filter, OptionalUnlessRequiredId, UUID, WithId } from 'mongodb';
+import { Collection, Filter, OptionalUnlessRequiredId, Sort, UUID, WithId } from 'mongodb';
 
 import { BaseEntity, BaseEntityWithoutId } from '@biketag/models';
 import { Logger } from '@biketag/utils';
@@ -70,10 +70,15 @@ export abstract class BaseDalService<E extends BaseEntity> {
         return { ...rest, _id } as unknown as WithId<E>;
     }
 
-    public async getAll(): Promise<E[]> {
+    // flexible overloading includes the ability to just get everything, or to paginage (must specify both skip and limit, or neither),
+    // to optionally return a total count if pagination is used, and optionally to sort
+    public async getAll(): Promise<E[]>;
+    public async getAll(options: { skip: number; limit: number; sort?: Sort }): Promise<E[]>;
+    public async getAll(options: { skip: number; limit: number; returnTotal: true; sort?: Sort }): Promise<{ items: E[]; total: number }>;
+    public async getAll(options: { skip: number; limit: number; returnTotal: false; sort?: Sort }): Promise<E[]>;
+    public async getAll(options?: { skip: number; limit: number; returnTotal?: boolean; sort?: Sort }): Promise<E[] | { items: E[]; total: number }> {
         this.logger.info('[getAll]');
-        const collection = await this.getCollection();
-        return (await collection.find().toArray()).map(this.convertFromDalEntity);
+        return await this.findAll({ filter: {}, ...options });
     }
 
     public async findOne({ filter, ignoreId }: { filter: Filter<E>; ignoreId?: string }): Promise<E | null> {
@@ -84,13 +89,38 @@ export abstract class BaseDalService<E extends BaseEntity> {
         return res ? this.convertFromDalEntity(res) : null;
     }
 
-    public async findAll({ filter, ignoreId }: { filter: Filter<E>; ignoreId?: string }): Promise<E[]> {
-        this.logger.info(`[findAll] `, { filter, ignoreId });
+    public async findAll(options: { filter: Filter<E>; ignoreId?: string; sort?: Sort }): Promise<E[]>;
+    public async findAll(options: { filter: Filter<E>; ignoreId?: string; skip: number; limit: number; sort?: Sort }): Promise<E[]>;
+    public async findAll(options: { filter: Filter<E>; ignoreId?: string; skip: number; limit: number; returnTotal: true; sort?: Sort }): Promise<{ items: E[]; total: number }>;
+    public async findAll(options: { filter: Filter<E>; ignoreId?: string; skip: number; limit: number; returnTotal: false; sort?: Sort }): Promise<E[]>;
+    public async findAll(options: { filter: Filter<E>; ignoreId?: string; skip?: number; limit?: number; returnTotal?: boolean; sort?: Sort }): Promise<E[] | { items: E[]; total: number }> {
+        // skip and limit will both be defined or both be undefined
+        const { filter, ignoreId, skip, limit, returnTotal, sort } = options;
+        this.logger.info(`[findAll] `, { filter, ignoreId, skip, limit, returnTotal });
+
         const searchFilter = ignoreId ? { ...filter, _id: { $ne: new UUID(ignoreId) } } : filter;
         const collection = await this.getCollection();
-        const queryRes = await collection.find(searchFilter).toArray();
-        this.logger.info(`[findAll]`, { queryRes });
-        return queryRes.map(this.convertFromDalEntity);
+        let findResult = collection.find(searchFilter, { skip, limit });
+        if (sort) {
+            findResult = findResult.sort(sort);
+        }
+        const queryResult = await findResult.toArray();
+        this.logger.info(`[findAll] query result`, { queryRes: queryResult });
+
+        let total: number | undefined = undefined;
+
+        // we are returning all results if:
+        // - we are not paginating (skip and limit are undefined)
+        // - we are paginating but there is only one page
+        // so in these cases we do not need to get a total (or, obviously, if returnTotal is false)
+        if (skip !== undefined && limit !== undefined && returnTotal && (skip > 0 || queryResult.length >= limit!)) {
+            total = await collection.countDocuments(searchFilter);
+        } else if (returnTotal) {
+            // but we still need to set it in this case
+            total = queryResult.length;
+        }
+
+        return total ? { items: queryResult.map(this.convertFromDalEntity), total } : queryResult.map(this.convertFromDalEntity);
     }
 
     public async delete({ id }: { id: string }) {
