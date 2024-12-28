@@ -10,8 +10,8 @@ import '../../styles/game.css';
 
 import { CreateEditGame } from './createEditGame';
 import { GameDetails } from './gameDetails';
-import { TagCardView } from './gameTagCardView';
-import { TagScroller } from './gameTagScroller';
+import { TagCardView } from './tagCardView';
+import { TagScroller } from './tagScroller';
 
 const logger = new Logger({ prefix: '[ViewGame]' });
 

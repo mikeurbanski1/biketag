@@ -77,7 +77,7 @@ export abstract class BaseDalService<E extends BaseEntity> {
     public async getAll(options: { skip: number; limit: number; returnTotal: true; sort?: Sort }): Promise<{ items: E[]; total: number }>;
     public async getAll(options: { skip: number; limit: number; returnTotal: false; sort?: Sort }): Promise<E[]>;
     public async getAll(options?: { skip: number; limit: number; returnTotal?: boolean; sort?: Sort }): Promise<E[] | { items: E[]; total: number }> {
-        this.logger.info('[getAll]');
+        this.logger.info('[getAll]', { options: options ?? 'undefined' });
         return await this.findAll({ filter: {}, ...options });
     }
 
@@ -100,6 +100,7 @@ export abstract class BaseDalService<E extends BaseEntity> {
 
         const searchFilter = ignoreId ? { ...filter, _id: { $ne: new UUID(ignoreId) } } : filter;
         const collection = await this.getCollection();
+
         let findResult = collection.find(searchFilter, { skip, limit });
         if (sort) {
             findResult = findResult.sort(sort);

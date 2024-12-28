@@ -30,15 +30,5 @@ export const TagCardView: React.FC<TagCardProps> = (props) => {
         });
     }, [refreshKey, game.id, loading]);
 
-    if (loading) {
-        return <div>Loading...</div>;
-    }
-
-    return (
-        <div className="tag-card-view">
-            {tags.map((tag) => (
-                <TagCard key={tag.id} tag={tag} selectTag={() => props.selectTag(tag)} />
-            ))}
-        </div>
-    );
+    return <div className="tag-card-view">{loading ? <div>Loading...</div> : tags.map((tag) => <TagCard key={tag.id} tag={tag} selectTag={() => props.selectTag(tag)} />)}</div>;
 };
