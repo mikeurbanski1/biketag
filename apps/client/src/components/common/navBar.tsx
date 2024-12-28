@@ -47,7 +47,7 @@ const MainMenu: React.FC<NavBarProps> = ({ user, game, handleLogout, startCreate
 //     );
 // };
 
-const NavBar: React.FC<NavBarProps> = (props) => {
+export const NavBar: React.FC<NavBarProps> = (props) => {
     return (
         <div className="nav-bar">
             <div className="bike-tag-title clickable-text" onClick={props.backToHome}>
@@ -57,5 +57,3 @@ const NavBar: React.FC<NavBarProps> = (props) => {
         </div>
     );
 };
-
-export default NavBar;

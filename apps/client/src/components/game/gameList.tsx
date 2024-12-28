@@ -11,7 +11,7 @@ interface GameListProps {
     startCreateGame: () => void;
 }
 
-const GameList: React.FC<GameListProps> = ({ user, selectGame, startCreateGame }: GameListProps) => {
+export const GameList: React.FC<GameListProps> = ({ user, selectGame, startCreateGame }: GameListProps) => {
     const [games, setGames] = useState<GameSummary[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [refreshKey, setRefreshKey] = useState<number>(0);
@@ -42,5 +42,3 @@ const GameList: React.FC<GameListProps> = ({ user, selectGame, startCreateGame }
         </div>
     );
 };
-
-export default GameList;

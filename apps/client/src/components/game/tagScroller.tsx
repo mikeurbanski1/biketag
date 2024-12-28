@@ -43,7 +43,7 @@ const getTagComponent = ({ tag, isActive, selectTag }: { tag: TagDto | PendingTa
     return <Tag key={tagKey} tag={tag} isActive={isActive} selectTag={selectThisTag} />;
 };
 
-export const GameTagView: React.FC<TagViewProps> = ({
+export const TagScroller: React.FC<TagViewProps> = ({
     game,
     dateOverride,
     currentRootTag,

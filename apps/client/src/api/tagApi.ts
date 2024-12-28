@@ -147,4 +147,18 @@ export class TagApi extends AbstractApi {
             throw err;
         }
     }
+
+    public async getRootTagsForGame({ gameId }: { gameId: string }): Promise<TagDto[]> {
+        try {
+            return await this.getWithPaging<TagDto>({
+                config: {
+                    method: 'get',
+                    url: `/tags/game/${gameId}/root-tags`,
+                },
+            });
+        } catch (err) {
+            this.logger.error(`[getTagsForGame] got an error response`, { err });
+            throw err;
+        }
+    }
 }

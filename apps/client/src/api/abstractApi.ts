@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosRequestConfig } from 'axios';
 
 import { CLIENT_ID_HEADER, Logger, USER_ID_HEADER } from '@biketag/utils';
 
@@ -45,5 +45,24 @@ export class AbstractApi {
             throw new Error('User ID not set');
         }
         return this.userId;
+    }
+
+    public async getWithPaging<E>({ config, pageSize = 10 }: { config: AxiosRequestConfig; pageSize?: number }): Promise<E[]> {
+        let page = 1;
+        config.params = { ...config.params, pageSize, page };
+
+        let response = await this.axiosInstance.request<{ items: E[]; total: number }>(config);
+        this.logger.info(`[getWithPaging] first page response`, { response });
+        page++;
+        const items: E[] = response.data.items;
+        while (items.length < response.data.total) {
+            config.params = { ...config.params, page };
+            response = await this.axiosInstance.request<{ items: E[]; total: number }>(config);
+            this.logger.info(`[getWithPaging] page ${page} response`, { response });
+            items.push(...response.data.items);
+            page++;
+        }
+
+        return items;
     }
 }
