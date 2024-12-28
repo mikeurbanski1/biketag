@@ -10,7 +10,8 @@ import '../../styles/game.css';
 
 import { CreateEditGame } from './createEditGame';
 import { GameDetails } from './gameDetails';
-import { GameTagView } from './gameTagView';
+import { TagCardView } from './gameTagCardView';
+import { TagScroller } from './gameTagScroller';
 
 const logger = new Logger({ prefix: '[ViewGame]' });
 
@@ -38,6 +39,7 @@ interface ViewGameState {
     showingPendingTag: boolean;
     showingAddRootTag: boolean;
     showingAddSubtag: boolean;
+    viewingTagScroller: boolean;
 }
 
 interface ViewGameProps {
@@ -64,6 +66,7 @@ export class Game extends React.Component<ViewGameProps, ViewGameState> {
             userCanAddSubtag: false,
             showingAddRootTag: false,
             showingAddSubtag: false,
+            viewingTagScroller: false,
         };
     }
 
@@ -125,6 +128,11 @@ export class Game extends React.Component<ViewGameProps, ViewGameState> {
         } else {
             this.setState({ showingAddRootTag: true });
         }
+    }
+
+    private selectRootTag(tag: TagDto): void {
+        this.setState({ currentRootTag: tag, currentTag: tag, viewingTagScroller: true });
+        this.fetchAndSetUserCanAddSubtag(tag);
     }
 
     private async createNewTag({ imageUrl, isSubtag }: { imageUrl: string; isSubtag: boolean }): Promise<void> {
@@ -255,9 +263,9 @@ export class Game extends React.Component<ViewGameProps, ViewGameState> {
                     deleteGame={() => this.props.deleteGame()}
                 />
             );
-        } else {
+        } else if (this.state.viewingTagScroller) {
             innerDiv = (
-                <GameTagView
+                <TagScroller
                     game={game}
                     dateOverride={this.props.dateOverride}
                     currentRootTag={this.state.currentRootTag}
@@ -272,6 +280,8 @@ export class Game extends React.Component<ViewGameProps, ViewGameState> {
                     selectTag={(tag: TagDto | PendingTag) => this.setCurrentTag(tag)}
                 />
             );
+        } else {
+            innerDiv = <TagCardView game={game} selectTag={(tag: TagDto) => this.selectRootTag(tag)} />;
         }
 
         // const backText = this.state.viewingGameDetails ? '← Back to tags' : '← Back to games';

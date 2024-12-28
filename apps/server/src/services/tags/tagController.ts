@@ -70,10 +70,10 @@ export class TagController extends Controller {
 
     @Get('/game/{gameId}/root-tags')
     @SuccessResponse('200', 'Ok')
-    public async getRootTags(@Path() gameId: string, @Query() page: number = 1, @Query() pageSize: number = 10): Promise<{ tags: TagDto[]; total: number }> {
+    public async getRootTags(@Path() gameId: string, @Query() page: number = 1, @Query() pageSize: number = 10): Promise<{ items: TagDto[]; total: number }> {
         logger.info(`[getRootTags]`, { gameId, page, pageSize });
-        const { tags, total } = await this.tagsService.getRootTags({ gameId, page, pageSize });
-        logger.info('[getRootTags] got tags', { tags, total });
-        return { tags, total };
+        const { items, total } = await this.tagsService.getRootTags({ gameId, page, pageSize });
+        logger.info('[getRootTags] got tags', { items, total });
+        return { items, total };
     }
 }

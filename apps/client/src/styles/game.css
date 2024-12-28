@@ -103,3 +103,10 @@
 .player-details-table .cell.sorted > span {
     font-weight: bold;
 }
+
+.tag-card-view {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 2.5%;
+}

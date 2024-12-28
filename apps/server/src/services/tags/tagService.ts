@@ -197,13 +197,13 @@ export class TagService extends BaseService<TagDto, CreateTagParams, TagEntity, 
         await this.dalService.update({ id: tagId, updateParams: { isPending } });
     }
 
-    public async getRootTags({ gameId, page, pageSize }: { gameId: string; page: number; pageSize: number }): Promise<{ tags: TagDto[]; total: number }> {
+    public async getRootTags({ gameId, page, pageSize }: { gameId: string; page: number; pageSize: number }): Promise<{ items: TagDto[]; total: number }> {
         this.logger.info(`[getRootTags]`, { gameId, page, pageSize });
         const filter = { gameId, isRoot: true };
         const { items, total } = await this.dalService.findAll({ filter, skip: (page - 1) * pageSize, limit: pageSize, returnTotal: true, sort: { forDate: 1 } });
         const tags = await Promise.all(items.map((tag) => this.convertToDto(tag)));
         this.logger.info(`[getRootTags] got tags`, { tags, total });
-        return { tags, total };
+        return { items: tags, total };
     }
 
     /**

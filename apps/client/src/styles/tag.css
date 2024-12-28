@@ -92,3 +92,18 @@
     color: #fb0000;
     font-size: 1.1em;
 }
+
+.tag-card {
+    box-shadow: 5px 5px 5px rgb(0, 0, 0, 0.5);
+    border-radius: 10px;
+    background-color: #dcdcdc;
+    width: 30%;
+    height: 30%;
+    /* display: grid; */
+    /* grid-template-rows: 1fr auto; */
+}
+
+.tag-card .tag-image-container {
+    width: calc(100% - 10px);
+    height: calc(100% - 10px);
+}
