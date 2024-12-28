@@ -97,6 +97,7 @@ export abstract class BaseDalService<E extends BaseEntity> {
         // skip and limit will both be defined or both be undefined
         const { filter, ignoreId, skip, limit, returnTotal, sort } = options;
         this.logger.info(`[findAll] `, { filter, ignoreId, skip, limit, returnTotal });
+
         const searchFilter = ignoreId ? { ...filter, _id: { $ne: new UUID(ignoreId) } } : filter;
         const collection = await this.getCollection();
 
