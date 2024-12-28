@@ -10,7 +10,8 @@ import '../../styles/game.css';
 
 import { CreateEditGame } from './createEditGame';
 import { GameDetails } from './gameDetails';
-import { GameTagView } from './gameTagView';
+import { TagCardView } from './tagCardView';
+import { TagScroller } from './tagScroller';
 
 const logger = new Logger({ prefix: '[ViewGame]' });
 
@@ -38,6 +39,7 @@ interface ViewGameState {
     showingPendingTag: boolean;
     showingAddRootTag: boolean;
     showingAddSubtag: boolean;
+    viewingTagScroller: boolean;
 }
 
 interface ViewGameProps {
@@ -64,6 +66,7 @@ export class Game extends React.Component<ViewGameProps, ViewGameState> {
             userCanAddSubtag: false,
             showingAddRootTag: false,
             showingAddSubtag: false,
+            viewingTagScroller: false,
         };
     }
 
@@ -127,6 +130,11 @@ export class Game extends React.Component<ViewGameProps, ViewGameState> {
         }
     }
 
+    private selectRootTag(tag: TagDto): void {
+        this.setState({ currentRootTag: tag, currentTag: tag, viewingTagScroller: true });
+        this.fetchAndSetUserCanAddSubtag(tag);
+    }
+
     private async createNewTag({ imageUrl, isSubtag }: { imageUrl: string; isSubtag: boolean }): Promise<void> {
         if (isSubtag) {
             await this.createNewSubtag({ imageUrl });
@@ -141,18 +149,26 @@ export class Game extends React.Component<ViewGameProps, ViewGameState> {
         // const latestRootTag = tag;
         // const updateParams = { latestRootTag };
         // this.props.updateGame(updateParams);
-        this.setState({
+        const stateUpdate: Partial<ViewGameState> = {
             userCanAddRootTag: false,
             userCanAddSubtag: false,
-            currentRootTag: tag,
-            currentTag: tag,
             showingAddRootTag: false,
             game: { ...this.state.game!, latestRootTag: tag },
-        });
-        ApiManager.tagApi.updateTagInCache({
-            tagId: tag.previousRootTagId,
-            update: { nextRootTagId: tag.id },
-        });
+        };
+
+        if (tag.isPending) {
+            stateUpdate.showingPendingTag = true;
+            stateUpdate.game = { ...this.state.game!, pendingRootTag: tag };
+        } else {
+            stateUpdate.currentRootTag = tag;
+            stateUpdate.currentTag = tag;
+            ApiManager.tagApi.updateTagInCache({
+                tagId: tag.previousRootTagId,
+                update: { nextRootTagId: tag.id },
+            });
+        }
+
+        this.setState(stateUpdate as ViewGameState);
     }
 
     private async createNewSubtag({ imageUrl }: { imageUrl: string }): Promise<void> {
@@ -247,9 +263,9 @@ export class Game extends React.Component<ViewGameProps, ViewGameState> {
                     deleteGame={() => this.props.deleteGame()}
                 />
             );
-        } else {
+        } else if (this.state.viewingTagScroller) {
             innerDiv = (
-                <GameTagView
+                <TagScroller
                     game={game}
                     dateOverride={this.props.dateOverride}
                     currentRootTag={this.state.currentRootTag}
@@ -264,6 +280,8 @@ export class Game extends React.Component<ViewGameProps, ViewGameState> {
                     selectTag={(tag: TagDto | PendingTag) => this.setCurrentTag(tag)}
                 />
             );
+        } else {
+            innerDiv = <TagCardView game={game} selectTag={(tag: TagDto) => this.selectRootTag(tag)} />;
         }
 
         // const backText = this.state.viewingGameDetails ? '← Back to tags' : '← Back to games';
