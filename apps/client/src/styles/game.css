@@ -6,6 +6,8 @@
     display: grid;
     grid-template-rows: 1fr;
     height: 100%;
+    align-items: center;
+    text-align: center;
     /* border: 1px solid purple; */
     /* height: 700px; */
     /* height: 100%; */
@@ -105,8 +107,8 @@
 
 .tag-card-view {
     display: grid;
-    grid-template-columns: repeat(auto-fit, 150px);
-    grid-auto-rows: 250px;
+    grid-template-columns: repeat(auto-fit, 125px);
+    grid-auto-rows: 166px;
     justify-content: center;
     padding: 10px;
     gap: 10px;

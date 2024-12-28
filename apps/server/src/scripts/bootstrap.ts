@@ -367,9 +367,10 @@ bootstrapData()
     .then(() => {
         logger.info('Finished bootstrapping new data');
     })
-    .catch((err) => {
-        logger.error(`Error bootstrapping data ${err}`, { err });
-    })
+    // .catch((err) => {
+    //     logger.error(`Error bootstrapping data ${err}`, { err });
+    //     throw err;
+    // })
     .finally(() => {
         if (provider) {
             provider.close().then(() => logger.info('closed connection'));
