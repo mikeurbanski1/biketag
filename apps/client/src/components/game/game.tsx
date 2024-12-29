@@ -72,7 +72,7 @@ export class Game extends React.Component<ViewGameProps, ViewGameState> {
 
     public componentDidMount(): void {
         // this.fetchAndSetUserCanAddRootTag(); do not need to until we look at the tag scroller
-        this.fetchAndSetGame();
+        this.fetchAndSetGame({});
     }
 
     private getInitialTagScrollerViewState(currentTagOverride?: TagDto): Partial<ViewGameState> {
@@ -86,7 +86,15 @@ export class Game extends React.Component<ViewGameProps, ViewGameState> {
         return state;
     }
 
-    private async fetchAndSetGame(setState = true, viewingTagScrollerOverride?: boolean): Promise<Partial<ViewGameState>> {
+    private async fetchAndSetGame({
+        setState = true,
+        viewingTagScrollerOverride,
+        setTagScrollerViewIfNoTags = true,
+    }: {
+        setState?: boolean;
+        viewingTagScrollerOverride?: boolean;
+        setTagScrollerViewIfNoTags?: boolean;
+    }): Promise<Partial<ViewGameState>> {
         let { game } = this.state;
         if (!game || game.id !== this.props.gameId) {
             game = await ApiManager.gameApi.getGame({ id: this.props.gameId, convertPendingTagForOwner: true });
@@ -101,10 +109,11 @@ export class Game extends React.Component<ViewGameProps, ViewGameState> {
             playerDetailsTable,
         };
 
-        if (viewingTagScrollerOverride ?? this.state.viewingTagScroller) {
+        if ((viewingTagScrollerOverride ?? this.state.viewingTagScroller) || (setTagScrollerViewIfNoTags && !latestRootTag)) {
             stateUpdate.currentRootTag = latestRootTag;
             stateUpdate.currentTag = latestRootTag;
             stateUpdate.showingAddRootTag = latestRootTag === undefined;
+            stateUpdate.viewingTagScroller = setTagScrollerViewIfNoTags ? latestRootTag === undefined : this.state.viewingTagScroller;
         }
 
         if (setState) {
@@ -253,7 +262,7 @@ export class Game extends React.Component<ViewGameProps, ViewGameState> {
             userCanAddRootTag: false,
             userCanAddSubtag: false,
         });
-        this.fetchAndSetGame();
+        this.fetchAndSetGame({});
         this.fetchAndSetUserCanAddRootTag();
     }
 
