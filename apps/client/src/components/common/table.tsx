@@ -1,8 +1,8 @@
 import React from 'react';
 
-import { Logger } from '@biketag/utils';
+// import { Logger } from '@biketag/utils';
 
-export interface TableProps<T extends Record<string, string | number>> {
+interface TableProps<T extends Record<string, string | number>> {
     data: T[];
     // type attributes to 0-based column index
     columnMapping: { attribute: keyof T; header: string; defaultDescending?: boolean }[];
@@ -11,75 +11,69 @@ export interface TableProps<T extends Record<string, string | number>> {
     numericColumns: number[];
 }
 
-export interface TableState {
-    sortColumn: number;
-    sortedAscending: boolean;
-    tableData: (string | number)[][];
+// const logger = new Logger({ prefix: '[Table]' });
+
+interface Sort {
+    column: number;
+    ascending: boolean;
 }
 
-const logger = new Logger({ prefix: '[Table]' });
+export const Table: React.FC<TableProps<Record<string, string | number>>> = (props) => {
+    const numColumns = Object.keys(props.columnMapping).length;
+    const [sort, setSort] = React.useState<Sort>({
+        column: props.columnMapping.findIndex((column) => column.attribute === props.initialSort.column),
+        ascending: props.initialSort.ascending,
+    });
 
-export class Table<T extends Record<string, string | number>> extends React.Component<TableProps<T>, TableState> {
-    constructor(props: TableProps<T>) {
-        super(props);
-        const numColumns = Object.keys(props.columnMapping).length;
-        this.state = {
-            sortColumn: props.columnMapping.findIndex((column) => column.attribute === props.initialSort.column),
-            sortedAscending: props.initialSort.ascending,
-            tableData: props.data.map((row) => {
-                const newRow = new Array<string | number>(numColumns);
-                props.columnMapping.forEach((column, i) => {
-                    newRow[i] = row[column.attribute];
-                });
-                return newRow;
-            }),
-        };
-    }
+    const tableData = props.data.map((row) => {
+        const newRow = new Array<string | number>(numColumns);
+        props.columnMapping.forEach((column, i) => {
+            newRow[i] = row[column.attribute];
+        });
+        return newRow;
+    });
 
-    public render() {
-        logger.info(`[public public render()]`, { state: this.state, props: this.props });
-        return (
-            <div className={this.props.tableClassName}>
-                <div className="row header">
-                    {Object.values(this.props.columnMapping).map((column, index) => (
-                        <div
-                            key={column.attribute.toString()}
-                            className={`clickable-text cell ${this.state.sortColumn === index ? 'sorted' : ''}`}
-                            onClick={() => {
-                                if (this.state.sortColumn === index) {
-                                    this.setState({ sortedAscending: !this.state.sortedAscending });
-                                } else {
-                                    this.setState({ sortColumn: index, sortedAscending: column.defaultDescending ? false : true });
-                                }
-                            }}
-                        >
-                            <span>{column.header}</span>
-                            <span>{this.state.sortColumn === index ? (this.state.sortedAscending ? '▲' : '▼') : ''}</span>
-                        </div>
-                    ))}
-                </div>
-                {this.state.tableData
-                    .sort((a, b) => {
-                        const aVal = a[this.state.sortColumn];
-                        const bVal = b[this.state.sortColumn];
-                        if (typeof aVal === 'string' && typeof bVal === 'string') {
-                            return this.state.sortedAscending ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
-                        } else if (typeof aVal === 'number' && typeof bVal === 'number') {
-                            return this.state.sortedAscending ? aVal - bVal : bVal - aVal;
-                        } else {
-                            throw new Error('sorting a mixed type column');
-                        }
-                    })
-                    .map((row, rowIndex) => (
-                        <div key={rowIndex} className="row">
-                            {row.map((cell, colIndex) => (
-                                <span key={colIndex} className="cell">
-                                    {cell}
-                                </span>
-                            ))}
-                        </div>
-                    ))}
+    return (
+        <div className={props.tableClassName}>
+            <div className="row header">
+                {Object.values(props.columnMapping).map((column, index) => (
+                    <div
+                        key={column.attribute.toString()}
+                        className={`clickable-text cell ${sort.column === index ? 'sorted' : ''}`}
+                        onClick={() => {
+                            if (sort.column === index) {
+                                setSort({ ...sort, ascending: !sort.ascending });
+                            } else {
+                                setSort({ column: index, ascending: column.defaultDescending ? false : true });
+                            }
+                        }}
+                    >
+                        <span>{column.header}</span>
+                        <span>{sort.column === index ? (sort.ascending ? '▲' : '▼') : ''}</span>
+                    </div>
+                ))}
             </div>
-        );
-    }
-}
+            {tableData
+                .sort((a, b) => {
+                    const aVal = a[sort.column];
+                    const bVal = b[sort.column];
+                    if (typeof aVal === 'string' && typeof bVal === 'string') {
+                        return sort.ascending ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+                    } else if (typeof aVal === 'number' && typeof bVal === 'number') {
+                        return sort.ascending ? aVal - bVal : bVal - aVal;
+                    } else {
+                        throw new Error('sorting a mixed type column');
+                    }
+                })
+                .map((row, rowIndex) => (
+                    <div key={rowIndex} className="row">
+                        {row.map((cell, colIndex) => (
+                            <span key={colIndex} className="cell">
+                                {cell}
+                            </span>
+                        ))}
+                    </div>
+                ))}
+        </div>
+    );
+};

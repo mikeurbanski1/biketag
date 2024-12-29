@@ -38,7 +38,7 @@ export const GameDetails: React.FC<GameDetailsProps> = ({ game, user, playerDeta
                 </button>
             </div>
             <div>Scoreboard</div>
-            <Table<PlayerDetailsTableRow>
+            <Table
                 data={playerDetailsTable}
                 columnMapping={[
                     { attribute: 'name', header: 'Name' },
