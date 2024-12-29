@@ -7,7 +7,7 @@ import { TagCard } from '../tag/tagCard';
 
 interface TagCardProps {
     game: GameDto;
-    selectTag: (tag: TagDto) => void;
+    selectTag: (tag: TagDto | PendingTag) => void;
 }
 
 export const TagCardView: React.FC<TagCardProps> = (props) => {
