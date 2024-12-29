@@ -28,14 +28,13 @@
 .tag-footer {
     margin: auto;
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: auto auto;
     padding-bottom: 25px;
     width: calc(100% - 50px);
 }
 
 .tag-footer > div {
     line-height: 1em;
-    text-align: center;
 }
 
 .tag-footer > div:nth-child(1) {
@@ -90,4 +89,14 @@
 .tag-card .tag-image-container {
     width: calc(100% - 10px);
     height: calc(100% - 10px);
+}
+
+.pending-tag-card {
+    font-size: 0.8em;
+    font-style: italic;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }

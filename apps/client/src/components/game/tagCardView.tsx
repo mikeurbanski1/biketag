@@ -1,13 +1,13 @@
 import React, { useEffect } from 'react';
 
-import { GameDto, TagDto } from '@biketag/models';
+import { GameDto, PendingTag, TagDto } from '@biketag/models';
 
 import { ApiManager } from '../../api';
 import { TagCard } from '../tag/tagCard';
 
 interface TagCardProps {
     game: GameDto;
-    selectTag: (tag: TagDto) => void;
+    selectTag: (tag: TagDto | PendingTag) => void;
 }
 
 export const TagCardView: React.FC<TagCardProps> = (props) => {
@@ -17,7 +17,7 @@ export const TagCardView: React.FC<TagCardProps> = (props) => {
     // if there are two or fewer tags, then we know all of them
     // we do not have to load anything if there is no latest tag, or if the latest tag is the first tag, or if the latest tag is the next tag of the first tag
     const [loading, setLoading] = React.useState(!(!latestRootTag || (latestRootTag.id === firstRootTag!.id && latestRootTag.id === firstRootTag!.nextTagId)));
-    const [tags, setTags] = React.useState<TagDto[]>([]);
+    const [tags, setTags] = React.useState<(TagDto | PendingTag)[]>([]);
     const [refreshKey] = React.useState(0);
 
     useEffect(() => {
@@ -26,9 +26,9 @@ export const TagCardView: React.FC<TagCardProps> = (props) => {
         }
         ApiManager.tagApi.getRootTagsForGame({ gameId: game.id }).then((tags) => {
             setLoading(false);
-            setTags(tags);
+            setTags(game.pendingRootTag ? [game.pendingRootTag, ...tags] : tags);
         });
-    }, [refreshKey, game.id, loading]);
+    }, [refreshKey, game.id, game.pendingRootTag, loading]);
 
     if (loading) {
         return <div>Loading...</div>;
