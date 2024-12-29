@@ -113,7 +113,7 @@ const bootstrapData = async () => {
     const gameService = new GameService();
     const tagService = new TagService();
 
-    const names = ['Mike', 'Jenny', 'Katie', 'Henry', 'Hung', 'Breanne'];
+    const names = ['Mike', 'Jenny', 'Katie', 'Henry', 'Hung', 'Breanne', 'Rhys'];
     const users = await Promise.all(names.map((name) => userService.create({ name })));
 
     logger.info(`[bootstrapData] created users`, { users });
@@ -129,6 +129,7 @@ const bootstrapData = async () => {
                 { userId: users[3].id, role: GameRoles.PLAYER },
                 { userId: users[4].id, role: GameRoles.PLAYER },
                 { userId: users[5].id, role: GameRoles.PLAYER },
+                { userId: users[6].id, role: GameRoles.PLAYER },
             ],
         }),
         await gameService.create({
@@ -140,6 +141,7 @@ const bootstrapData = async () => {
                 { userId: users[3].id, role: GameRoles.PLAYER },
                 { userId: users[4].id, role: GameRoles.PLAYER },
                 { userId: users[5].id, role: GameRoles.PLAYER },
+                { userId: users[6].id, role: GameRoles.PLAYER },
             ],
         }),
         await gameService.create({
@@ -149,6 +151,7 @@ const bootstrapData = async () => {
                 { userId: users[0].id, role: GameRoles.ADMIN },
                 { userId: users[1].id, role: GameRoles.ADMIN },
                 { userId: users[3].id, role: GameRoles.PLAYER },
+                { userId: users[6].id, role: GameRoles.PLAYER },
             ],
         }),
     ];
