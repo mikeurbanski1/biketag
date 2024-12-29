@@ -55,7 +55,7 @@ export const TagCardView: React.FC<TagCardProps> = (props) => {
             // logger.info(`[TagCardView][useEffect] setting tags`, { instanceId, tagsToSet });
             setTags(gameTags);
         });
-    }, [refreshKey, game.id, game.pendingRootTag, loading]);
+    }, [refreshKey, game.id, loading]);
 
     // return this here so that we are outside of the grid and the loading text does not move from the game loading screen
     if (loading) {

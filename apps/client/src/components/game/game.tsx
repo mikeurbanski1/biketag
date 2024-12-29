@@ -113,7 +113,10 @@ export class Game extends React.Component<ViewGameProps, ViewGameState> {
             stateUpdate.currentRootTag = latestRootTag;
             stateUpdate.currentTag = latestRootTag;
             stateUpdate.showingAddRootTag = latestRootTag === undefined;
-            stateUpdate.viewingTagScroller = setTagScrollerViewIfNoTags ? latestRootTag === undefined : this.state.viewingTagScroller;
+
+            if (setTagScrollerViewIfNoTags && !latestRootTag) {
+                stateUpdate.viewingTagScroller = true;
+            }
         }
 
         if (setState) {
