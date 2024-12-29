@@ -71,4 +71,5 @@ export const isNumeric = (str: string | number): boolean => {
 
 export * from './consts';
 export * from './date';
+export * from './gameUtils';
 export { Logger, LogLevel };

@@ -91,6 +91,7 @@ export class Game extends React.Component<ViewGameProps, ViewGameState> {
         if (!game || game.id !== this.props.gameId) {
             game = await ApiManager.gameApi.getGame({ id: this.props.gameId, convertPendingTagForOwner: true });
         }
+        logger.info(`[fetchAndSetGame] for game`, { game });
         const { latestRootTag } = game;
         const playerDetailsTable = this.getPlayerDetailsTable(game);
         const stateUpdate: Partial<ViewGameState> = {
@@ -107,8 +108,9 @@ export class Game extends React.Component<ViewGameProps, ViewGameState> {
         }
 
         if (setState) {
+            logger.info(`[fetchAndSetGame] in setState true`);
             this.setState(stateUpdate as ViewGameState);
-            this.fetchAndSetUserCanAddRootTag();
+            this.fetchAndSetUserCanAddRootTag(game);
             if (latestRootTag && setState) {
                 logger.info(`[fetchAndSetGame]`, { latestRootTag });
                 this.fetchAndSetUserCanAddSubtag(latestRootTag);
@@ -129,12 +131,13 @@ export class Game extends React.Component<ViewGameProps, ViewGameState> {
         });
     }
 
-    private fetchAndSetUserCanAddRootTag(): void {
-        if (this.state.game?.latestRootTag) {
+    private fetchAndSetUserCanAddRootTag(gameOverride?: GameDto): void {
+        if ((gameOverride ?? this.state.game)?.latestRootTag) {
             ApiManager.tagApi.canUserAddTag({ userId: this.props.user.id, gameId: this.props.gameId, dateOverride: this.props.dateOverride }).then((userCanAddRootTag) => {
                 this.setState({ userCanAddRootTag });
             });
         } else {
+            logger.info(`[fetchAndSetUserCanAddRootTag] set true`);
             this.setState({ userCanAddRootTag: true });
         }
     }
@@ -254,9 +257,22 @@ export class Game extends React.Component<ViewGameProps, ViewGameState> {
         this.fetchAndSetUserCanAddRootTag();
     }
 
-    private setCurrentTag(tag: TagDto | PendingTag): void {
+    private extendCurrentTagStateFromLatestTag(stateUpdate: Partial<ViewGameState>): void {
+        const latestRootTag = this.state.game!.latestRootTag!;
+
+        stateUpdate.currentRootTag = latestRootTag;
+        stateUpdate.currentTag = latestRootTag;
+    }
+
+    private setCurrentTag(tag: TagDto | PendingTag | 'addTag'): void {
         const stateUpdate: Partial<ViewGameState> = { showingAddRootTag: false, showingAddSubtag: false, viewingTagScroller: true };
-        if (isFullTag(tag)) {
+        if (tag === 'addTag') {
+            stateUpdate.showingAddRootTag = true;
+            if (!this.state.viewingTagScroller) {
+                // if we jumped straight from the cards to the add tag, we need to initialize the "current" tag
+                this.extendCurrentTagStateFromLatestTag(stateUpdate);
+            }
+        } else if (isFullTag(tag)) {
             if (tag.id === this.state.currentTag?.id) {
                 // we switched back to the latest tag from pending tag or root tag
                 stateUpdate.showingPendingTag = false;
@@ -271,9 +287,7 @@ export class Game extends React.Component<ViewGameProps, ViewGameState> {
             stateUpdate.showingPendingTag = true;
             if (!this.state.viewingTagScroller) {
                 // if we jumped straight from the cards to the pending tag, we need to initialize the "current" tag
-                const latestRootTag = this.state.game!.latestRootTag!;
-                stateUpdate.currentRootTag = latestRootTag;
-                stateUpdate.currentTag = latestRootTag;
+                this.extendCurrentTagStateFromLatestTag(stateUpdate);
             }
         }
         this.setState(stateUpdate as ViewGameState);
@@ -319,7 +333,7 @@ export class Game extends React.Component<ViewGameProps, ViewGameState> {
                 />
             );
         } else {
-            innerDiv = <TagCardView game={game} selectTag={(tag: TagDto | PendingTag) => this.setCurrentTag(tag)} />;
+            innerDiv = <TagCardView game={game} selectTag={(tag: TagDto | PendingTag | 'addTag') => this.setCurrentTag(tag)} userCanAddRootTag={this.state.userCanAddRootTag} />;
         }
 
         // const backText = this.state.viewingGameDetails ? '← Back to tags' : '← Back to games';
