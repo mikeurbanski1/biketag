@@ -91,3 +91,13 @@
     width: calc(100% - 10px);
     height: calc(100% - 10px);
 }
+
+.pending-tag-card {
+    font-size: 0.8em;
+    font-style: italic;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}

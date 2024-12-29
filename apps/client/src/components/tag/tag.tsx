@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { isFullTag, PendingTag, TagDto } from '@biketag/models';
 import { Logger } from '@biketag/utils';
 
-import { TIME_READABLE_FORMAT } from '../../utils/consts';
+import { DATETIME_FORMAT, TIME_READABLE_FORMAT } from '../../utils/consts';
 
 import '../../styles/tag.css';
 
@@ -59,6 +59,17 @@ const isTagToLoad = (props: TagProps): props is TagProps & LoadingTagDefinedProp
 const isLoadedTag = (tag?: TagTypeWithId): tag is TagDto | PendingTag => typeof tag === 'object';
 const isInactiveTag = (props: TagProps): props is TagProps & RealInactiveTagDefinedProps => !props.isActive;
 
+const getTimeString = (tag: TagDto): string => {
+    const forDate = dayjs(tag.forDate);
+    const relativeDate = convertDateToRelativeDate(forDate);
+    const timeFormat = forDate.format(TIME_READABLE_FORMAT);
+    const isPending = tag.isPending;
+    // return isPending ? 'Live at midnight!' : `${relativeDate} — ${timeFormat}`;
+    // root tags just have the day (it is a little difficult to decide what to show for a time,
+    // when the tag could be posted the day before or this day - the time is not relevant)
+    return isPending ? 'Live at midnight!' : tag.isRoot ? relativeDate : `${relativeDate} — ${timeFormat}`;
+};
+
 export const Tag: React.FC<TagProps> = (props: TagProps): React.ReactNode => {
     logger.info(`[Tag] render()`, { props });
     // we are only displaying loading if we know we are getting a tag
@@ -101,16 +112,12 @@ export const Tag: React.FC<TagProps> = (props: TagProps): React.ReactNode => {
 
         if (isFullTag(tagToRender)) {
             logger.info(`[Tag] isFullTag`, { tagToRender });
-            const forDate = dayjs(tagToRender.forDate);
-            const relativeDate = convertDateToRelativeDate(forDate);
-            const timeFormat = forDate.format(TIME_READABLE_FORMAT);
-            const isPending = tagToRender.isPending;
-            const timeString = isPending ? 'Live at midnight!' : `${relativeDate} — ${timeFormat}`;
+            const timeString = getTimeString(tagToRender);
 
             const footer = (
                 <div className="tag-footer">
                     <div>{tagToRender.creator.name}</div>
-                    <div>{timeString}</div>
+                    <div title={`Posted ${dayjs(tagToRender.postedDate).format(DATETIME_FORMAT)}`}>{timeString}</div>
                     {/* <div>{tagWinner}</div> */}
                 </div>
             );
