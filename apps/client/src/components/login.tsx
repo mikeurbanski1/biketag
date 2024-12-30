@@ -1,4 +1,4 @@
-import React, { ChangeEvent } from 'react';
+import React, { ChangeEvent, useCallback } from 'react';
 
 import { ApiManager } from '../api';
 
@@ -18,36 +18,36 @@ export const Login: React.FC<LoginProps> = ({ setUser }: LoginProps) => {
         setCanSignup(event.target.value !== '');
     };
 
-    const login = async () => {
-        try {
-            const { id } = await ApiManager.userApi.login({ name });
-            setUser({ name, id });
-        } catch (err) {
-            if (err instanceof Error) {
-                setErrorMessage(err.message);
-            }
-        }
+    const login = () => {
+        ApiManager.userApi
+            .login({ name })
+            .then(({ id }) => setUser({ name, id }))
+            .catch((err) => {
+                if (err instanceof Error) {
+                    setErrorMessage(err.message);
+                }
+            });
     };
 
-    const signUp = async () => {
-        try {
-            const { id } = await ApiManager.userApi.signup({ name });
-            setUser({ name, id });
-        } catch (err) {
-            if (err instanceof Error) {
-                setErrorMessage(err.message);
-            }
-        }
+    const signUp = () => {
+        ApiManager.userApi
+            .signup({ name })
+            .then(({ id }) => setUser({ name, id }))
+            .catch((err) => {
+                if (err instanceof Error) {
+                    setErrorMessage(err.message);
+                }
+            });
     };
 
     return (
         <div className="flex-column moderate-gap">
-            <input className="login-text" placeholder="Name" type="text" onChange={(event) => handleNameChange(event)} value={name}></input>
+            <input className="login-text" placeholder="Name" type="text" onChange={handleNameChange} value={name}></input>
             <div className="button-pair">
-                <button className="login-button" type="button" onClick={async () => await login()} disabled={!canLogin}>
+                <button className="login-button" type="button" onClick={login} disabled={!canLogin}>
                     Login
                 </button>
-                <button className="login-button" type="button" onClick={async () => await signUp()} disabled={!canSignup}>
+                <button className="login-button" type="button" onClick={signUp} disabled={!canSignup}>
                     Sign up
                 </button>
             </div>
