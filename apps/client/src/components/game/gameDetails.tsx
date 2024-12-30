@@ -15,14 +15,13 @@ interface GameDetailsProps {
     game: GameDto; // Define the type for game if available
     user: UserDto; // Define the type for user if available
     playerDetailsTable: PlayerDetailsTableRow[];
-    showingGameAdminButtons: boolean;
-    setShowingGameAdminButtons: (value: boolean) => void;
     setEditingGame: () => void;
     deleteGame: () => void;
 }
 
-export const GameDetails: React.FC<GameDetailsProps> = ({ game, user, playerDetailsTable, showingGameAdminButtons, setShowingGameAdminButtons, setEditingGame, deleteGame }) => {
+export const GameDetails: React.FC<GameDetailsProps> = ({ game, user, playerDetailsTable, setEditingGame, deleteGame }) => {
     const isCreator = game.creator.id === user.id;
+    const [showingGameAdminButtons, setShowingGameAdminButtons] = React.useState(false);
 
     return (
         <div className="game-details">
@@ -38,7 +37,7 @@ export const GameDetails: React.FC<GameDetailsProps> = ({ game, user, playerDeta
                 </button>
             </div>
             <div>Scoreboard</div>
-            <Table<PlayerDetailsTableRow>
+            <Table
                 data={playerDetailsTable}
                 columnMapping={[
                     { attribute: 'name', header: 'Name' },

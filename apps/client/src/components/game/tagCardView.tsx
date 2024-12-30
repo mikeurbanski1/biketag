@@ -6,6 +6,7 @@ import { gameHasTag, Logger } from '@biketag/utils';
 import { ApiManager } from '../../api';
 import { TagCard } from '../tag/tagCard';
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const logger = new Logger({ prefix: '' });
 
 type TagCardType = TagDto | PendingTag | 'addTag';
@@ -17,8 +18,6 @@ interface TagCardProps {
 }
 
 export const TagCardView: React.FC<TagCardProps> = (props) => {
-    const instanceId = Math.random();
-    logger.info(`[TagCardView] start`, { instanceId, props });
     const { game, userCanAddRootTag } = props;
     const { pendingRootTag } = game;
 
@@ -28,7 +27,6 @@ export const TagCardView: React.FC<TagCardProps> = (props) => {
     // if there are two or fewer tags (ignoring pending tag), then we know all of them from the game itself and do not need to load
     // otherwise we will load everything and display it together later
     if (!gameHasTag(game) || game.latestRootTag.id === game.firstRootTag.id || game.latestRootTag.id === game.firstRootTag.nextRootTagId) {
-        logger.info(`[TagCardView] in skip loading`, { instanceId });
         initLoading = false;
 
         if (gameHasTag(game)) {

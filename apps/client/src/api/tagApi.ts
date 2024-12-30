@@ -140,7 +140,25 @@ export class TagApi extends AbstractApi {
                 throw new Error(`Unexpected response: ${resp.status} - ${resp.statusText}`);
             }
             this.logger.info('[createTag] got 201 response', { data: resp.data });
-            this.tagCache[resp.data.id] = resp.data;
+            const newTag = resp.data;
+            this.tagCache[newTag.id] = newTag;
+
+            if (newTag.isRoot) {
+                this.updateTagInCache({
+                    tagId: newTag.previousRootTagId,
+                    update: { nextRootTagId: newTag.id },
+                });
+            } else {
+                this.updateTagInCache({
+                    tagId: newTag.parentTagId,
+                    update: { nextTagId: newTag.id },
+                });
+                this.updateTagInCache({
+                    tagId: newTag.rootTagId,
+                    update: { lastTagInChainId: newTag.id },
+                });
+            }
+
             return resp.data;
         } catch (err) {
             this.logger.error(`[createTag] got an error response`, { err });
@@ -150,12 +168,16 @@ export class TagApi extends AbstractApi {
 
     public async getRootTagsForGame({ gameId }: { gameId: string }): Promise<TagDto[]> {
         try {
-            return await this.getWithPaging<TagDto>({
+            const tags = await this.getWithPaging<TagDto>({
                 config: {
                     method: 'get',
                     url: `/tags/game/${gameId}/root-tags`,
                 },
             });
+            tags.forEach((tag) => {
+                this.tagCache[tag.id] = tag;
+            });
+            return tags;
         } catch (err) {
             this.logger.error(`[getTagsForGame] got an error response`, { err });
             throw err;
