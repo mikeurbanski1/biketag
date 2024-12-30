@@ -47,6 +47,7 @@ export const Game: React.FC<ViewGameProps> = (props: ViewGameProps) => {
     const [editingGame, setEditingGame] = React.useState(false);
     const [loadingGame, setLoadingGame] = React.useState(true);
     const [playerDetailsTable, setPlayerDetailsTable] = React.useState<PlayerDetailsTableRow[]>([]);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [viewingGameDetails, setViewingGameDetails] = React.useState(false);
     const [viewingTagScroller, setViewingTagScroller] = React.useState(false);
     const [userCanAddRootTag, setUserCanAddRootTag] = React.useState(false);
