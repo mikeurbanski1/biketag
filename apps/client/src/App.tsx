@@ -1,5 +1,5 @@
 import dayjs, { Dayjs } from 'dayjs';
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useCallback, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 import { GameDto, GameSummary, UserDto } from '@biketag/models';
@@ -36,7 +36,94 @@ interface AppComponentState {
     dateOverride: Dayjs;
 }
 
-export default class App extends React.Component<AppProps, AppComponentState> {
+export const App: React.FC = () => {
+    const [appState, setAppState] = React.useState<AppState>(AppState.LOGGED_OUT);
+    const [previousState, setPreviousState] = React.useState<AppState | undefined>(undefined);
+    const [clientId, setClientId] = React.useState<string>(uuidv4());
+    const [user, setUser] = React.useState<UserDto | undefined>(undefined);
+    const [game, setGame] = React.useState<GameSummary | undefined>(undefined);
+    const [dateOverride, setDateOverride] = React.useState<Dayjs>(dayjs());
+
+    useEffect(() => {
+        ApiManager.initialize({ clientId });
+    }, [clientId]);
+
+    const setUserCallback = useCallback((user: UserDto) => {
+        setUser(user);
+        setAppState(AppState.HOME);
+        ApiManager.setUser({ userId: user.id });
+    }, []);
+
+    const doneCreatingGame = useCallback(
+        (game?: GameDto): void => {
+            const newState = game ? AppState.VIEWING_GAME : previousState!;
+            setAppState(newState);
+            setPreviousState(undefined);
+            // set the created game as the game being viewed, otherwise do not change anything
+            if (game) {
+                setGame(game);
+            }
+        },
+        [previousState]
+    );
+
+    const setGameCallback = useCallback(
+        (game: GameSummary) => {
+            setGame(game);
+            setAppState(AppState.VIEWING_GAME);
+            setPreviousState(appState);
+        },
+        [appState]
+    );
+
+    const startCreateGame = useCallback(() => {
+        setPreviousState(appState);
+        setAppState(AppState.CREATING_GAME);
+    }, [appState]);
+
+    const deleteGame = useCallback(() => {
+        if (game) {
+            ApiManager.gameApi.deleteGame({ gameId: game.id }).then(() => {
+                setAppState(AppState.HOME);
+                setGame(undefined);
+            });
+        }
+    }, [game]);
+
+    const doneViewingGame = () => {
+        setAppState(AppState.HOME);
+        setPreviousState(undefined);
+        setGame(undefined);
+    };
+
+    const handleLogout = () => {
+        setAppState(AppState.LOGGED_OUT);
+        setUser(undefined);
+        ApiManager.setUser({ userId: null });
+    };
+
+    let inner: ReactNode;
+
+    if (appState === AppState.LOGGED_OUT) {
+        inner = <Login key="login" setUser={setUserCallback}></Login>;
+    } else if (appState === AppState.CREATING_GAME) {
+        inner = <CreateEditGame user={user!} doneCreatingGame={doneCreatingGame} />;
+    } else if (appState === AppState.HOME) {
+        inner = <GameList user={user!} selectGame={setGameCallback} startCreateGame={startCreateGame} />;
+    } else if (appState === AppState.VIEWING_GAME) {
+        inner = <Game gameId={game!.id} gameName={game!.name} user={user!} deleteGame={deleteGame} doneViewingGame={doneViewingGame} dateOverride={dateOverride} />;
+    }
+
+    return (
+        <div className="App">
+            <NavBar user={user} backToHome={doneViewingGame} handleLogout={handleLogout} doneViewingGame={doneViewingGame} startCreateGame={startCreateGame}></NavBar>
+            <div className="main">{inner}</div>
+            {/* <input type="button" name="reset-client-button" value="Reset local client ID" onClick={this.handleResetClient}></input> */}
+        </div>
+    );
+};
+
+export class App2 extends React.Component<AppProps, AppComponentState> {
     constructor(props: AppProps) {
         super(props);
 
@@ -110,7 +197,7 @@ export default class App extends React.Component<AppProps, AppComponentState> {
     //     this.setState({ dateOverride: dayjs(event.target.value) });
     // }
 
-    private async deleteGame() {
+    private deleteGame() {
         if (this.state.game) {
             ApiManager.gameApi.deleteGame({ gameId: this.state.game.id }).then(() => {
                 this.setState({ state: AppState.HOME, game: undefined });
