@@ -4,7 +4,6 @@
     grid-template-rows: 1fr auto;
     box-shadow: 15px 15px 5px rgb(0, 0, 0, 0.5);
     /* border: 1px solid #535bf2; */
-    box-sizing: border-box;
     height: 100%;
     width: 100%;
     background-color: #e8e8e8;

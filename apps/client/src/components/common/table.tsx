@@ -68,9 +68,9 @@ export const Table: React.FC<TableProps<Record<string, string | number>>> = (pro
                 .map((row, rowIndex) => (
                     <div key={rowIndex} className="row">
                         {row.map((cell, colIndex) => (
-                            <span key={colIndex} className="cell">
+                            <div key={colIndex} className="cell">
                                 {cell}
-                            </span>
+                            </div>
                         ))}
                     </div>
                 ))}

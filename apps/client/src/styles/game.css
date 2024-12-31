@@ -3,20 +3,10 @@
 }
 
 .game-view {
-    display: grid;
-    grid-template-rows: 1fr;
+    position: relative;
+    display: block;
     height: 100%;
-    align-items: center;
-    text-align: center;
 }
-
-/* .tag-scroller {
-    display: grid;
-    grid-template-columns: 15% 15% 40% 15% 15%;
-    grid-template-rows: 10% 10% 60% 10% 10%;
-    grid-auto-rows: 100%;
-    height: 100%;
-} */
 
 .tag-scroller {
     position: relative;
@@ -25,7 +15,7 @@
     overflow: hidden;
 }
 
-.tag-scroller > div {
+.tag-scoller-tag {
     height: 70%;
     width: 70%;
     position: absolute;
@@ -89,7 +79,6 @@
 .player-details-table .cell {
     padding: 0.2em;
     text-align: center;
-    box-sizing: border-box;
     vertical-align: middle;
 }
 
@@ -113,6 +102,27 @@
     row-gap: 10px;
     height: 100%;
     width: 100%;
-    box-sizing: border-box;
     overflow: scroll;
+}
+
+.game-header {
+    z-index: 2;
+}
+
+/* the header positioned in place of the top tag */
+.top-tag-header {
+    position: absolute;
+    width: 100%;
+    height: calc(15% - 50px);
+    border: 1px solid red;
+    top: 0px;
+    margin: 25px auto;
+    display: flex;
+    justify-content: center;
+}
+
+.cards-header {
+    border: 1px solid red;
+    height: calc(15% - 50px);
+    margin: 25px auto;
 }

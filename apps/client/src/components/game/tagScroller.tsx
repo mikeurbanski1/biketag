@@ -135,13 +135,21 @@ export const TagScroller: React.FC<TagViewProps> = ({
         }
     }
 
+    // let topTagClass = 'top-tag';
+
+    // if (!topTagElement) {
+    //     // this should not be a card going off the top
+    //     topTagElement = <GameHeader game={game} />;
+    //     topTagClass = 'top-tag top-tag-header';
+    // }
+
     return (
         <div className="tag-scroller">
-            <div className="top-tag">{topTagElement}</div>
-            <div className="left-tag">{leftTagElement}</div>
-            <div className="center-tag">{centerTagElement}</div>
-            <div className="right-tag">{rightTagElement}</div>
-            <div className="bottom-tag">{bottomTagElement}</div>
+            <div className="tag-scoller-tag top-tag">{topTagElement}</div>
+            <div className="tag-scoller-tag left-tag">{leftTagElement}</div>
+            <div className="tag-scoller-tag center-tag">{centerTagElement}</div>
+            <div className="tag-scoller-tag right-tag">{rightTagElement}</div>
+            <div className="tag-scoller-tag bottom-tag">{bottomTagElement}</div>
         </div>
     );
 };
