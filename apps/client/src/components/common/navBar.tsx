@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 
-import { GameDto, UserDto } from '@biketag/models';
+import { UserDto } from '@biketag/models';
 
 interface NavBarProps {
     user?: UserDto;
-    game?: GameDto;
     handleLogout: () => void;
     backToHome: () => void;
     doneViewingGame: () => void;
@@ -16,7 +15,7 @@ interface NavBarProps {
 //     handleLogout: () => void;
 // }
 
-const MainMenu: React.FC<NavBarProps> = ({ user, game, handleLogout, startCreateGame, doneViewingGame }) => {
+const MainMenu: React.FC<NavBarProps> = ({ user, handleLogout, startCreateGame, doneViewingGame }) => {
     const [showingMenu, setShowingMenu] = useState(false);
     return (
         <div className="clickable-nav-item dropdown-header" onClick={() => setShowingMenu(!showingMenu)}>

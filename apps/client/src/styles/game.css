@@ -3,37 +3,30 @@
 }
 
 .game-view {
-    display: grid;
-    grid-template-rows: 1fr;
+    position: relative;
+    display: block;
     height: 100%;
-    align-items: center;
     text-align: center;
 }
-
-/* .tag-scroller {
-    display: grid;
-    grid-template-columns: 15% 15% 40% 15% 15%;
-    grid-template-rows: 10% 10% 60% 10% 10%;
-    grid-auto-rows: 100%;
-    height: 100%;
-} */
 
 .tag-scroller {
     position: relative;
     height: 100%;
     width: 100%;
     overflow: hidden;
+
+    --tag-gap: 25px;
 }
 
-.tag-scroller > div {
-    height: 70%;
-    width: 70%;
+.tag-scoller-tag {
+    height: var(--tag-scroller-tag-width);
+    width: var(--tag-scroller-tag-width);
     position: absolute;
 }
 
 .top-tag {
     left: 50%;
-    bottom: calc(85% + 25px);
+    bottom: calc(var(--tag-scroller-offset) + var(--tag-gap));
     transform: translateX(-50%);
 }
 
@@ -46,18 +39,18 @@
 
 .bottom-tag {
     left: 50%;
-    top: calc(85% + 25px);
+    top: calc(var(--tag-scroller-offset) + var(--tag-gap));
     transform: translateX(-50%);
 }
 
 .left-tag {
-    right: calc(85% + 25px);
+    right: calc(var(--tag-scroller-offset) + var(--tag-gap));
     top: 50%;
     transform: translateY(-50%);
 }
 
 .right-tag {
-    left: calc(85% + 25px);
+    left: calc(var(--tag-scroller-offset) + var(--tag-gap));
     top: 50%;
     transform: translateY(-50%);
 }
@@ -89,7 +82,6 @@
 .player-details-table .cell {
     padding: 0.2em;
     text-align: center;
-    box-sizing: border-box;
     vertical-align: middle;
 }
 
@@ -113,6 +105,56 @@
     row-gap: 10px;
     height: 100%;
     width: 100%;
-    box-sizing: border-box;
     overflow: scroll;
 }
+
+.game-header {
+    z-index: 2;
+    height: calc(var(--tag-scroller-sidebar-width) - 50px);
+    width: 50%;
+    margin: auto;
+    margin-top: 25px;
+    display: grid;
+    grid-template-columns: 50% 50%;
+    grid-template-rows: 50% 50%;
+    text-align: center;
+}
+
+/* the header positioned in place of the top tag
+the top tag will still have an empty div, so we absolutely position this
+on top of the empty space
+*/
+.top-tag-header {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.game-header-title {
+    grid-column: 1 / span 2;
+    grid-row: 1;
+}
+
+.game-header-link {
+    grid-row: 2;
+}
+
+/* tag scroller view, but not viewing a root tag (there is a tag in the menu space) */
+.collapsed {
+    left: 0%;
+    width: var(--tag-scroller-sidebar-width);
+    transform: translateX(0%);
+    grid-template-columns: 100%;
+    grid-template-rows: 50% 50%;
+}
+
+.collapsed > .game-header-link {
+    grid-column: 1;
+    grid-row: auto;
+}
+
+/* .cards-header {
+    border: 1px solid red;
+    height: calc(15% - 50px);
+    margin: 25px auto;
+} */

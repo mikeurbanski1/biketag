@@ -8,12 +8,13 @@ import { ApiManager } from '../../api';
 
 import '../../styles/game.css';
 
+import { GameHeaderParentView } from '../../models/game';
 import { CreateEditGame } from './createEditGame';
 import { GameDetails } from './gameDetails';
+import { GameHeader } from './gameHeader';
 import { TagCardView } from './tagCardView';
 import { TagScroller } from './tagScroller';
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const logger = new Logger({ prefix: '[ViewGame]' });
 
 type PlayerTableRole = GameRoles | 'OWNER';
@@ -47,9 +48,7 @@ export const Game: React.FC<ViewGameProps> = (props: ViewGameProps) => {
     const [editingGame, setEditingGame] = React.useState(false);
     const [loadingGame, setLoadingGame] = React.useState(true);
     const [playerDetailsTable, setPlayerDetailsTable] = React.useState<PlayerDetailsTableRow[]>([]);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const [viewingGameDetails, setViewingGameDetails] = React.useState(false);
-    const [viewingTagScroller, setViewingTagScroller] = React.useState(false);
+    const [currentView, setCurrentView] = React.useState<GameHeaderParentView>(GameHeaderParentView.CARDS);
     const [userCanAddRootTag, setUserCanAddRootTag] = React.useState(false);
     const [userCanAddSubtag, setUserCanAddSubtag] = React.useState(false);
     const [showingPendingTag, setShowingPendingTag] = React.useState(false);
@@ -70,17 +69,17 @@ export const Game: React.FC<ViewGameProps> = (props: ViewGameProps) => {
             setPlayerDetailsTable(getPlayerDetailsTable(game));
 
             const { latestRootTag } = game;
-            if (viewingTagScroller) {
+            if (currentView === GameHeaderParentView.SCROLLER) {
                 setCurrentRootTag(latestRootTag);
                 setCurrentTag(latestRootTag);
                 setShowingAddRootTag(latestRootTag === undefined);
-            } else if (!viewingTagScroller && !latestRootTag) {
+            } else if (currentView === GameHeaderParentView.CARDS && !latestRootTag) {
                 // when starting the view, if there is no tag, go straight to add tag in tag scroller
-                setViewingTagScroller(true);
+                setCurrentView(GameHeaderParentView.SCROLLER);
                 setShowingAddRootTag(true);
             }
         });
-    }, [loadingGame, props.gameId, game?.latestRootTag, viewingTagScroller]);
+    }, [loadingGame, props.gameId, game?.latestRootTag, currentView]);
 
     useEffect(() => {
         const tagToUse = currentRootTag ?? game?.latestRootTag;
@@ -143,7 +142,7 @@ export const Game: React.FC<ViewGameProps> = (props: ViewGameProps) => {
         (tag: 'addTag' | TagDto | PendingTag) => {
             if (tag === 'addTag') {
                 setShowingAddRootTag(true);
-                if (!viewingTagScroller) {
+                if (currentView === GameHeaderParentView.CARDS) {
                     // if we jumped straight from the cards to the add tag, we need to initialize the "current" tag
                     setCurrentRootTag(game!.latestRootTag);
                     setCurrentTag(game!.latestRootTag);
@@ -160,7 +159,7 @@ export const Game: React.FC<ViewGameProps> = (props: ViewGameProps) => {
                 }
             } else {
                 setShowingPendingTag(true);
-                if (!viewingTagScroller) {
+                if (currentView === GameHeaderParentView.CARDS) {
                     // switched from card view
                     setCurrentRootTag(game!.latestRootTag);
                     setCurrentTag(game!.latestRootTag);
@@ -170,9 +169,23 @@ export const Game: React.FC<ViewGameProps> = (props: ViewGameProps) => {
                 setShowingAddRootTag(false);
                 setShowingAddSubtag(false);
             }
-            setViewingTagScroller(true);
+            setCurrentView(GameHeaderParentView.SCROLLER);
         },
-        [game, currentTag, viewingTagScroller]
+        [game, currentTag, currentView]
+    );
+
+    const setNewView = useCallback(
+        (view: GameHeaderParentView) => {
+            setCurrentView(view);
+            // switching to tag scroller for the first time via the menu, not clicking a card - show latest root tag
+            // otherwise we will keep the card we were looking at
+            if (!currentTag && view === GameHeaderParentView.SCROLLER) {
+                setCurrentRootTag(game!.latestRootTag);
+                setCurrentTag(game!.latestRootTag);
+                setShowingAddRootTag(game!.latestRootTag === undefined);
+            }
+        },
+        [currentTag, game]
     );
 
     if (editingGame) {
@@ -182,9 +195,9 @@ export const Game: React.FC<ViewGameProps> = (props: ViewGameProps) => {
     let innerDiv: React.ReactNode;
     if (!game || loadingGame) {
         innerDiv = <div className="game-details">Loading...</div>;
-    } else if (viewingGameDetails) {
+    } else if (currentView === GameHeaderParentView.DETAILS) {
         innerDiv = <GameDetails game={game} user={props.user} playerDetailsTable={playerDetailsTable} setEditingGame={() => setEditingGame(true)} deleteGame={() => props.deleteGame()} />;
-    } else if (viewingTagScroller) {
+    } else if (currentView === GameHeaderParentView.SCROLLER) {
         innerDiv = (
             <TagScroller
                 game={game}
@@ -205,5 +218,12 @@ export const Game: React.FC<ViewGameProps> = (props: ViewGameProps) => {
         innerDiv = <TagCardView game={game} selectTag={selectTag} userCanAddRootTag={userCanAddRootTag} />;
     }
 
-    return <div className="game-view">{innerDiv}</div>;
+    return (
+        <div className="game-view">
+            {game && (
+                <GameHeader game={game} setView={setNewView} parentView={currentView} collapsed={currentView === GameHeaderParentView.SCROLLER && currentTag !== undefined && !currentTag.isRoot} />
+            )}
+            {innerDiv}
+        </div>
+    );
 };
