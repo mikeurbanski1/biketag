@@ -9,6 +9,8 @@
     background-color: #e8e8e8;
     text-align: center;
     align-items: center;
+
+    --tag-padding: 25px;
 }
 
 .tag-image-container {
@@ -28,8 +30,8 @@
     margin: auto;
     display: grid;
     grid-template-columns: auto auto;
-    padding-bottom: 25px;
-    width: calc(100% - 50px);
+    padding-bottom: var(--tag-padding);
+    width: calc(100% - 2 * var(--tag-padding));
 }
 
 .tag-footer > div {

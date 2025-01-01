@@ -15,7 +15,6 @@ import { GameHeader } from './gameHeader';
 import { TagCardView } from './tagCardView';
 import { TagScroller } from './tagScroller';
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const logger = new Logger({ prefix: '[ViewGame]' });
 
 type PlayerTableRole = GameRoles | 'OWNER';
@@ -50,9 +49,6 @@ export const Game: React.FC<ViewGameProps> = (props: ViewGameProps) => {
     const [loadingGame, setLoadingGame] = React.useState(true);
     const [playerDetailsTable, setPlayerDetailsTable] = React.useState<PlayerDetailsTableRow[]>([]);
     const [currentView, setCurrentView] = React.useState<GameHeaderParentView>(GameHeaderParentView.CARDS);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    // const [viewingGameDetails, setViewingGameDetails] = React.useState(false);
-    // const [viewingTagScroller, setViewingTagScroller] = React.useState(false);
     const [userCanAddRootTag, setUserCanAddRootTag] = React.useState(false);
     const [userCanAddSubtag, setUserCanAddSubtag] = React.useState(false);
     const [showingPendingTag, setShowingPendingTag] = React.useState(false);
@@ -182,6 +178,7 @@ export const Game: React.FC<ViewGameProps> = (props: ViewGameProps) => {
         (view: GameHeaderParentView) => {
             setCurrentView(view);
             // switching to tag scroller for the first time via the menu, not clicking a card - show latest root tag
+            // otherwise we will keep the card we were looking at
             if (!currentTag && view === GameHeaderParentView.SCROLLER) {
                 setCurrentRootTag(game!.latestRootTag);
                 setCurrentTag(game!.latestRootTag);
