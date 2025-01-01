@@ -8,6 +8,7 @@ import { BaseService } from '../../common/baseService';
 import { validateExists } from '../../common/entityValidators';
 import { CannotPostTagError, tagServiceErrors } from '../../common/errors';
 import { TagDalService } from '../../dal/services/tagDalService';
+import { DiscordIntegration } from '../../integrations/photoStream/discordIntegration';
 import { QueueManager } from '../../queue/manager';
 import { GameService } from '../games/gameService';
 import { ScoreService } from '../scores/scoreService';
@@ -121,6 +122,10 @@ export class TagService extends BaseService<TagDto, CreateTagParams, TagEntity, 
         return await this.dalService.update({ id: tagIdToUpdate, updateParams: updateFields });
     }
 
+    private async postMessageForNewTag({ tag }: { tag: TagEntity }): Promise<void> {
+        (await DiscordIntegration.getInstance()).sendMessage({ message: `New tag posted by ${tag.creatorId} for game ${tag.gameId} ${tag.imageUrl}` });
+    }
+
     public override async create(params: CreateTagParams): Promise<TagDto> {
         this.logger.info(`[create]`, { params });
         const { isRoot, gameId } = params;
@@ -186,6 +191,8 @@ export class TagService extends BaseService<TagDto, CreateTagParams, TagEntity, 
         } else {
             await QueueManager.getInstance().addPendingTagJob({ jobParams: { gameId }, triggerTime: getDateOnly(createParams.forDate) });
         }
+
+        await this.postMessageForNewTag({ tag });
 
         this.logger.info(`[create] created tag`, { tag });
 
