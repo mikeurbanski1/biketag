@@ -1,7 +1,9 @@
+import axios from 'axios';
 import dayjs, { Dayjs } from 'dayjs';
+import { Jimp } from 'jimp';
 import { UUID } from 'mongodb';
 
-import { BaseEntityWithoutId, CreateTagParams, GameEntity, PendingTag, TagDto, TagEntity, tagFields, UserDto } from '@biketag/models';
+import { BaseEntityWithoutId, CreateTagParams, GameEntity, TagDto, TagEntity, tagFields, TagWithImage, TagWithImageData, UserDto } from '@biketag/models';
 import { convertDateToRelativeDate, getDateOnly, isEarlierDate, isSameDate } from '@biketag/utils';
 
 import { BaseService } from '../../common/baseService';
@@ -27,11 +29,25 @@ export class TagService extends BaseService<TagDto, CreateTagParams, TagEntity, 
         this.scoreService = new ScoreService();
     }
 
-    private async generatePendingTag({ tag, creator }: { tag: TagEntity; creator?: UserDto }): Promise<PendingTag> {
-        return {
-            id: tag.id,
-            creator: creator ?? (await this.usersService.getRequired({ id: tag.creatorId })),
-        };
+    private async getImageAsBase64(imageUrl: string): Promise<string> {
+        const image = await Jimp.read(imageUrl);
+
+        const blurredImage = await image.blur(20).getBase64('image/jpeg');
+        this.logger.info(`[getImageAsBase64] blurred image`, { blurredImage });
+
+        // image.blur(25).write(`/tmp/blurred-${new UUID()}.png`);
+        // const axiosInstance = axios.create();
+        // const response = await axiosInstance.get(imageUrl, { responseType: 'arraybuffer' });
+        return blurredImage;
+    }
+
+    private async generateNonCreatorPendingTag({ tag, creator }: { tag: TagEntity; creator?: UserDto }): Promise<TagWithImageData> {
+        const tagDto = await this.convertToDto(tag, { creator });
+
+        tagDto.imageData = await this.getImageAsBase64(tag.imageUrl);
+        delete tagDto.imageUrl;
+
+        return tagDto as TagWithImageData;
     }
 
     /**
@@ -48,38 +64,21 @@ export class TagService extends BaseService<TagDto, CreateTagParams, TagEntity, 
         userId: string;
         knownPendingTagId?: string;
         knownCreator?: UserDto;
-    }): Promise<TagDto | PendingTag | null> {
+    }): Promise<TagDto | null> {
         const tag = await this.dalService.getById({ id: tagId });
         if (!tag) {
             return null;
         }
 
         if (tag.creatorId !== userId && (knownPendingTagId ?? (await this.gamesService.getRequiredAsEntity({ id: tag.gameId })).pendingRootTagId) === tagId) {
-            return this.generatePendingTag({ tag, creator: knownCreator });
+            return this.generateNonCreatorPendingTag({ tag, creator: knownCreator });
         }
         return await this.convertToDto(tag);
     }
 
-    public async getAsPendingTag({ id }: { id: string }): Promise<PendingTag> {
+    public async getAsPendingTag({ id }: { id: string }): Promise<TagDto> {
         const tag = await this.dalService.getByIdRequired({ id });
-        return this.generatePendingTag({ tag });
-    }
-
-    public async getMultipleWithPendingCheck({ ids }: { ids: string[] }): Promise<(TagDto | PendingTag)[]> {
-        const tags = await this.getMultiple({ ids });
-        const gameMap: Record<string, GameEntity> = {};
-        return await Promise.all(
-            tags.map(async (tag) => {
-                const game = gameMap[tag.gameId] ?? (gameMap[tag.gameId] = await this.gamesService.getRequiredAsEntity({ id: tag.gameId }));
-                if (game.pendingRootTagId === tag.id) {
-                    return {
-                        id: tag.id,
-                        creator: tag.creator,
-                    };
-                }
-                return tag;
-            })
-        );
+        return this.generateNonCreatorPendingTag({ tag });
     }
 
     // public async getPendingTag({ id }: { id: string }): Promise<PendingTag> {

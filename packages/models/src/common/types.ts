@@ -1,6 +1,6 @@
 import { Dayjs } from 'dayjs';
 
-import { PendingTag, TagDto } from '../api';
+import { TagDto } from '../api';
 import { TagEntity } from '../dal';
 
 export type RequiredExceptFor<T, K extends keyof T> = Partial<Pick<T, K>> & Required<Omit<T, K>>;
@@ -12,8 +12,8 @@ export type KeyOfType<T, V> = keyof {
     [P in keyof T as T[P] extends V ? P : never]: any;
 };
 
-export const isFullTag = (tag: TagDto | PendingTag): tag is TagDto => {
-    return tag && 'imageUrl' in tag;
+export const tagHasRealImage = (tag: TagDto): tag is TagDto & { imageUrl: string } => {
+    return tag.imageUrl !== undefined;
 };
 
 interface SubtagDefinedFields {

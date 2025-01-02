@@ -1,6 +1,6 @@
 import { Dayjs } from 'dayjs';
 
-import { GameDto, PendingTag, TagDto } from '@biketag/models';
+import { GameDto, TagDto } from '@biketag/models';
 import { Logger } from '@biketag/utils';
 
 import { AddTag } from '../tag/addTag';
@@ -21,10 +21,10 @@ interface TagViewProps {
     showingPendingTag: boolean;
     createNewTag: ({ imageUrl, isSubtag }: { imageUrl: string; isSubtag: boolean }) => void;
     setAddTagAsActive: (isSubtag: boolean) => void;
-    selectTag: (tag: TagDto | PendingTag) => void;
+    selectTag: (tag: TagDto) => void;
 }
 
-const getTagComponent = ({ tag, isActive, selectTag }: { tag: TagDto | PendingTag | string; isActive: boolean; selectTag: (tag: TagDto | PendingTag) => void }): React.ReactNode => {
+const getTagComponent = ({ tag, isActive, selectTag }: { tag: TagDto | string; isActive: boolean; selectTag: (tag: TagDto) => void }): React.ReactNode => {
     let tagKey: string;
     if (!tag) {
         tagKey = 'undefined';
@@ -34,11 +34,11 @@ const getTagComponent = ({ tag, isActive, selectTag }: { tag: TagDto | PendingTa
         tagKey = `id-${tag}`;
     }
 
-    let selectThisTag: ((tag: TagDto | PendingTag) => void) | undefined;
+    let selectThisTag: ((tag: TagDto) => void) | undefined;
 
     // if the tag is a real, not pending tag, then the callback actually selects it
     if (!isActive) {
-        selectThisTag = (tag: TagDto | PendingTag) => selectTag(tag);
+        selectThisTag = (tag: TagDto) => selectTag(tag);
     }
     return <Tag key={tagKey} tag={tag} isActive={isActive} selectTag={selectThisTag} />;
 };

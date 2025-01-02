@@ -1,14 +1,12 @@
 import dayjs from 'dayjs';
 import { Body, Controller, Get, Header, Path, Post, Query, Res, Route, SuccessResponse, TsoaResponse } from 'tsoa';
 
-import { CreateTagDto, PendingTag, TagDto } from '@biketag/models';
+import { CreateTagDto, TagDto } from '@biketag/models';
 import { Logger, USER_ID_HEADER } from '@biketag/utils';
 
 import { TagService } from './tagService';
 
 const logger = new Logger({ prefix: '[TagController]' });
-
-type CreatedTag = TagDto | PendingTag;
 
 @Route('tags')
 export class TagController extends Controller {
@@ -16,7 +14,7 @@ export class TagController extends Controller {
 
     @Get('/{id}')
     @SuccessResponse('200', 'ok')
-    public async getTag(@Path() id: string, @Header(USER_ID_HEADER) userId: string, @Res() notFoundResponse: TsoaResponse<404, { reason: string }>): Promise<TagDto | PendingTag> {
+    public async getTag(@Path() id: string, @Header(USER_ID_HEADER) userId: string, @Res() notFoundResponse: TsoaResponse<404, { reason: string }>): Promise<TagDto> {
         logger.info(`[getTag] id: ${id}`);
         const tag = await this.tagsService.getWithPendingCheck({ tagId: id, userId });
         if (!tag) {
@@ -28,26 +26,11 @@ export class TagController extends Controller {
 
     @Post('/')
     @SuccessResponse('201', 'Created')
-    public async createTag(@Body() requestBody: CreateTagDto, @Header(USER_ID_HEADER) userId: string): Promise<CreatedTag> {
+    public async createTag(@Body() requestBody: CreateTagDto, @Header(USER_ID_HEADER) userId: string): Promise<TagDto> {
         logger.info(`[createTag]`, { userId, requestBody });
         const createdTag = await this.tagsService.create({ ...requestBody, creatorId: userId });
         const tag = await this.tagsService.getWithPendingCheck({ tagId: createdTag.id, userId });
         return tag!;
-    }
-
-    @Post('/multi')
-    @SuccessResponse('201', 'Created')
-    public async getMultipleTags(@Body() requestBody: string[]): Promise<Record<string, TagDto | PendingTag>> {
-        logger.info(`[getMultipleTags]`, { requestBody });
-        const tags = await this.tagsService.getMultiple({ ids: requestBody });
-        logger.info('[getMultipleTags] got tags', { tags });
-        return tags.reduce(
-            (idMap, tag) => {
-                idMap[tag.id] = tag;
-                return idMap;
-            },
-            {} as Record<string, TagDto | PendingTag>
-        );
     }
 
     @Get('/user/{userId}/in-chain/{tagId}')

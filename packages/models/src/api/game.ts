@@ -1,4 +1,4 @@
-import { BaseDto, PendingTag, TagDto } from '.';
+import { BaseDto, TagDto } from '.';
 import { GameScore } from '../common';
 import { GameRoles, PlayerGame, PlayerGameDto } from '../common/game';
 import { UserDto } from './user';
@@ -10,7 +10,7 @@ export interface GameDto extends BaseDto {
     players: PlayerGameDto[];
     firstRootTag?: TagDto;
     latestRootTag?: TagDto;
-    pendingRootTag?: PendingTag;
+    pendingRootTag?: TagDto;
     gameScore: GameScore;
     discordGuildId: string;
     discordChannelId: string;

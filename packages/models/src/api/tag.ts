@@ -9,11 +9,12 @@ import { UserDto } from './user';
 //     postedDate: string;
 // }
 
-export interface PendingTag extends BaseDto {
-    creator: Pick<UserDto, 'id' | 'name'>;
-    // imageData: string;
-    // ownerImageUser: string;
-}
+// export interface PendingTag extends BaseDto {
+//     creator: Pick<UserDto, 'id' | 'name'>;
+//     imageUrl: string; // only populated if the request is from the creator
+//     imageData: string; // obfuscated image for all others
+//     isPending: true;
+// }
 
 export interface TagDto extends BaseDto {
     // name: string;
@@ -28,10 +29,13 @@ export interface TagDto extends BaseDto {
     nextRootTagId?: string;
     postedDate: string;
     forDate: string;
-    imageUrl: string;
+    imageUrl?: string; // only populated if the request is from the creator
     stats: TagStats;
     isPending: boolean;
+    imageData?: string; // obfuscated image for all others
 }
+export type TagWithImage = Omit<TagDto, 'imageData'> & { imageUrl: string };
+export type TagWithImageData = Omit<TagDto, 'imageUrl'> & { imageData: string };
 
 export interface CreateTagDto {
     // name: string;

@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 import React, { useEffect, useState } from 'react';
 
-import { isFullTag, PendingTag, TagDto } from '@biketag/models';
+import { TagDto, tagHasRealImage } from '@biketag/models';
 import { convertDateToRelativeDate, Logger } from '@biketag/utils';
 
 import { DATETIME_FORMAT, TIME_READABLE_FORMAT } from '../../utils/consts';
@@ -20,14 +20,12 @@ const logger = new Logger({});
 //     previousRootTagDate?: Dayjs;
 // }
 
-// type AddTagTypes = 'addRootTag' | 'addSubtag';
-type TagType = TagDto | PendingTag;
-type TagTypeWithId = TagType | string;
+type TagTypeWithId = TagDto | string;
 
 interface TagProps {
     tag: TagTypeWithId; // string is a tagId
     isActive: boolean;
-    selectTag?: (tag: TagType) => void;
+    selectTag?: (tag: TagDto) => void;
 }
 
 interface LoadingTagDefinedProps {
@@ -41,11 +39,11 @@ interface LoadingTagDefinedProps {
 // }
 
 interface RealActiveTagDefinedProps {
-    tag: TagDto | PendingTag;
+    tag: TagDto;
 }
 
 interface RealInactiveTagDefinedProps extends RealActiveTagDefinedProps {
-    selectTag: (tag: TagType) => void;
+    selectTag: (tag: TagDto) => void;
 }
 
 // interface LoadingAndTagType {
@@ -55,7 +53,7 @@ interface RealInactiveTagDefinedProps extends RealActiveTagDefinedProps {
 
 const isTagToLoad = (props: TagProps): props is TagProps & LoadingTagDefinedProps => typeof props.tag === 'string';
 // const isAddTag = (tag?: TagTypeWithId): tag is AddTagProps => typeof tag === 'object' && !('tagId' in tag);
-const isLoadedTag = (tag?: TagTypeWithId): tag is TagDto | PendingTag => typeof tag === 'object';
+const isLoadedTag = (tag?: TagTypeWithId): tag is TagDto => typeof tag === 'object';
 const isInactiveTag = (props: TagProps): props is TagProps & RealInactiveTagDefinedProps => !props.isActive;
 
 const getTimeString = (tag: TagDto): string => {
@@ -103,41 +101,44 @@ export const Tag: React.FC<TagProps> = (props: TagProps): React.ReactNode => {
             classes.push('clickable-tag');
         }
 
-        if (isFullTag(tagToRender) && !tagToRender.isRoot) {
+        if (tagHasRealImage(tagToRender) && !tagToRender.isRoot) {
             classes.push('subtag');
         }
 
         const className = classes.join(' ');
 
-        if (isFullTag(tagToRender)) {
-            logger.info(`[Tag] isFullTag`, { tagToRender });
-            const timeString = getTimeString(tagToRender);
+        // if (!tagToRender.isPending || tagHasRealImage(tagToRender)) {
+        // it is a regular tag with an image, or the pending tag but we are the creator of it
+        logger.info(`[Tag] isFullTag`, { tagToRender });
+        const timeString = getTimeString(tagToRender);
 
-            const footer = (
-                <div className="tag-footer">
-                    <div>{tagToRender.creator.name}</div>
-                    <div title={`Posted ${dayjs(tagToRender.postedDate).format(DATETIME_FORMAT)}`}>{timeString}</div>
-                    {/* <div>{tagWinner}</div> */}
-                </div>
-            );
+        const footer = (
+            <div className="tag-footer">
+                <div>{tagToRender.creator.name}</div>
+                <div title={`Posted ${dayjs(tagToRender.postedDate).format(DATETIME_FORMAT)}`}>{timeString}</div>
+                {/* <div>{tagWinner}</div> */}
+            </div>
+        );
 
-            return (
-                <div className={className} onClick={onClick}>
-                    <div className={`tag-image-container ${tagToRender.isPending ? 'pending-tag-image' : ''}`}>
-                        <img className="tag-image" src={tagToRender.imageUrl}></img>
-                    </div>
-                    {footer}
+        // {`data:image/jpeg;base64,${data}`}
+
+        return (
+            <div className={className} onClick={onClick}>
+                <div className={`tag-image-container ${tagToRender.isPending ? 'pending-tag-image' : ''}`}>
+                    <img className="tag-image" src={tagToRender.imageUrl ?? tagToRender.imageData}></img>
                 </div>
-            );
-        } else {
-            // pending tag
-            return (
-                <div className={`tag ${className}`} onClick={onClick}>
-                    <div className="tag-details">
-                        The next tag posted by <span className="tag-creator">{tagToRender.creator.name}</span> will go live at midnight!
-                    </div>
-                </div>
-            );
-        }
+                {footer}
+            </div>
+        );
+        // } else {
+        //     // pending tag with obfuscated image (we are not the creator)
+        //     return (
+        //         <div className={`tag ${className}`} onClick={onClick}>
+        //             <div className="tag-details">
+        //                 The next tag posted by <span className="tag-creator">{tagToRender.creator.name}</span> will go live at midnight!
+        //             </div>
+        //         </div>
+        //     );
+        // }
     }
 };
