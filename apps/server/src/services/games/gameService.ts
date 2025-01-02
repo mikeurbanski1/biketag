@@ -44,6 +44,8 @@ export class GameService extends BaseService<GameDto, CreateGameParams, GameEnti
             latestRootTag: entity.latestRootTagId ? await this.tagsService.getRequired({ id: entity.latestRootTagId }) : undefined,
             pendingRootTag: entity.pendingRootTagId ? await this.tagsService.getAsPendingTag({ id: entity.pendingRootTagId }) : undefined,
             gameScore: entity.gameScore,
+            discordGuildId: entity.discordGuildId,
+            discordChannelId: entity.discordChannelId,
         };
     }
 
@@ -61,8 +63,12 @@ export class GameService extends BaseService<GameDto, CreateGameParams, GameEnti
             creatorId: dto.creatorId,
             players: dto.players,
             gameScore: { playerScores: {} },
+            discordGuildId: dto.discordGuildId,
+            discordChannelId: dto.discordChannelId,
         });
     }
+
+    private async validateIntegrations(params: CreateGameParams): Promise<void> {}
 
     public override async create(params: CreateGameParams): Promise<GameDto> {
         const { creatorId: creator, players } = params;
@@ -94,7 +100,7 @@ export class GameService extends BaseService<GameDto, CreateGameParams, GameEnti
 
         const game = await this.dalService.getByIdRequired({ id });
 
-        let dalParams: Partial<GameEntity> = copyDefinedProperties(updateParams, ['name', 'creatorId', 'players', 'latestRootTagId', 'firstRootTagId']);
+        let dalParams: Partial<GameEntity> = copyDefinedProperties(updateParams, ['name', 'creatorId', 'players', 'latestRootTagId', 'firstRootTagId', 'discordGuildId', 'discordChannelId']);
         if (updateParams.creatorId) {
             const players = updateParams.players || game.players;
             const creatorIndex = players.findIndex((p) => p.userId === updateParams.creatorId);
@@ -151,7 +157,7 @@ export class GameService extends BaseService<GameDto, CreateGameParams, GameEnti
 
         await this.addScoreForPlayer({ gameId, playerId: pendingTag.creator.id, stats: pendingTag.stats });
         const newGame = await this.dalService.update({ id: gameId, updateParams: { latestRootTagId: game.pendingRootTagId, pendingRootTagId: undefined } });
-        await this.tagsService.setIsPendingTagValue({ tagId: game.pendingRootTagId, isPending: false });
+        await this.tagsService.setIsPendingTagValue({ tagId: game.pendingRootTagId, isPending: false, channelId: game.discordChannelId });
 
         return await this.convertToDto(newGame);
     }

@@ -39,11 +39,15 @@ export const addIfMissing = <T>(arr: T[], item: T): boolean => {
     return false;
 };
 
+const typesToStringify = ['bigint'];
+
 export const jsonReplacer = (_: unknown, value: unknown) => {
     if (value instanceof Map) {
         return mapToRecord(value);
     } else if (value instanceof Set) {
         return Array.from(value);
+    } else if (typesToStringify.includes(typeof value)) {
+        return value!.toString();
     } else {
         return value;
     }

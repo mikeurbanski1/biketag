@@ -9,4 +9,6 @@ export interface GameEntity extends BaseEntity {
     latestRootTagId?: string;
     pendingRootTagId?: string;
     gameScore: GameScore;
+    discordGuildId: string;
+    discordChannelId: string;
 }

@@ -1,6 +1,7 @@
 export * from './user';
 export * from './game';
 export * from './tag';
+export * from './integrations';
 
 export interface BaseDto {
     id: string;

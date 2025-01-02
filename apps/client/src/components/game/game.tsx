@@ -15,6 +15,7 @@ import { GameHeader } from './gameHeader';
 import { TagCardView } from './tagCardView';
 import { TagScroller } from './tagScroller';
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const logger = new Logger({ prefix: '[ViewGame]' });
 
 type PlayerTableRole = GameRoles | 'OWNER';

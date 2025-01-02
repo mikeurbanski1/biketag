@@ -5,6 +5,7 @@ import { Logger } from '@biketag/utils';
 
 import { GameHeaderParentView } from '../../models/game';
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const logger = new Logger({ prefix: '' });
 
 interface GameHeaderProps {

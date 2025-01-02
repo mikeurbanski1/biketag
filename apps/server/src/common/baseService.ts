@@ -110,5 +110,5 @@ export abstract class BaseService<ResponseDto extends BaseDto, UpsertDTO, Entity
 
     protected abstract convertToUpsertEntity(dto: UpsertDTO): Promise<Partial<BaseEntityWithoutId<EntityType>>>;
     protected abstract convertToNewEntity(dto: UpsertDTO): Promise<BaseEntityWithoutId<EntityType>>;
-    protected abstract convertToDto(entity: EntityType | null): Promise<ResponseDto | null>;
+    protected abstract convertToDto(entity: EntityType | null, overrides?: Partial<ResponseDto>): Promise<ResponseDto | null>;
 }

@@ -30,6 +30,7 @@ export class MongoDbProvider {
     }
 
     public static async getInstance(): Promise<MongoDbProvider> {
+        // logger.info(`[getInstance]`, { env: process.env });
         if (!MongoDbProvider.instance) {
             logger.info('[getInstance] initializing Mongo connection');
             const client = new MongoClient(process.env.DB_CONN_STRING!);
