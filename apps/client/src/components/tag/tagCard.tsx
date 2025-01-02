@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { TagDto, tagHasRealImage } from '@biketag/models';
+import { TagDto } from '@biketag/models';
 
 interface TagCardProps {
     tag: TagDto | 'addTag';
