@@ -1,4 +1,4 @@
-import { ChannelType, Client, Collection, Events, GuildBasedChannel, NonThreadGuildBasedChannel, OAuth2Guild, Snowflake, TextChannel } from 'discord.js';
+import { ChannelType, Client, Collection, Events, GuildBasedChannel, MessageCreateOptions, MessagePayload, NonThreadGuildBasedChannel, OAuth2Guild, Snowflake, TextChannel } from 'discord.js';
 import { O } from 'vitest/dist/chunks/environment.LoooBwUu';
 
 import { DiscordChannelDto, DiscordGuildDto } from '@biketag/models';
@@ -54,8 +54,16 @@ export class DiscordIntegrationService {
             }));
     }
 
-    public async sendMessage({ message, channelId }: { message: string; channelId: string }) {
+    public async sendMessage({ content, replyTo, channelId }: { content: string; replyTo?: string; channelId: string }) {
         const channel = (await this.client.channels.fetch(channelId)) as TextChannel;
-        await channel.send(message);
+        const payload: MessageCreateOptions = { content };
+        if (replyTo) {
+            payload.reply = {
+                messageReference: replyTo,
+            };
+        }
+        const message = await channel.send(payload);
+        this.logger.info(`[sendMessage] posted message`, { message });
+        return message.id;
     }
 }

@@ -17,4 +17,5 @@ export interface TagEntity extends BaseEntity {
     imageUrl: string;
     stats: TagStats;
     isPending: boolean;
+    discordMessageId?: string;
 }

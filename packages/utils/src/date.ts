@@ -1,4 +1,7 @@
 import dayjs, { Dayjs } from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+
+dayjs.extend(utc);
 
 export function isSameDate(date1: Dayjs, date2: Dayjs): boolean;
 export function isSameDate(date1: string, date2: string): boolean;
@@ -46,4 +49,27 @@ export function getDateOnly(date: Dayjs): Dayjs;
 export function getDateOnly(date: string): Dayjs;
 export function getDateOnly(date: string | Dayjs): Dayjs {
     return (typeof date === 'string' ? dayjs(date) : date).startOf('day');
+}
+
+export function convertDateToRelativeDate(date: string): string;
+export function convertDateToRelativeDate(date: Dayjs): string;
+export function convertDateToRelativeDate(date: Dayjs | string): string {
+    if (typeof date === 'string') {
+        date = dayjs(date);
+    }
+    const now = dayjs().set('hour', 0).set('minute', 0).set('second', 0).set('millisecond', 0);
+    const dateDay = dayjs(date).set('hour', 0).set('minute', 0).set('second', 0).set('millisecond', 0);
+    const diff = now.diff(date, 'day');
+
+    if (diff === -1) {
+        return 'Tomorrow';
+    } else if (diff === 0) {
+        return 'Today';
+    } else if (diff === 1) {
+        return 'Yesterday';
+    } else if (diff < 5) {
+        return date.format('dddd');
+    } else {
+        return date.format('MM/DD/YYYY');
+    }
 }

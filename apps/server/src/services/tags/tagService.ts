@@ -2,11 +2,12 @@ import dayjs, { Dayjs } from 'dayjs';
 import { UUID } from 'mongodb';
 
 import { BaseEntityWithoutId, CreateTagParams, GameEntity, PendingTag, TagDto, TagEntity, tagFields, UserDto } from '@biketag/models';
-import { getDateOnly, isEarlierDate, isSameDate } from '@biketag/utils';
+import { convertDateToRelativeDate, getDateOnly, isEarlierDate, isSameDate } from '@biketag/utils';
 
 import { BaseService } from '../../common/baseService';
 import { validateExists } from '../../common/entityValidators';
 import { CannotPostTagError, tagServiceErrors } from '../../common/errors';
+import { PostTagStream } from '../../common/models/enum';
 import { TagDalService } from '../../dal/services/tagDalService';
 import { QueueManager } from '../../queue/manager';
 import { GameService } from '../games/gameService';
@@ -100,16 +101,16 @@ export class TagService extends BaseService<TagDto, CreateTagParams, TagEntity, 
         };
     }
 
-    protected async convertToDto(entity: TagEntity): Promise<TagDto>;
+    protected async convertToDto(entity: TagEntity, overrides?: Partial<TagDto>): Promise<TagDto>;
     protected async convertToDto(entity: null): Promise<null>;
-    protected async convertToDto(entity: TagEntity | null): Promise<TagDto | null> {
+    protected async convertToDto(entity: TagEntity | null, overrides?: Partial<TagDto>): Promise<TagDto | null> {
         if (!entity) {
             return null;
         }
 
         return {
             ...entity,
-            creator: await this.usersService.getRequired({ id: entity.creatorId }),
+            creator: overrides?.creator ?? (await this.usersService.getRequired({ id: entity.creatorId })),
         };
     }
 
@@ -122,9 +123,37 @@ export class TagService extends BaseService<TagDto, CreateTagParams, TagEntity, 
         return await this.dalService.update({ id: tagIdToUpdate, updateParams: updateFields });
     }
 
-    private async postMessageForNewTag({ tag, game }: { tag: TagDto; game: GameEntity }): Promise<void> {
+    /**
+     * Posts a message (if it is not disabled), and sets the ID in the tag object
+     */
+    private async postMessageForNewTag({ tag, creatorName, game, rootTag }: { tag: TagEntity; creatorName: string; game: GameEntity; rootTag?: TagEntity }): Promise<void> {
+        if (process.env.POST_TAG_STREAM && (process.env.POST_TAG_STREAM === PostTagStream.NONE || (tag.isRoot && process.env.POST_TAG_STREAM !== PostTagStream.ALL))) {
+            this.logger.info(`[postMessageForNewTag] skipping message for new ${tag.isRoot ? 'subtag' : 'root tag'}`);
+            return undefined;
+        }
+        if (!tag.isRoot && !rootTag) {
+            throw new Error('Root tag must be provided to post a message for a subtag');
+        }
+        const date = convertDateToRelativeDate(tag.forDate);
+        let content: string;
+        if (tag.isRoot) {
+            if (tag.isPending) {
+                content = `${creatorName} has posted a new tag that will go live at midnight ${date}!`;
+            } else {
+                content = `${creatorName} has posted the latest tag for ${date}! ${tag.imageUrl}`;
+            }
+        } else {
+            const rootDate = convertDateToRelativeDate(rootTag!.forDate);
+            const rootTagCreator = await this.usersService.getRequired({ id: rootTag!.creatorId });
+            content = `${creatorName} has found ${rootTagCreator.name}'s spot from ${rootDate}! ${tag.imageUrl}`;
+        }
+
+        const discordService = await DiscordIntegrationService.getInstance();
+        let replyTo = rootTag?.discordMessageId;
+
         const channelId = game.discordChannelId;
-        (await DiscordIntegrationService.getInstance()).sendMessage({ message: `${tag.creator.name} has posted a new tag ${tag.imageUrl}`, channelId });
+        const messageId = await (await DiscordIntegrationService.getInstance()).sendMessage({ content, replyTo, channelId });
+        tag.discordMessageId = messageId;
     }
 
     public override async create(params: CreateTagParams): Promise<TagDto> {
@@ -183,6 +212,10 @@ export class TagService extends BaseService<TagDto, CreateTagParams, TagEntity, 
             createParams.parentTagId = parentTag.id;
         }
 
+        const creator = await this.usersService.getRequired({ id: params.creatorId });
+
+        await this.postMessageForNewTag({ tag: createParams, creatorName: creator.name, game, rootTag });
+
         const tag = await this.dalService.create(createParams);
 
         await this.gamesService.setTagInGame({ gameId, tagId: tagUuid, root: isRoot, isPending });
@@ -195,8 +228,7 @@ export class TagService extends BaseService<TagDto, CreateTagParams, TagEntity, 
 
         this.logger.info(`[create] created tag`, { tag });
 
-        const tagDto = await this.convertToDto(tag);
-        await this.postMessageForNewTag({ tag: tagDto, game });
+        const tagDto = await this.convertToDto(tag, { creator });
 
         return tagDto;
     }

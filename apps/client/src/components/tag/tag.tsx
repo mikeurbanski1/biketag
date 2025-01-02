@@ -2,14 +2,13 @@ import dayjs from 'dayjs';
 import React, { useEffect, useState } from 'react';
 
 import { isFullTag, PendingTag, TagDto } from '@biketag/models';
-import { Logger } from '@biketag/utils';
+import { convertDateToRelativeDate, Logger } from '@biketag/utils';
 
 import { DATETIME_FORMAT, TIME_READABLE_FORMAT } from '../../utils/consts';
 
 import '../../styles/tag.css';
 
 import { ApiManager } from '../../api';
-import { convertDateToRelativeDate } from '../../utils/utils';
 
 const logger = new Logger({});
 
