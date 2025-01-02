@@ -9,6 +9,7 @@
         "start": "ts-node src/server.ts",
         "bootstrap": "ts-node src/scripts/bootstrap.ts",
         "update-pending-tag": "ts-node src/scripts/updatePendingTag.ts",
+        "delete-discord-messages": "ts-node src/scripts/deleteDiscordMessages.ts",
         "start-worker:update-pending-tag": "ts-node src/queue/jobs/updatePendingTagJob.ts"
     },
     "keywords": [],

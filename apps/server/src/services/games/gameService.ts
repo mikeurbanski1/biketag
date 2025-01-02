@@ -157,7 +157,7 @@ export class GameService extends BaseService<GameDto, CreateGameParams, GameEnti
 
         await this.addScoreForPlayer({ gameId, playerId: pendingTag.creator.id, stats: pendingTag.stats });
         const newGame = await this.dalService.update({ id: gameId, updateParams: { latestRootTagId: game.pendingRootTagId, pendingRootTagId: undefined } });
-        await this.tagsService.setIsPendingTagValue({ tagId: game.pendingRootTagId, isPending: false });
+        await this.tagsService.setIsPendingTagValue({ tagId: game.pendingRootTagId, isPending: false, channelId: game.discordChannelId });
 
         return await this.convertToDto(newGame);
     }

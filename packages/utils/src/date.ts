@@ -51,9 +51,9 @@ export function getDateOnly(date: string | Dayjs): Dayjs {
     return (typeof date === 'string' ? dayjs(date) : date).startOf('day');
 }
 
-export function convertDateToRelativeDate(date: string): string;
-export function convertDateToRelativeDate(date: Dayjs): string;
-export function convertDateToRelativeDate(date: Dayjs | string): string {
+export function convertDateToRelativeDate(date: string, firstLetterCapital?: boolean): string;
+export function convertDateToRelativeDate(date: Dayjs, firstLetterCapital?: boolean): string;
+export function convertDateToRelativeDate(date: Dayjs | string, firstLetterCapital = true): string {
     if (typeof date === 'string') {
         date = dayjs(date);
     }
@@ -62,11 +62,11 @@ export function convertDateToRelativeDate(date: Dayjs | string): string {
     const diff = now.diff(date, 'day');
 
     if (diff === -1) {
-        return 'Tomorrow';
+        return firstLetterCapital ? 'Tomorrow' : 'tomorrow';
     } else if (diff === 0) {
-        return 'Today';
+        return firstLetterCapital ? 'Today' : 'today';
     } else if (diff === 1) {
-        return 'Yesterday';
+        return firstLetterCapital ? 'Yesterday' : 'yesterday';
     } else if (diff < 5) {
         return date.format('dddd');
     } else {

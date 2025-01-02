@@ -1,5 +1,4 @@
-import { ChannelType, Client, Collection, Events, GuildBasedChannel, MessageCreateOptions, MessagePayload, NonThreadGuildBasedChannel, OAuth2Guild, Snowflake, TextChannel } from 'discord.js';
-import { O } from 'vitest/dist/chunks/environment.LoooBwUu';
+import { ChannelType, Client, Events, MessageCreateOptions, TextChannel } from 'discord.js';
 
 import { DiscordChannelDto, DiscordGuildDto } from '@biketag/models';
 import { Logger } from '@biketag/utils';
@@ -65,5 +64,22 @@ export class DiscordIntegrationService {
         const message = await channel.send(payload);
         this.logger.info(`[sendMessage] posted message`, { message });
         return message.id;
+    }
+
+    public async getChannelMessages({ channelId }: { channelId: string }) {
+        const channel = (await this.client.channels.fetch(channelId)) as TextChannel;
+        const messages = await channel.messages.fetch();
+        this.logger.info(`[getChannelMessages]`, { messages });
+        return messages.map((message) => ({
+            id: message.id,
+            content: message.content,
+        }));
+    }
+
+    public async deleteMessage({ channelId, messageId }: { channelId: string; messageId: string }) {
+        const channel = (await this.client.channels.fetch(channelId)) as TextChannel;
+        const message = await channel.messages.fetch(messageId);
+        await message.delete();
+        this.logger.info(`[deleteMessage] deleted message`, { message });
     }
 }

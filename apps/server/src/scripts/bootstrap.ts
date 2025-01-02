@@ -86,7 +86,7 @@ const imageUrls = [
 ];
 
 const bootstrapData = async () => {
-    process.env.POST_TAG_STREAM = PostTagStream.NONE;
+    process.env.POST_TAG_STREAM = PostTagStream.ROOT_ONLY;
 
     provider = await MongoDbProvider.getInstance();
     queueManager = QueueManager.getInstance();
