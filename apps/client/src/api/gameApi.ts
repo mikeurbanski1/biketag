@@ -1,6 +1,6 @@
 import axios, { AxiosError } from 'axios';
 
-import { CreateGameDto, GameDto, GameSummary, PlayerGame } from '@biketag/models';
+import { CreateGameDto, GameDto, GameSummary } from '@biketag/models';
 
 import { ApiManager } from '.';
 import { AbstractApi } from './abstractApi';
@@ -79,12 +79,12 @@ export class GameApi extends AbstractApi {
         }
     }
 
-    public async createGame({ name, players }: { name: string; players: PlayerGame[] }): Promise<GameDto> {
+    public async createGame(params: CreateGameDto): Promise<GameDto> {
         try {
             const resp = await this.axiosInstance.request<GameDto>({
                 method: 'post',
                 url: '/games',
-                data: { name, players },
+                data: params,
             });
             if (resp.status !== 201) {
                 throw new CreateGameFailedError(`Unexpected response: ${resp.status} - ${resp.statusText}`);

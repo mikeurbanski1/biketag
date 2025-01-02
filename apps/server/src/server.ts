@@ -4,8 +4,8 @@ import { Logger } from '@biketag/utils';
 
 import { app } from './app';
 import { initializePersistence } from './dal/persistenceService';
-import { DiscordIntegration } from './integrations/photoStream/discordIntegration';
 import { QueueManager } from './queue/manager';
+import { DiscordIntegrationService } from './services/integrations/discordIntegrationService';
 
 // import { UsersService } from './users/usersService';
 // import { GamesService } from './games/gamesService';
@@ -25,7 +25,10 @@ initializePersistence().then(() => {
         logger.info(`Example app listening at http://localhost:${port}`);
         QueueManager.getInstance();
         logger.info(`Initialized queue manager`);
-        DiscordIntegration.getInstance({ guildId: '1324105214868983839', channelName: 'general' }).then(() => {
+        DiscordIntegrationService.getInstance().then((instance) => {
+            instance.getGuilds().then((guilds) => {
+                logger.info(`Got guilds`, { guilds });
+            });
             logger.info(`Initialized discord integration`);
         });
     });

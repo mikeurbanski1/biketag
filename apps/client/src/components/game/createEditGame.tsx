@@ -19,11 +19,23 @@ interface CreateEditGameProps {
     doneCreatingGame: (game?: GameDto) => void;
 }
 
+interface DiscordEntity {
+    id: string;
+    name: string;
+}
+
 export const CreateEditGame: React.FC<CreateEditGameProps> = (props: CreateEditGameProps) => {
+    const { discordGuildId, discordChannelId } = props.game ?? {};
+
     const [name, setName] = React.useState<string>(props.game?.name ?? '');
+
+    const [selectedDiscordServerId, setSelectedDiscordServerId] = React.useState<string>(discordGuildId ?? '');
+    const [selectedDiscordChannelId, setSelectedDiscordChannelId] = React.useState<string>(discordChannelId ?? '');
+    const [discordServers, setDiscordServers] = React.useState<DiscordEntity[] | undefined>(undefined);
+    const [discordChannels, setDiscordChannels] = React.useState<DiscordEntity[] | undefined>(undefined);
     const isNewGame = props.game === undefined;
-    const [canSaveGame, setCanSaveGame] = React.useState<boolean>(!isNewGame);
     const [loadingUsers, setLoadingUsers] = React.useState<boolean>(true);
+    // const [loadingDiscord, setLoadingDiscord] = React.useState<boolean>(true);
     const [selectedUsers, setSelectedUsers] = React.useState<UserBeingAdded[]>([]);
     // const [refreshKey, setRefreshKey] = React.useState<number>(0);
 
@@ -49,11 +61,21 @@ export const CreateEditGame: React.FC<CreateEditGameProps> = (props: CreateEditG
         });
     }, [loadingUsers, props.game?.players, props.user.id]);
 
-    const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
-        const canCreateGame = event.target.value !== '';
-        setCanSaveGame(canCreateGame);
-        setName(event.target.value);
-    };
+    useEffect(() => {
+        ApiManager.integrationApi.getDiscordGuilds().then((guilds) => {
+            setDiscordServers(guilds);
+        });
+    }, []);
+
+    useEffect(() => {
+        if (!selectedDiscordServerId) {
+            setDiscordChannels(undefined);
+            return;
+        }
+        ApiManager.integrationApi.getDiscordGuildChannels({ guildId: selectedDiscordServerId }).then((channels) => {
+            setDiscordChannels(channels);
+        });
+    }, [selectedDiscordServerId]);
 
     const handleUserSelect = (index: number, user: UserDto, role?: GameRoles): void => {
         const newUsers = selectedUsers;
@@ -70,6 +92,8 @@ export const CreateEditGame: React.FC<CreateEditGameProps> = (props: CreateEditG
                     userId: user.user.id,
                     role: user.role!,
                 })),
+            discordGuildId: selectedDiscordServerId,
+            discordChannelId: selectedDiscordChannelId,
         };
 
         const callback = (game: GameDto) => {
@@ -83,7 +107,18 @@ export const CreateEditGame: React.FC<CreateEditGameProps> = (props: CreateEditG
         }
     };
 
+    const changeDiscordServer = (event: React.ChangeEvent<HTMLSelectElement>): void => {
+        setSelectedDiscordServerId(event.target.value);
+    };
+
+    const changeDiscordChannel = (event: React.ChangeEvent<HTMLSelectElement>): void => {
+        setSelectedDiscordChannelId(event.target.value);
+    };
+
     const centerText = isNewGame ? 'Create game' : `Editing  ${props.game!.name}`;
+
+    const canSaveGame = name.length > 0 && selectedDiscordServerId.length > 0 && selectedDiscordChannelId.length > 0;
+
     return (
         <div className="flex-column moderate-gap full-width">
             <NavHeader
@@ -95,7 +130,31 @@ export const CreateEditGame: React.FC<CreateEditGameProps> = (props: CreateEditG
                 rightOnClick={() => setLoadingUsers(true)}
             />
 
-            <input type="text" value={name} name="gameName" placeholder="Game name" onChange={handleNameChange}></input>
+            <input type="text" value={name} name="gameName" placeholder="Game name" onChange={(event) => setName(event.target.value)}></input>
+
+            <select value={selectedDiscordServerId} onChange={changeDiscordServer}>
+                <option hidden value={undefined}>
+                    {!discordServers ? 'Loading Discord servers...' : 'Select a discord server'}
+                </option>
+                {discordServers &&
+                    discordServers.map((server) => (
+                        <option key={server.id} value={server.id}>
+                            {server.name}
+                        </option>
+                    ))}
+            </select>
+
+            <select hidden={selectedDiscordServerId === ''} value={selectedDiscordChannelId} onChange={changeDiscordChannel}>
+                <option hidden value={undefined}>
+                    {!discordChannels ? 'Loading channels...' : 'Select a channel'}
+                </option>
+                {discordChannels &&
+                    discordChannels.map((channel) => (
+                        <option key={channel.id} value={channel.id}>
+                            {channel.name}
+                        </option>
+                    ))}
+            </select>
 
             {loadingUsers ? (
                 <div>Loading users...</div>

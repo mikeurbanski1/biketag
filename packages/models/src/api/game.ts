@@ -12,6 +12,8 @@ export interface GameDto extends BaseDto {
     latestRootTag?: TagDto;
     pendingRootTag?: PendingTag;
     gameScore: GameScore;
+    discordGuildId: string;
+    discordChannelId: string;
 }
 
 export interface GameDtoWithPendingTagOwner extends GameDto {
@@ -25,6 +27,8 @@ export interface CreateGameDto {
     players: PlayerGame[];
     firstRootTagId?: string;
     latestRootTagId?: string;
+    discordGuildId: string;
+    discordChannelId: string;
 }
 
 export interface CreateGameParams extends CreateGameDto {

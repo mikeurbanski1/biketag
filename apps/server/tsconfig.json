@@ -15,8 +15,6 @@
         "noImplicitThis": true,
         "alwaysStrict": true,
         /* Additional Checks */
-        "noUnusedLocals": true,
-        "noUnusedParameters": true,
         "noImplicitReturns": true,
         "noFallthroughCasesInSwitch": true,
         /* Module Resolution Options */

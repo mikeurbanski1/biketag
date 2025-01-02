@@ -8,9 +8,9 @@ import { BaseService } from '../../common/baseService';
 import { validateExists } from '../../common/entityValidators';
 import { CannotPostTagError, tagServiceErrors } from '../../common/errors';
 import { TagDalService } from '../../dal/services/tagDalService';
-import { DiscordIntegration } from '../../integrations/photoStream/discordIntegration';
 import { QueueManager } from '../../queue/manager';
 import { GameService } from '../games/gameService';
+import { DiscordIntegrationService } from '../integrations/discordIntegrationService';
 import { ScoreService } from '../scores/scoreService';
 import { UserService } from '../users/userService';
 
@@ -122,8 +122,9 @@ export class TagService extends BaseService<TagDto, CreateTagParams, TagEntity, 
         return await this.dalService.update({ id: tagIdToUpdate, updateParams: updateFields });
     }
 
-    private async postMessageForNewTag({ tag }: { tag: TagEntity }): Promise<void> {
-        (await DiscordIntegration.getInstance()).sendMessage({ message: `New tag posted by ${tag.creatorId} for game ${tag.gameId} ${tag.imageUrl}` });
+    private async postMessageForNewTag({ tag, game }: { tag: TagDto; game: GameEntity }): Promise<void> {
+        const channelId = game.discordChannelId;
+        (await DiscordIntegrationService.getInstance()).sendMessage({ message: `${tag.creator.name} has posted a new tag ${tag.imageUrl}`, channelId });
     }
 
     public override async create(params: CreateTagParams): Promise<TagDto> {
@@ -192,11 +193,12 @@ export class TagService extends BaseService<TagDto, CreateTagParams, TagEntity, 
             await QueueManager.getInstance().addPendingTagJob({ jobParams: { gameId }, triggerTime: getDateOnly(createParams.forDate) });
         }
 
-        await this.postMessageForNewTag({ tag });
-
         this.logger.info(`[create] created tag`, { tag });
 
-        return await this.convertToDto(tag);
+        const tagDto = await this.convertToDto(tag);
+        await this.postMessageForNewTag({ tag: tagDto, game });
+
+        return tagDto;
     }
 
     public async setIsPendingTagValue({ tagId, isPending }: { tagId: string; isPending: boolean }): Promise<void> {
