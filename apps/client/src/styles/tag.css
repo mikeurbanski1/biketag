@@ -92,6 +92,10 @@
     height: calc(100% - 10px);
 }
 
+.pending-tag-image {
+    filter: grayscale(100%);
+}
+
 .pending-tag-card {
     font-size: 0.8em;
     font-style: italic;

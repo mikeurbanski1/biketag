@@ -22,9 +22,11 @@ export const TagCard: React.FC<TagCardProps> = (props) => {
         );
     }
 
+    const imageContainerClass = `tag-image-container ${tag !== 'addTag' && isFullTag(tag) && tag.isPending ? 'pending-tag-image' : ''}`;
+
     return (
         <div className="tag tag-card clickable-tag" onClick={selectTag}>
-            <div className="tag-image-container">{tagContents}</div>
+            <div className={imageContainerClass}>{tagContents}</div>
         </div>
     );
 };

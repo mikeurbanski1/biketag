@@ -123,7 +123,7 @@ export const Tag: React.FC<TagProps> = (props: TagProps): React.ReactNode => {
 
             return (
                 <div className={className} onClick={onClick}>
-                    <div className="tag-image-container">
+                    <div className={`tag-image-container ${tagToRender.isPending ? 'pending-tag-image' : ''}`}>
                         <img className="tag-image" src={tagToRender.imageUrl}></img>
                     </div>
                     {footer}
