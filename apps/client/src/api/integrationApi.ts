@@ -1,4 +1,4 @@
-import { DiscordGuildDto } from '@biketag/models';
+import { TagStreamChannel, TagStreamServer } from '@biketag/models';
 
 import { AbstractApi } from './abstractApi';
 
@@ -7,9 +7,9 @@ export class IntegrationApi extends AbstractApi {
         super({ clientId, logPrefix: '[IntegrationApi]' });
     }
 
-    public async getDiscordGuilds(): Promise<DiscordGuildDto[]> {
+    public async getDiscordGuilds(): Promise<TagStreamServer[]> {
         try {
-            const resp = await this.axiosInstance.request<DiscordGuildDto[]>({
+            const resp = await this.axiosInstance.request<TagStreamServer[]>({
                 method: 'get',
                 url: `/integrations/discord/guilds`,
             });
@@ -24,9 +24,9 @@ export class IntegrationApi extends AbstractApi {
         }
     }
 
-    public async getDiscordGuildChannels({ guildId }: { guildId: string }): Promise<DiscordGuildDto[]> {
+    public async getDiscordGuildChannels({ guildId }: { guildId: string }): Promise<TagStreamChannel[]> {
         try {
-            const resp = await this.axiosInstance.request<DiscordGuildDto[]>({
+            const resp = await this.axiosInstance.request<TagStreamChannel[]>({
                 method: 'get',
                 url: `/integrations/discord/guilds/${guildId}/channels`,
             });

@@ -6,14 +6,14 @@ import { UUID } from 'mongodb';
 import { BaseEntityWithoutId, CreateTagParams, GameEntity, TagDto, TagEntity, tagFields, TagWithImage, TagWithImageData, UserDto } from '@biketag/models';
 import { convertDateToRelativeDate, getDateOnly, isEarlierDate, isSameDate } from '@biketag/utils';
 
-import { BaseService } from '../../common/baseService';
-import { validateExists } from '../../common/entityValidators';
 import { CannotPostTagError, tagServiceErrors } from '../../common/errors';
 import { PostTagStream } from '../../common/models/enum';
 import { TagDalService } from '../../dal/services/tagDalService';
 import { QueueManager } from '../../queue/manager';
+import { BaseService } from '../baseService';
+import { validateExists } from '../entityValidators';
 import { GameService } from '../games/gameService';
-import { DiscordIntegrationService } from '../integrations/discordIntegrationService';
+import { DiscordIntegrationService } from '../integrations/services/discordIntegrationService';
 import { ScoreService } from '../scores/scoreService';
 import { UserService } from '../users/userService';
 

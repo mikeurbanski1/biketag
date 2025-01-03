@@ -3,7 +3,7 @@ import { Get, Path, Route, SuccessResponse } from 'tsoa';
 import { DiscordGuildDto } from '@biketag/models';
 import { Logger } from '@biketag/utils';
 
-import { DiscordIntegrationService } from './discordIntegrationService';
+import { DiscordIntegrationService } from './services/discordIntegrationService';
 
 const logger = new Logger({ prefix: '[GameController]' });
 
