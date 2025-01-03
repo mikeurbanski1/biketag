@@ -44,8 +44,7 @@ export class GameService extends BaseService<GameDto, CreateGameParams, GameEnti
             latestRootTag: entity.latestRootTagId ? await this.tagsService.getRequired({ id: entity.latestRootTagId }) : undefined,
             pendingRootTag: entity.pendingRootTagId ? await this.tagsService.getAsPendingTag({ id: entity.pendingRootTagId }) : undefined,
             gameScore: entity.gameScore,
-            discordGuildId: entity.discordGuildId,
-            discordChannelId: entity.discordChannelId,
+            tagStreamIntegration: entity.tagStreamIntegration,
         };
     }
 
@@ -63,8 +62,7 @@ export class GameService extends BaseService<GameDto, CreateGameParams, GameEnti
             creatorId: dto.creatorId,
             players: dto.players,
             gameScore: { playerScores: {} },
-            discordGuildId: dto.discordGuildId,
-            discordChannelId: dto.discordChannelId,
+            tagStreamIntegration: dto.tagStreamIntegration,
         });
     }
 
@@ -100,7 +98,7 @@ export class GameService extends BaseService<GameDto, CreateGameParams, GameEnti
 
         const game = await this.dalService.getByIdRequired({ id });
 
-        let dalParams: Partial<GameEntity> = copyDefinedProperties(updateParams, ['name', 'creatorId', 'players', 'latestRootTagId', 'firstRootTagId', 'discordGuildId', 'discordChannelId']);
+        let dalParams: Partial<GameEntity> = copyDefinedProperties(updateParams, ['name', 'creatorId', 'players', 'latestRootTagId', 'firstRootTagId', 'tagStreamIntegration']);
         if (updateParams.creatorId) {
             const players = updateParams.players || game.players;
             const creatorIndex = players.findIndex((p) => p.userId === updateParams.creatorId);
@@ -157,7 +155,7 @@ export class GameService extends BaseService<GameDto, CreateGameParams, GameEnti
 
         await this.addScoreForPlayer({ gameId, playerId: pendingTag.creator.id, stats: pendingTag.stats });
         const newGame = await this.dalService.update({ id: gameId, updateParams: { latestRootTagId: game.pendingRootTagId, pendingRootTagId: undefined } });
-        await this.tagsService.setIsPendingTagValue({ tagId: game.pendingRootTagId, isPending: false, channelId: game.discordChannelId });
+        await this.tagsService.setIsPendingTagValue({ tagId: game.pendingRootTagId, isPending: false, tagStreamIntegration: game.tagStreamIntegration });
 
         return await this.convertToDto(newGame);
     }

@@ -1,5 +1,5 @@
 import { BaseDto, TagDto } from '.';
-import { GameScore } from '../common';
+import { GameScore, TagStreamIntegration } from '../common';
 import { GameRoles, PlayerGame, PlayerGameDto } from '../common/game';
 import { UserDto } from './user';
 
@@ -12,8 +12,7 @@ export interface GameDto extends BaseDto {
     latestRootTag?: TagDto;
     pendingRootTag?: TagDto;
     gameScore: GameScore;
-    discordGuildId: string;
-    discordChannelId: string;
+    tagStreamIntegration?: TagStreamIntegration;
 }
 
 export interface GameDtoWithPendingTagOwner extends GameDto {
@@ -27,8 +26,7 @@ export interface CreateGameDto {
     players: PlayerGame[];
     firstRootTagId?: string;
     latestRootTagId?: string;
-    discordGuildId: string;
-    discordChannelId: string;
+    tagStreamIntegration?: TagStreamIntegration;
 }
 
 export interface CreateGameParams extends CreateGameDto {

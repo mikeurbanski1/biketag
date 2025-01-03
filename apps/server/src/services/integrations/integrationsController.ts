@@ -4,17 +4,24 @@ import { IntegrationServer, IntegrationSource, IntegrationType, TagStreamChannel
 import { Logger } from '@biketag/utils';
 
 import { DiscordIntegrationService } from './services/discordIntegrationService';
-import { getIntegrationService, getTagStreamIntegrationService } from './services/serviceRouter';
+import { getIntegrationService, getIntegrationSourcesByType, getTagStreamIntegrationService } from './services/serviceRouter';
 
 const logger = new Logger({ prefix: '[IntegrationController]' });
 
 @Route('integrations')
 export class IntegrationController {
+    @Get('/{integrationType}/sources')
+    @SuccessResponse('200', 'ok')
+    public async getIntegrationSources(@Path() integrationType: IntegrationType): Promise<IntegrationSource[]> {
+        logger.info(`[getIntegrationSources]`, { integrationType });
+        return getIntegrationSourcesByType(integrationType);
+    }
+
     @Get('/{integrationType}/{source}/servers')
     @SuccessResponse('200', 'ok')
     public async getIntegrationServers(@Path() integrationType: IntegrationType, @Path() source: IntegrationSource): Promise<IntegrationServer[]> {
         logger.info(`[getIntegrationServers]`, { integrationType, source });
-        const service = await getIntegrationService(source);
+        const service = await getIntegrationService({ integrationType, source });
         const servers = await service.getServers();
         logger.info(`[getIntegrationServers] got servers`, { servers });
         return servers;

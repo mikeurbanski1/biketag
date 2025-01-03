@@ -1,5 +1,5 @@
 import { BaseEntity } from '.';
-import { GameScore, PlayerGame } from '../common';
+import { GameScore, PlayerGame, TagStreamIntegration } from '../common';
 
 export interface GameEntity extends BaseEntity {
     name: string;
@@ -9,6 +9,5 @@ export interface GameEntity extends BaseEntity {
     latestRootTagId?: string;
     pendingRootTagId?: string;
     gameScore: GameScore;
-    discordGuildId: string;
-    discordChannelId: string;
+    tagStreamIntegration?: TagStreamIntegration;
 }
