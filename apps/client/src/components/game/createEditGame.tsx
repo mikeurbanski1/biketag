@@ -2,12 +2,13 @@ import React, { useEffect } from 'react';
 
 import '../../styles/createEditGame.css';
 
-import { CreateGameDto, GameDto, GameRoles, UserDto } from '@biketag/models';
+import { CreateGameDto, GameDto, GameRoles, IntegrationServer, IntegrationSource, IntegrationType, TagStreamChannel, UserDto } from '@biketag/models';
 import { Logger } from '@biketag/utils';
 
 import { ApiManager } from '../../api';
 import { UserBeingAdded } from '../../models/user';
 import { NavHeader } from '../common/navHeader';
+import { Select } from '../common/select';
 import UserSelection from '../userSelection';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -19,25 +20,34 @@ interface CreateEditGameProps {
     doneCreatingGame: (game?: GameDto) => void;
 }
 
-interface DiscordEntity {
-    id: string;
-    name: string;
-}
+type IntegrationOrNone = IntegrationSource | 'None';
+
+const noSource = 'None';
+
+const integrationSourceToNameOrId = (source: IntegrationSource): string => source;
+
+const integrationServerToId = (server: IntegrationServer): string => server.id;
+const integrationServerToName = (server: IntegrationServer): string => server.name;
+
+const integrationChannelToId = (channel: TagStreamChannel): string => channel.id;
+const integrationChannelToName = (channel: TagStreamChannel): string => channel.name;
 
 export const CreateEditGame: React.FC<CreateEditGameProps> = (props: CreateEditGameProps) => {
-    const { discordGuildId, discordChannelId } = props.game ?? {};
+    const { tagStreamIntegration } = props.game ?? {};
 
     const [name, setName] = React.useState<string>(props.game?.name ?? '');
 
-    const [selectedDiscordServerId, setSelectedDiscordServerId] = React.useState<string>(discordGuildId ?? '');
-    const [selectedDiscordChannelId, setSelectedDiscordChannelId] = React.useState<string>(discordChannelId ?? '');
-    const [discordServers, setDiscordServers] = React.useState<DiscordEntity[] | undefined>(undefined);
-    const [discordChannels, setDiscordChannels] = React.useState<DiscordEntity[] | undefined>(undefined);
-    const isNewGame = props.game === undefined;
+    const [tagStreamIntegrationSource, setTagStreamIntegrationSource] = React.useState<IntegrationSource | undefined>(undefined);
+    const [serverId, setServerId] = React.useState<string>(tagStreamIntegration?.serverId ?? '');
+    const [channelId, setChannelId] = React.useState<string>(tagStreamIntegration?.channelId ?? '');
+    const [integrationSources, setIntegrationSources] = React.useState<IntegrationSource[]>([]);
+    const [servers, setServers] = React.useState<IntegrationServer[] | undefined>(undefined);
+    const [channels, setChannels] = React.useState<TagStreamChannel[] | undefined>(undefined);
     const [loadingUsers, setLoadingUsers] = React.useState<boolean>(true);
-    // const [loadingDiscord, setLoadingDiscord] = React.useState<boolean>(true);
     const [selectedUsers, setSelectedUsers] = React.useState<UserBeingAdded[]>([]);
     // const [refreshKey, setRefreshKey] = React.useState<number>(0);
+
+    const isNewGame = props.game === undefined;
 
     useEffect(() => {
         if (!loadingUsers) {
@@ -62,20 +72,30 @@ export const CreateEditGame: React.FC<CreateEditGameProps> = (props: CreateEditG
     }, [loadingUsers, props.game?.players, props.user.id]);
 
     useEffect(() => {
-        ApiManager.integrationApi.getDiscordGuilds().then((guilds) => {
-            setDiscordServers(guilds);
+        ApiManager.integrationApi.getIntegrationSources(IntegrationType.TAG_STREAM).then((sources) => {
+            setIntegrationSources(sources);
         });
     }, []);
 
     useEffect(() => {
-        if (!selectedDiscordServerId) {
-            setDiscordChannels(undefined);
+        if (!tagStreamIntegrationSource) {
+            setServers(undefined);
+        } else {
+            ApiManager.integrationApi.getServers({ integrationType: IntegrationType.TAG_STREAM, source: tagStreamIntegrationSource }).then((guilds) => {
+                setServers(guilds);
+            });
+        }
+    }, [tagStreamIntegrationSource]);
+
+    useEffect(() => {
+        if (!tagStreamIntegrationSource || !serverId) {
+            setChannels(undefined);
             return;
         }
-        ApiManager.integrationApi.getDiscordGuildChannels({ guildId: selectedDiscordServerId }).then((channels) => {
-            setDiscordChannels(channels);
+        ApiManager.integrationApi.getTagStreamChannels({ source: tagStreamIntegrationSource, serverId: serverId }).then((channels) => {
+            setChannels(channels);
         });
-    }, [selectedDiscordServerId]);
+    }, [tagStreamIntegrationSource, serverId]);
 
     const handleUserSelect = (index: number, user: UserDto, role?: GameRoles): void => {
         const newUsers = selectedUsers;
@@ -84,6 +104,14 @@ export const CreateEditGame: React.FC<CreateEditGameProps> = (props: CreateEditG
     };
 
     const createOrEditGame = (): void => {
+        const tagStreamIntegration = tagStreamIntegrationSource
+            ? {
+                  source: tagStreamIntegrationSource,
+                  serverId,
+                  channelId,
+              }
+            : undefined;
+
         const game: CreateGameDto = {
             name,
             players: selectedUsers
@@ -92,8 +120,7 @@ export const CreateEditGame: React.FC<CreateEditGameProps> = (props: CreateEditG
                     userId: user.user.id,
                     role: user.role!,
                 })),
-            discordGuildId: selectedDiscordServerId,
-            discordChannelId: selectedDiscordChannelId,
+            tagStreamIntegration,
         };
 
         const callback = (game: GameDto) => {
@@ -107,17 +134,23 @@ export const CreateEditGame: React.FC<CreateEditGameProps> = (props: CreateEditG
         }
     };
 
+    const changeIntegrationSource = (event: React.ChangeEvent<HTMLSelectElement>): void => {
+        const value = event.target.value as IntegrationOrNone;
+        const newValue = value === noSource ? undefined : value;
+        setTagStreamIntegrationSource(newValue);
+    };
+
     const changeDiscordServer = (event: React.ChangeEvent<HTMLSelectElement>): void => {
-        setSelectedDiscordServerId(event.target.value);
+        setServerId(event.target.value);
     };
 
     const changeDiscordChannel = (event: React.ChangeEvent<HTMLSelectElement>): void => {
-        setSelectedDiscordChannelId(event.target.value);
+        setChannelId(event.target.value);
     };
 
     const centerText = isNewGame ? 'Create game' : `Editing  ${props.game!.name}`;
 
-    const canSaveGame = name.length > 0 && selectedDiscordServerId.length > 0 && selectedDiscordChannelId.length > 0;
+    const canSaveGame = (name.length > 0 && !tagStreamIntegrationSource) || (tagStreamIntegrationSource && serverId.length > 0 && channelId.length > 0);
 
     return (
         <div className="flex-column moderate-gap full-width">
@@ -132,29 +165,38 @@ export const CreateEditGame: React.FC<CreateEditGameProps> = (props: CreateEditG
 
             <input type="text" value={name} name="gameName" placeholder="Game name" onChange={(event) => setName(event.target.value)}></input>
 
-            <select value={selectedDiscordServerId} onChange={changeDiscordServer}>
-                <option hidden value={undefined}>
-                    {!discordServers ? 'Loading Discord servers...' : 'Select a discord server'}
-                </option>
-                {discordServers &&
-                    discordServers.map((server) => (
-                        <option key={server.id} value={server.id}>
-                            {server.name}
-                        </option>
-                    ))}
-            </select>
+            <Select<IntegrationSource>
+                value={tagStreamIntegrationSource}
+                onChange={changeIntegrationSource}
+                toId={integrationSourceToNameOrId}
+                toName={integrationSourceToNameOrId}
+                noSelectionText={noSource}
+                options={integrationSources}
+                loadingText="Loading tag stream integrations..."
+                placeholderText="Select tag stream integration"
+            />
 
-            <select hidden={selectedDiscordServerId === ''} value={selectedDiscordChannelId} onChange={changeDiscordChannel}>
-                <option hidden value={undefined}>
-                    {!discordChannels ? 'Loading channels...' : 'Select a channel'}
-                </option>
-                {discordChannels &&
-                    discordChannels.map((channel) => (
-                        <option key={channel.id} value={channel.id}>
-                            {channel.name}
-                        </option>
-                    ))}
-            </select>
+            <Select<IntegrationServer>
+                value={serverId}
+                onChange={changeDiscordServer}
+                toId={integrationServerToId}
+                toName={integrationServerToName}
+                options={servers}
+                loadingText="Loading servers..."
+                placeholderText="Select a server"
+                hidden={tagStreamIntegrationSource === undefined}
+            />
+
+            <Select<TagStreamChannel>
+                value={channelId}
+                onChange={changeDiscordChannel}
+                toId={integrationChannelToId}
+                toName={integrationChannelToName}
+                options={channels}
+                loadingText="Loading channels..."
+                placeholderText="Select a channel"
+                hidden={tagStreamIntegrationSource === undefined || serverId === ''}
+            />
 
             {loadingUsers ? (
                 <div>Loading users...</div>

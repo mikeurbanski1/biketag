@@ -1,7 +1,7 @@
-import { BaseService } from '../../src/common/baseService';
 import { BaseExistsCheckError, ServiceErrors } from '../../src/common/errors';
 import { BaseEntity } from '../../src/dal/models';
 import { BaseDalService } from '../../src/dal/services/baseDalService';
+import { BaseService } from '../../src/services/baseService';
 
 export interface MockType extends BaseEntity {
     name: string;
@@ -17,7 +17,7 @@ export class NotFoundError extends BaseExistsCheckError {
 
 export const mockServiceErrors: ServiceErrors = {
     notFoundErrorClass: ExistsError,
-    existsErrorClass: NotFoundError
+    existsErrorClass: NotFoundError,
 };
 
 export class MockDalService extends BaseDalService<MockType> {

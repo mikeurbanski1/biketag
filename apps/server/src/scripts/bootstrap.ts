@@ -1,6 +1,6 @@
 import dayjs, { Dayjs } from 'dayjs';
 
-import { CreateTagParams, GameRoles, TagDto } from '@biketag/models';
+import { CreateTagParams, GameRoles, IntegrationSource, TagDto } from '@biketag/models';
 import { Logger } from '@biketag/utils';
 
 import { PostTagStream } from '../common/models/enum';
@@ -134,8 +134,11 @@ const bootstrapData = async () => {
                 { userId: users[5].id, role: GameRoles.PLAYER },
                 { userId: users[6].id, role: GameRoles.PLAYER },
             ],
-            discordGuildId: '1324105214868983839',
-            discordChannelId: '1324152064284033065',
+            tagStreamIntegration: {
+                source: IntegrationSource.DISCORD,
+                serverId: '1324105214868983839',
+                channelId: '1324152064284033065',
+            },
         }),
         await gameService.create({
             name: "Mike's bike tag!",
@@ -148,8 +151,11 @@ const bootstrapData = async () => {
                 { userId: users[5].id, role: GameRoles.PLAYER },
                 { userId: users[6].id, role: GameRoles.PLAYER },
             ],
-            discordGuildId: '1324105214868983839',
-            discordChannelId: '1324152085301956618',
+            tagStreamIntegration: {
+                source: IntegrationSource.DISCORD,
+                serverId: '1324105214868983839',
+                channelId: '1324152085301956618',
+            },
         }),
         await gameService.create({
             name: "Katie's bike tag!",
@@ -160,8 +166,11 @@ const bootstrapData = async () => {
                 { userId: users[3].id, role: GameRoles.PLAYER },
                 { userId: users[6].id, role: GameRoles.PLAYER },
             ],
-            discordGuildId: '1324105214868983839',
-            discordChannelId: '1324152112019669024',
+            tagStreamIntegration: {
+                source: IntegrationSource.DISCORD,
+                serverId: '1324105214868983839',
+                channelId: '1324152112019669024',
+            },
         }),
     ];
 

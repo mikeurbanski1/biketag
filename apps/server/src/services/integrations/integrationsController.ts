@@ -1,30 +1,38 @@
 import { Get, Path, Route, SuccessResponse } from 'tsoa';
 
-import { DiscordGuildDto } from '@biketag/models';
+import { IntegrationServer, IntegrationSource, IntegrationType, TagStreamChannel } from '@biketag/models';
 import { Logger } from '@biketag/utils';
 
-import { DiscordIntegrationService } from './discordIntegrationService';
+import { DiscordIntegrationService } from './services/discordIntegrationService';
+import { getIntegrationService, getIntegrationSourcesByType, getTagStreamIntegrationService } from './services/serviceRouter';
 
-const logger = new Logger({ prefix: '[GameController]' });
+const logger = new Logger({ prefix: '[IntegrationController]' });
 
 @Route('integrations')
 export class IntegrationController {
-    @Get('/discord/guilds')
+    @Get('/{integrationType}/sources')
     @SuccessResponse('200', 'ok')
-    public async getDiscordGuilds(): Promise<DiscordGuildDto[]> {
-        logger.info(`[getDiscordGuilds]`);
-        const discordService = await DiscordIntegrationService.getInstance();
-        const guilds = await discordService.getGuilds();
-        logger.info(`[getDiscordGuilds] got guilds`, { guilds });
-        return guilds.sort((a, b) => a.name.localeCompare(b.name));
+    public async getIntegrationSources(@Path() integrationType: IntegrationType): Promise<IntegrationSource[]> {
+        logger.info(`[getIntegrationSources]`, { integrationType });
+        return getIntegrationSourcesByType(integrationType);
     }
 
-    @Get('/discord/guilds/{guildId}/channels')
+    @Get('/{integrationType}/{source}/servers')
     @SuccessResponse('200', 'ok')
-    public async getDiscordGuildChannels(@Path() guildId: string): Promise<DiscordGuildDto[]> {
-        logger.info(`[getDiscordGuildChannels]`);
-        const discordService = await DiscordIntegrationService.getInstance();
-        const channels = await discordService.getChannels({ guildId });
-        return channels.sort((a, b) => a.name.localeCompare(b.name));
+    public async getIntegrationServers(@Path() integrationType: IntegrationType, @Path() source: IntegrationSource): Promise<IntegrationServer[]> {
+        logger.info(`[getIntegrationServers]`, { integrationType, source });
+        const service = await getIntegrationService({ integrationType, source });
+        const servers = await service.getServers();
+        logger.info(`[getIntegrationServers] got servers`, { servers });
+        return servers;
+    }
+
+    @Get('/tag-stream/{source}/servers/{serverId}/channels')
+    @SuccessResponse('200', 'ok')
+    public async getTagStreamChannels(@Path() source: IntegrationSource, @Path() serverId: string): Promise<TagStreamChannel[]> {
+        logger.info(`[getTagStreamChannels]`, { source, serverId });
+        const service = await getTagStreamIntegrationService(source);
+        const channels = await service.getChannels({ serverId });
+        return channels;
     }
 }

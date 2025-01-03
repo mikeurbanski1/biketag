@@ -1,9 +1,11 @@
-import { ChannelType, Client, Events, MessageCreateOptions, TextChannel } from 'discord.js';
+import { ChannelType, Client, Events, Message, MessageCreateOptions, NonThreadGuildBasedChannel, OAuth2Guild, TextChannel } from 'discord.js';
 
-import { DiscordChannelDto, DiscordGuildDto } from '@biketag/models';
+import { IntegrationServer, TagStreamChannel, TagStreamMessage } from '@biketag/models';
 import { Logger } from '@biketag/utils';
 
-export class DiscordIntegrationService {
+import { TagStreamIntegrationInterface } from '../interfaces/tagStreamIntegrationInterface';
+
+export class DiscordIntegrationService implements TagStreamIntegrationInterface {
     private static instance: DiscordIntegrationService | undefined;
     private readonly logger = new Logger({ prefix: '[DiscordIntegration]' });
     private readonly client: Client;
@@ -13,7 +15,7 @@ export class DiscordIntegrationService {
         this.client = new Client({ intents: ['Guilds'] });
         this.token = process.env.DISCORD_APP_TOKEN!;
         this.client.once(Events.ClientReady, (readyClient) => {
-            console.log(`Ready! Logged in as ${readyClient.user.tag}`);
+            this.logger.info(`Ready! Logged in as ${readyClient.user.tag}`);
         });
     }
 
@@ -32,28 +34,20 @@ export class DiscordIntegrationService {
         await this.client.login(this.token);
     }
 
-    public async getGuilds(): Promise<DiscordGuildDto[]> {
+    public async getServers(): Promise<IntegrationServer[]> {
         const guilds = await this.client.guilds.fetch();
         this.logger.info(`[getGuilds]`, { guilds: guilds });
-        return guilds.map((guild) => ({
-            id: guild.id,
-            name: guild.name,
-        }));
+        return guilds.map((guild) => this.convertServer(guild));
     }
 
-    public async getChannels({ guildId }: { guildId: string }): Promise<DiscordChannelDto[]> {
-        const guild = await this.client.guilds.fetch(guildId);
+    public async getChannels({ serverId }: { serverId: string }): Promise<TagStreamChannel[]> {
+        const guild = await this.client.guilds.fetch(serverId);
         const channels = await guild.channels.fetch();
         this.logger.info(`[getChannels]`, { channels });
-        return channels
-            .filter((channel) => channel && channel.type === ChannelType.GuildText)
-            .map((channel) => ({
-                id: channel!.id,
-                name: channel!.name,
-            }));
+        return channels.filter((channel) => channel && channel.type === ChannelType.GuildText).map((channel) => this.convertChannel(channel!));
     }
 
-    public async sendMessage({ content, replyTo, channelId }: { content: string; replyTo?: string; channelId: string }) {
+    public async sendMessage({ content, replyTo, channelId }: Omit<TagStreamMessage, 'id'>): Promise<string> {
         const channel = (await this.client.channels.fetch(channelId)) as TextChannel;
         const payload: MessageCreateOptions = { content };
         if (replyTo) {
@@ -66,14 +60,11 @@ export class DiscordIntegrationService {
         return message.id;
     }
 
-    public async getChannelMessages({ channelId }: { channelId: string }) {
+    public async getMessages({ channelId }: { channelId: string }): Promise<TagStreamMessage[]> {
         const channel = (await this.client.channels.fetch(channelId)) as TextChannel;
         const messages = await channel.messages.fetch();
         this.logger.info(`[getChannelMessages]`, { messages });
-        return messages.map((message) => ({
-            id: message.id,
-            content: message.content,
-        }));
+        return messages.map((message) => this.convertMessage(message));
     }
 
     public async deleteMessage({ channelId, messageId }: { channelId: string; messageId: string }) {
@@ -81,5 +72,29 @@ export class DiscordIntegrationService {
         const message = await channel.messages.fetch(messageId);
         await message.delete();
         this.logger.info(`[deleteMessage] deleted message`, { message });
+    }
+
+    private convertServer(guild: OAuth2Guild): IntegrationServer {
+        return {
+            id: guild.id,
+            name: guild.name,
+        };
+    }
+
+    private convertChannel(channel: NonThreadGuildBasedChannel): TagStreamChannel {
+        return {
+            id: channel.id,
+            name: channel.name,
+            serverId: channel.guildId,
+        };
+    }
+
+    private convertMessage(message: Message): TagStreamMessage {
+        return {
+            id: message.id,
+            content: message.content,
+            channelId: message.channel.id,
+            replyTo: message.reference?.messageId,
+        };
     }
 }

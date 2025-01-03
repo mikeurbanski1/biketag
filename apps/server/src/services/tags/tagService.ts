@@ -3,17 +3,17 @@ import dayjs, { Dayjs } from 'dayjs';
 import { Jimp } from 'jimp';
 import { UUID } from 'mongodb';
 
-import { BaseEntityWithoutId, CreateTagParams, GameEntity, TagDto, TagEntity, tagFields, TagWithImage, TagWithImageData, UserDto } from '@biketag/models';
+import { BaseEntityWithoutId, CreateTagParams, GameEntity, TagDto, TagEntity, tagFields, TagStreamIntegration, TagWithImage, TagWithImageData, UserDto } from '@biketag/models';
 import { convertDateToRelativeDate, getDateOnly, isEarlierDate, isSameDate } from '@biketag/utils';
 
-import { BaseService } from '../../common/baseService';
-import { validateExists } from '../../common/entityValidators';
 import { CannotPostTagError, tagServiceErrors } from '../../common/errors';
 import { PostTagStream } from '../../common/models/enum';
 import { TagDalService } from '../../dal/services/tagDalService';
 import { QueueManager } from '../../queue/manager';
+import { BaseService } from '../baseService';
+import { validateExists } from '../entityValidators';
 import { GameService } from '../games/gameService';
-import { DiscordIntegrationService } from '../integrations/discordIntegrationService';
+import { DiscordIntegrationService } from '../integrations/services/discordIntegrationService';
 import { ScoreService } from '../scores/scoreService';
 import { UserService } from '../users/userService';
 
@@ -133,6 +133,9 @@ export class TagService extends BaseService<TagDto, CreateTagParams, TagEntity, 
         if (!tag.isRoot && !rootTag) {
             throw new Error('Root tag must be provided to post a message for a subtag');
         }
+        if (!game.tagStreamIntegration) {
+            throw new Error('Game must have a tag stream integration to post a message');
+        }
         const date = convertDateToRelativeDate(tag.forDate, false);
         let content: string;
         if (tag.isRoot) {
@@ -150,7 +153,7 @@ export class TagService extends BaseService<TagDto, CreateTagParams, TagEntity, 
         const discordService = await DiscordIntegrationService.getInstance();
         let replyTo = rootTag?.discordMessageId;
 
-        const channelId = game.discordChannelId;
+        const channelId = game.tagStreamIntegration.channelId;
         const messageId = await discordService.sendMessage({ content, replyTo, channelId });
         tag.discordMessageId = messageId;
     }
@@ -213,7 +216,9 @@ export class TagService extends BaseService<TagDto, CreateTagParams, TagEntity, 
 
         const creator = await this.usersService.getRequired({ id: params.creatorId });
 
-        await this.postMessageForNewTag({ tag: createParams, creatorName: creator.name, game, rootTag });
+        if (game.tagStreamIntegration) {
+            await this.postMessageForNewTag({ tag: createParams, creatorName: creator.name, game, rootTag });
+        }
 
         const tag = await this.dalService.create(createParams);
 
@@ -232,11 +237,11 @@ export class TagService extends BaseService<TagDto, CreateTagParams, TagEntity, 
         return tagDto;
     }
 
-    public async setIsPendingTagValue({ tagId, isPending, channelId }: { tagId: string; isPending: boolean; channelId: string }): Promise<void> {
+    public async setIsPendingTagValue({ tagId, isPending, tagStreamIntegration }: { tagId: string; isPending: boolean; tagStreamIntegration?: TagStreamIntegration }): Promise<void> {
         this.logger.info(`[setIsPendingTagValue]`, { tagId, isPending });
         const tag = await this.dalService.getByIdRequired({ id: tagId });
         const updateParams: Partial<TagEntity> = { isPending };
-        if (!isPending && process.env.POST_TAG_STREAM !== PostTagStream.NONE) {
+        if (!isPending && process.env.POST_TAG_STREAM !== PostTagStream.NONE && tagStreamIntegration) {
             const discordService = await DiscordIntegrationService.getInstance();
             let replyTo: string | undefined;
             if (tag.discordMessageId) {
@@ -244,7 +249,7 @@ export class TagService extends BaseService<TagDto, CreateTagParams, TagEntity, 
             }
             const creator = await this.usersService.getRequired({ id: tag.creatorId });
             const content = `The latest tag posted by ${creator.name} is now live! ${tag.imageUrl}`;
-            const newMessageId = await discordService.sendMessage({ content, channelId, replyTo });
+            const newMessageId = await discordService.sendMessage({ content, channelId: tagStreamIntegration.channelId, replyTo });
             updateParams.discordMessageId = newMessageId;
         }
         await this.dalService.update({ id: tagId, updateParams });
