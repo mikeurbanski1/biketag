@@ -1,7 +1,7 @@
 import { Dayjs } from 'dayjs';
 import React, { useCallback, useEffect } from 'react';
 
-import { GameDto, GameRoles, isFullTag, PendingTag, PlayerScores, TagDto, UserDto } from '@biketag/models';
+import { GameDto, GameRoles, PlayerScores, TagDto, tagHasRealImage, UserDto } from '@biketag/models';
 import { Logger } from '@biketag/utils';
 
 import { ApiManager } from '../../api';
@@ -140,7 +140,7 @@ export const Game: React.FC<ViewGameProps> = (props: ViewGameProps) => {
 
     // handles when an actual tag in the scroller is selected, as well as when any tag or fake tag in the card view is selected
     const selectTag = useCallback(
-        (tag: 'addTag' | TagDto | PendingTag) => {
+        (tag: 'addTag' | TagDto) => {
             if (tag === 'addTag') {
                 setShowingAddRootTag(true);
                 if (currentView === GameHeaderParentView.CARDS) {
@@ -148,7 +148,7 @@ export const Game: React.FC<ViewGameProps> = (props: ViewGameProps) => {
                     setCurrentRootTag(game!.latestRootTag);
                     setCurrentTag(game!.latestRootTag);
                 }
-            } else if (isFullTag(tag)) {
+            } else if (tagHasRealImage(tag)) {
                 if (tag.id === currentTag?.id) {
                     // we switched back to the current tag from pending tag or add tag
                     setShowingPendingTag(false);

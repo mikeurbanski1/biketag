@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 
-import { GameDto, PendingTag, TagDto } from '@biketag/models';
+import { GameDto, TagDto } from '@biketag/models';
 import { gameHasTag, Logger } from '@biketag/utils';
 
 import { ApiManager } from '../../api';
@@ -9,7 +9,7 @@ import { TagCard } from '../tag/tagCard';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const logger = new Logger({ prefix: '' });
 
-type TagCardType = TagDto | PendingTag | 'addTag';
+type TagCardType = TagDto | 'addTag';
 
 interface TagCardProps {
     game: GameDto;
