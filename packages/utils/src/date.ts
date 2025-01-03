@@ -36,12 +36,16 @@ export function isLaterDate(date1: string, date2: string): boolean;
 export function isLaterDate(date1: Dayjs, date2: string): boolean;
 export function isLaterDate(date1: string, date2: Dayjs): boolean;
 export function isLaterDate(date1: Dayjs | string, date2: Dayjs | string): boolean {
+    console.log(JSON.stringify({ date1: date1.toString(), date1Type: typeof date1, date2: date2.toString(), date2Type: typeof date2 }));
+
     if (typeof date1 === 'string') {
         date1 = dayjs(date1);
     }
     if (typeof date2 === 'string') {
         date2 = dayjs(date2);
     }
+    console.log(JSON.stringify({ date1: date1.toString(), date1Type: typeof date1, date2: date2.toString(), date2Type: typeof date2 }));
+    console.log(date1.format('YYYY-MM-DD'), date2.format('YYYY-MM-DD'));
     return date1.format('YYYY-MM-DD') > date2.format('YYYY-MM-DD');
 }
 
