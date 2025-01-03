@@ -1,6 +1,6 @@
 import { ChannelType, Client, Events, Message, MessageCreateOptions, NonThreadGuildBasedChannel, OAuth2Guild, TextChannel } from 'discord.js';
 
-import { TagStreamChannel, TagStreamMessage, TagStreamServer } from '@biketag/models';
+import { IntegrationServer, TagStreamChannel, TagStreamMessage } from '@biketag/models';
 import { Logger } from '@biketag/utils';
 
 import { TagStreamIntegrationInterface } from '../interfaces/tagStreamIntegrationInterface';
@@ -15,7 +15,7 @@ export class DiscordIntegrationService implements TagStreamIntegrationInterface 
         this.client = new Client({ intents: ['Guilds'] });
         this.token = process.env.DISCORD_APP_TOKEN!;
         this.client.once(Events.ClientReady, (readyClient) => {
-            console.log(`Ready! Logged in as ${readyClient.user.tag}`);
+            this.logger.info(`Ready! Logged in as ${readyClient.user.tag}`);
         });
     }
 
@@ -34,7 +34,7 @@ export class DiscordIntegrationService implements TagStreamIntegrationInterface 
         await this.client.login(this.token);
     }
 
-    public async getServers(): Promise<TagStreamServer[]> {
+    public async getServers(): Promise<IntegrationServer[]> {
         const guilds = await this.client.guilds.fetch();
         this.logger.info(`[getGuilds]`, { guilds: guilds });
         return guilds.map((guild) => this.convertServer(guild));
@@ -74,7 +74,7 @@ export class DiscordIntegrationService implements TagStreamIntegrationInterface 
         this.logger.info(`[deleteMessage] deleted message`, { message });
     }
 
-    private convertServer(guild: OAuth2Guild): TagStreamServer {
+    private convertServer(guild: OAuth2Guild): IntegrationServer {
         return {
             id: guild.id,
             name: guild.name,

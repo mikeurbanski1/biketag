@@ -1,8 +1,3 @@
-export interface TagStreamServer {
-    id: string;
-    name: string;
-}
-
 export interface TagStreamChannel {
     id: string;
     name: string;

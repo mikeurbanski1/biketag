@@ -1,4 +1,4 @@
-import { TagStreamChannel, TagStreamServer } from '@biketag/models';
+import { IntegrationServer, TagStreamChannel } from '@biketag/models';
 
 import { AbstractApi } from './abstractApi';
 
@@ -7,11 +7,11 @@ export class IntegrationApi extends AbstractApi {
         super({ clientId, logPrefix: '[IntegrationApi]' });
     }
 
-    public async getDiscordGuilds(): Promise<TagStreamServer[]> {
+    public async getDiscordGuilds(): Promise<IntegrationServer[]> {
         try {
-            const resp = await this.axiosInstance.request<TagStreamServer[]>({
+            const resp = await this.axiosInstance.request<IntegrationServer[]>({
                 method: 'get',
-                url: `/integrations/discord/guilds`,
+                url: `/integrations/discord/servers`,
             });
             if (resp.status !== 200) {
                 throw new Error(`Unexpected response: ${resp.status} - ${resp.statusText}`);
@@ -28,7 +28,7 @@ export class IntegrationApi extends AbstractApi {
         try {
             const resp = await this.axiosInstance.request<TagStreamChannel[]>({
                 method: 'get',
-                url: `/integrations/discord/guilds/${guildId}/channels`,
+                url: `/integrations/discord/servers/${guildId}/channels`,
             });
             if (resp.status !== 200) {
                 throw new Error(`Unexpected response: ${resp.status} - ${resp.statusText}`);

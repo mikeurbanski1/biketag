@@ -1,8 +1,9 @@
-import { TagStreamChannel, TagStreamMessage, TagStreamServer } from '@biketag/models';
+import { IntegrationServer, TagStreamChannel, TagStreamMessage } from '@biketag/models';
 
-export interface TagStreamIntegrationInterface {
+import { IntegrationInterface } from './commonIntegrationInterface';
+
+export interface TagStreamIntegrationInterface extends IntegrationInterface {
     init(): Promise<void>;
-    getServers(): Promise<TagStreamServer[]>;
     getChannels({ serverId }: { serverId: string }): Promise<TagStreamChannel[]>;
     sendMessage({ content, channelId, replyTo }: { content: string; channelId: string; replyTo?: string }): Promise<string>;
     getMessages({ channelId }: { channelId: string }): Promise<TagStreamMessage[]>;
