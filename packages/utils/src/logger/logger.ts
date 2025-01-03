@@ -1,4 +1,4 @@
-import { stringify } from '.';
+import { stringify } from '..';
 
 export enum LogLevel {
     DEBUG = 1,
