@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useContext } from 'react';
 
-import { GameDto, PlayerScores, UserDto } from '@biketag/models';
+import { GameDto, PlayerScores } from '@biketag/models';
 
 import { Table } from '../common/table';
+import { UserContext } from '../common/context';
 
 type PlayerDetailsTableRow = PlayerScores & {
     id: string;
@@ -12,14 +13,15 @@ type PlayerDetailsTableRow = PlayerScores & {
 };
 
 interface GameDetailsProps {
-    game: GameDto; // Define the type for game if available
-    user: UserDto; // Define the type for user if available
+    game: GameDto;
     playerDetailsTable: PlayerDetailsTableRow[];
     setEditingGame: () => void;
     deleteGame: () => void;
 }
 
-export const GameDetails: React.FC<GameDetailsProps> = ({ game, user, playerDetailsTable, setEditingGame, deleteGame }) => {
+export const GameDetails: React.FC<GameDetailsProps> = ({ game, playerDetailsTable, setEditingGame, deleteGame }) => {
+    const user = useContext(UserContext)!;
+
     const isCreator = game.creator.id === user.id;
     const [showingGameAdminButtons, setShowingGameAdminButtons] = React.useState(false);
 

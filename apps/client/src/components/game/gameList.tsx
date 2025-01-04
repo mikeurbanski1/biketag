@@ -1,17 +1,19 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 
-import { GameSummary, UserDto } from '@biketag/models';
+import { GameSummary } from '@biketag/models';
 
 import { ApiManager } from '../../api';
 import { NavHeader } from '../common/navHeader';
+import { UserContext } from '../common/context';
 
 interface GameListProps {
-    user: UserDto;
     selectGame: (game: GameSummary) => void;
     startCreateGame: () => void;
 }
 
-export const GameList: React.FC<GameListProps> = ({ user, selectGame, startCreateGame }: GameListProps) => {
+export const GameList: React.FC<GameListProps> = ({ selectGame, startCreateGame }: GameListProps) => {
+    const user = useContext(UserContext)!;
+
     const [games, setGames] = useState<GameSummary[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [refreshKey, setRefreshKey] = useState<number>(0);

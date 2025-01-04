@@ -1,22 +1,17 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 
-import { UserDto } from '@biketag/models';
+import { UserContext } from './context';
 
 interface NavBarProps {
-    user?: UserDto;
     handleLogout: () => void;
     backToHome: () => void;
     doneViewingGame: () => void;
     startCreateGame: () => void;
 }
 
-// interface MainMenuProps {
-//     user?: UserDto;
-//     handleLogout: () => void;
-// }
-
-const MainMenu: React.FC<NavBarProps> = ({ user, handleLogout, startCreateGame, doneViewingGame }) => {
+const MainMenu: React.FC<NavBarProps> = ({ handleLogout, startCreateGame, doneViewingGame }) => {
     const [showingMenu, setShowingMenu] = useState(false);
+    const user = useContext(UserContext);
     return (
         <div className="clickable-nav-item dropdown-header" onClick={() => setShowingMenu(!showingMenu)}>
             {/* {userName.charAt(0)} */}🚲
@@ -37,14 +32,6 @@ const MainMenu: React.FC<NavBarProps> = ({ user, handleLogout, startCreateGame, 
         </div>
     );
 };
-
-// const MainMenu: React.FC = () => {
-//     return (
-//         <span className="clickable-text clickable-nav-item menu-dropdown-header dropdown-header">
-//             🚲<div className="dropdown-content menu-dropdown-content">View games</div>
-//         </span>
-//     );
-// };
 
 export const NavBar: React.FC<NavBarProps> = (props) => {
     return (

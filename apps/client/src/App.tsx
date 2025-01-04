@@ -11,6 +11,7 @@ import { CreateEditGame } from './components/game/createEditGame';
 import { Game } from './components/game/game';
 import { GameList } from './components/game/gameList';
 import { Login } from './components/login';
+import { UserContext } from './components/common/context';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const logger = new Logger({});
@@ -95,17 +96,19 @@ export const App: React.FC = () => {
     if (appState === AppState.LOGGED_OUT) {
         inner = <Login key="login" setUser={setUserCallback}></Login>;
     } else if (appState === AppState.CREATING_GAME) {
-        inner = <CreateEditGame user={user!} doneCreatingGame={doneCreatingGame} />;
+        inner = <CreateEditGame doneCreatingGame={doneCreatingGame} />;
     } else if (appState === AppState.HOME) {
-        inner = <GameList user={user!} selectGame={setGameCallback} startCreateGame={startCreateGame} />;
+        inner = <GameList selectGame={setGameCallback} startCreateGame={startCreateGame} />;
     } else if (appState === AppState.VIEWING_GAME) {
-        inner = <Game gameId={game!.id} gameName={game!.name} user={user!} deleteGame={deleteGame} doneViewingGame={doneViewingGame} dateOverride={dateOverride} />;
+        inner = <Game gameId={game!.id} gameName={game!.name} deleteGame={deleteGame} doneViewingGame={doneViewingGame} dateOverride={dateOverride} />;
     }
 
     return (
         <div className="App">
-            <NavBar user={user} backToHome={doneViewingGame} handleLogout={handleLogout} doneViewingGame={doneViewingGame} startCreateGame={startCreateGame}></NavBar>
-            <div className="main">{inner}</div>
+            <UserContext.Provider value={user}>
+                <NavBar backToHome={doneViewingGame} handleLogout={handleLogout} doneViewingGame={doneViewingGame} startCreateGame={startCreateGame}></NavBar>
+                <div className="main">{inner}</div>
+            </UserContext.Provider>
             {/* <input type="button" name="reset-client-button" value="Reset local client ID" onClick={this.handleResetClient}></input> */}
         </div>
     );
