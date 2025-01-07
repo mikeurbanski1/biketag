@@ -1,14 +1,14 @@
 import { AxiosError } from 'axios';
 import { Dayjs } from 'dayjs';
 
-import { CreateTagDto, TagDto } from '@biketag/models';
+import { CreateTagDto, TagWithUserContext } from '@biketag/models';
 
 import { AbstractApi } from './abstractApi';
 
 export class TagNotFoundError extends Error {}
 
 export class TagApi extends AbstractApi {
-    private tagCache: Record<string, TagDto> = {};
+    private tagCache: Record<string, TagWithUserContext> = {};
 
     constructor({ clientId }: { clientId: string }) {
         super({ clientId, logPrefix: '[TagApi]' });
@@ -18,11 +18,11 @@ export class TagApi extends AbstractApi {
         this.tagCache = {};
     }
 
-    public getTagFromCache({ id }: { id: string }): TagDto | undefined {
+    public getTagFromCache({ id }: { id: string }): TagWithUserContext | undefined {
         return this.tagCache[id];
     }
 
-    public updateTagInCache({ tagId, update }: { tagId?: string; update: Partial<TagDto> }): void {
+    public updateTagInCache({ tagId, update }: { tagId?: string; update: Partial<TagWithUserContext> }): void {
         if (!tagId) {
             return;
         }
@@ -33,7 +33,7 @@ export class TagApi extends AbstractApi {
         this.tagCache[tag.id] = { ...tag, ...update };
     }
 
-    public async getTag({ id }: { id?: string }): Promise<TagDto | undefined> {
+    public async getTag({ id }: { id?: string }): Promise<TagWithUserContext | undefined> {
         if (!id) {
             return undefined;
         }
@@ -48,7 +48,7 @@ export class TagApi extends AbstractApi {
         }
 
         try {
-            const resp = await this.axiosInstance.request<TagDto>({
+            const resp = await this.axiosInstance.request<TagWithUserContext>({
                 method: 'get',
                 url: `/tags/${id}`,
             });
@@ -106,9 +106,9 @@ export class TagApi extends AbstractApi {
         }
     }
 
-    public async createTag(params: CreateTagDto): Promise<TagDto> {
+    public async createTag(params: CreateTagDto): Promise<TagWithUserContext> {
         try {
-            const resp = await this.axiosInstance.request<TagDto>({
+            const resp = await this.axiosInstance.request<TagWithUserContext>({
                 method: 'post',
                 url: '/tags',
                 data: params,
@@ -143,9 +143,9 @@ export class TagApi extends AbstractApi {
         }
     }
 
-    public async getRootTagsForGame({ gameId }: { gameId: string }): Promise<TagDto[]> {
+    public async getRootTagsForGame({ gameId }: { gameId: string }): Promise<TagWithUserContext[]> {
         try {
-            const tags = await this.getWithPaging<TagDto>({
+            const tags = await this.getWithPaging<TagWithUserContext>({
                 config: {
                     method: 'get',
                     url: `/tags/game/${gameId}/root-tags`,
