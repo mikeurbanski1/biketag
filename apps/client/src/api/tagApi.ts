@@ -1,7 +1,7 @@
 import { AxiosError } from 'axios';
 import { Dayjs } from 'dayjs';
 
-import { CreateTagDto, PrimitiveResponse, TagDto } from '@biketag/models';
+import { CreateTagDto, EnrichedTagDto, PrimitiveResponse, TagDto } from '@biketag/models';
 
 import { AbstractApi } from './abstractApi';
 
@@ -166,12 +166,12 @@ export class TagApi extends AbstractApi {
         }
     }
 
-    public async getRootTagsForGame({ gameId }: { gameId: string }): Promise<TagDto[]> {
+    public async getRootTagsForGame({ gameId }: { gameId: string }): Promise<EnrichedTagDto[]> {
         try {
-            const tags = await this.getWithPaging<TagDto>({
+            const tags = await this.getWithPaging<EnrichedTagDto>({
                 config: {
                     method: 'get',
-                    url: `/tags/game/${gameId}/root-tags`,
+                    url: `/tags/game/${gameId}/root-tags?enrich=true`,
                 },
             });
             tags.forEach((tag) => {

@@ -3,7 +3,7 @@ import dayjs, { Dayjs } from 'dayjs';
 import { Jimp } from 'jimp';
 import { UUID } from 'mongodb';
 
-import { BaseEntityWithoutId, CreateTagParams, GameEntity, TagDto, TagEntity, tagFields, TagStreamIntegration, TagWithImage, TagWithImageData, UserDto } from '@biketag/models';
+import { BaseEntityWithoutId, CreateTagParams, EnrichedTagDto, GameEntity, TagDto, TagEntity, tagFields, TagStreamIntegration, TagWithImage, TagWithImageData, UserDto } from '@biketag/models';
 import { convertDateToRelativeDate, getDateOnly, isEarlierDate, isSameDate } from '@biketag/utils';
 
 import { CannotPostTagError, tagServiceErrors } from '../../common/errors';
@@ -255,13 +255,78 @@ export class TagService extends BaseService<TagDto, CreateTagParams, TagEntity, 
         await this.dalService.update({ id: tagId, updateParams });
     }
 
-    public async getRootTags({ gameId, page, pageSize }: { gameId: string; page: number; pageSize: number }): Promise<{ items: TagDto[]; total: number }> {
+    public async getRootTags({ gameId, userId, page, pageSize }: { gameId: string; userId: string; page: number; pageSize: number }): Promise<{ items: TagDto[]; total: number }>;
+    public async getRootTags({
+        gameId,
+        userId,
+        page,
+        pageSize,
+        enrich,
+    }: {
+        gameId: string;
+        userId: string;
+        page: number;
+        pageSize: number;
+        enrich: false;
+    }): Promise<{ items: TagDto[]; total: number }>;
+    public async getRootTags({
+        gameId,
+        userId,
+        page,
+        pageSize,
+        enrich,
+    }: {
+        gameId: string;
+        userId: string;
+        page: number;
+        pageSize: number;
+        enrich: true;
+    }): Promise<{ items: EnrichedTagDto[]; total: number }>;
+    public async getRootTags({
+        gameId,
+        userId,
+        page,
+        pageSize,
+        enrich,
+    }: {
+        gameId: string;
+        userId: string;
+        page: number;
+        pageSize: number;
+        enrich?: boolean;
+    }): Promise<{ items: (TagDto | EnrichedTagDto)[]; total: number }>;
+
+    public async getRootTags({
+        gameId,
+        userId,
+        page,
+        pageSize,
+        enrich,
+    }: {
+        gameId: string;
+        userId: string;
+        page: number;
+        pageSize: number;
+        enrich?: boolean;
+    }): Promise<{ items: (TagDto | EnrichedTagDto)[]; total: number }> {
         this.logger.info(`[getRootTags]`, { gameId, page, pageSize });
         const filter = { gameId, isRoot: true, isPending: false };
         const { items, total } = await this.dalService.findAll({ filter, skip: (page - 1) * pageSize, limit: pageSize, returnTotal: true, sort: { forDate: -1 } });
         const tags = await Promise.all(items.map((tag) => this.convertToDto(tag)));
-        this.logger.info(`[getRootTags] got tags`, { tags, total });
-        return { items: tags, total };
+
+        if (enrich) {
+            const enrichedTags = await Promise.all(
+                tags.map(async (tag) => {
+                    const userCanAddSubtag = !(await this.userInTagChain({ userId, tagId: tag.id }));
+                    return { ...tag, userCanAddSubtag };
+                })
+            );
+            this.logger.info(`[getRootTags] got enriched tags`, { enrichedTags, total });
+            return { items: enrichedTags, total };
+        } else {
+            this.logger.info(`[getRootTags] got tags`, { tags, total });
+            return { items: tags, total };
+        }
     }
 
     /**

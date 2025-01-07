@@ -37,6 +37,10 @@ export interface TagDto extends BaseDto {
 export type TagWithImage = Omit<TagDto, 'imageData'> & { imageUrl: string };
 export type TagWithImageData = Omit<TagDto, 'imageUrl'> & { imageData: string };
 
+export interface EnrichedTagDto extends TagDto {
+    userCanAddSubtag: boolean;
+}
+
 export interface CreateTagDto {
     // name: string;
     gameId: string;

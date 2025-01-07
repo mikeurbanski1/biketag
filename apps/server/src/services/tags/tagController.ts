@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 import { Body, Controller, Get, Header, Path, Post, Query, Res, Route, SuccessResponse, TsoaResponse } from 'tsoa';
 
-import { CreateTagDto, PrimitiveResponse, TagDto } from '@biketag/models';
+import { CreateTagDto, EnrichedTagDto, PrimitiveResponse, TagDto } from '@biketag/models';
 import { Logger, USER_ID_HEADER } from '@biketag/utils';
 
 import { TagService } from './tagService';
@@ -53,9 +53,15 @@ export class TagController extends Controller {
 
     @Get('/game/{gameId}/root-tags')
     @SuccessResponse('200', 'Ok')
-    public async getRootTags(@Path() gameId: string, @Query() page: number = 1, @Query() pageSize: number = 10): Promise<{ items: TagDto[]; total: number }> {
+    public async getRootTags(
+        @Header(USER_ID_HEADER) userId: string,
+        @Path() gameId: string,
+        @Query() page: number = 1,
+        @Query() pageSize: number = 10,
+        @Query() enrich?: boolean
+    ): Promise<{ items: (TagDto | EnrichedTagDto)[]; total: number }> {
         logger.info(`[getRootTags]`, { gameId, page, pageSize });
-        const { items, total } = await this.tagsService.getRootTags({ gameId, page, pageSize });
+        const { items, total } = await this.tagsService.getRootTags({ gameId, userId, page, pageSize, enrich });
         logger.info('[getRootTags] got tags', { items, total });
         return { items, total };
     }
