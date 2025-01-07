@@ -26,6 +26,11 @@ div {
     --tag-scroller-sidebar-width: 15%;
     --tag-scroller-offset: calc(100% - var(--tag-scroller-sidebar-width));
     --tag-scroller-tag-width: calc(100% - 2 * var(--tag-scroller-sidebar-width));
+
+    --tag-creator-color: #00ffff;
+    --root-tag-complete-color: #00ff00;
+    --root-tag-incomplete-color: #ffff00;
+    --subtag-color: #e9e9e9;
 }
 
 @media (prefers-color-scheme: light) {

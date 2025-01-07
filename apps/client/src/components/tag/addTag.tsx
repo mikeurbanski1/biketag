@@ -42,8 +42,13 @@ export const AddTag: React.FC<AddTagProps> = ({ saveTag, previousRootTagDate, da
         text = 'Tag the next spot!';
     }
 
+    const classes = ['tag tag-creator'];
+    if (!isActive) {
+        classes.push('clickable-tag');
+    }
+
     return (
-        <div className={`tag ${isActive ? '' : 'clickable-tag'}`} onClick={isActive ? undefined : setAddTagAsActive}>
+        <div className={classes.join(' ')} onClick={isActive ? undefined : setAddTagAsActive}>
             <div className="add-tag">
                 {text}
                 <div>

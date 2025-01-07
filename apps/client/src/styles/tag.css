@@ -3,14 +3,28 @@
     display: grid;
     grid-template-rows: 1fr auto;
     box-shadow: 15px 15px 5px rgb(0, 0, 0, 0.5);
-    /* border: 1px solid #535bf2; */
     height: 100%;
     width: 100%;
-    background-color: #e8e8e8;
     text-align: center;
     align-items: center;
 
     --tag-padding: 25px;
+}
+
+.tag-complete {
+    background-color: var(--root-tag-complete-color);
+}
+
+.tag-incomplete {
+    background-color: var(--root-tag-incomplete-color);
+}
+
+.subtag {
+    background-color: var(--subtag-color);
+}
+
+.tag-creator {
+    background-color: var(--tag-creator-color);
 }
 
 .tag-image-container {
@@ -81,6 +95,7 @@
 .tag-card {
     box-shadow: 5px 5px 5px rgb(0, 0, 0, 0.5);
     border-radius: 10px;
+    filter: brightness(100%); /* for cards, we do not need to dim clickable */
     width: 100%;
     height: 100%;
     /* display: grid; */

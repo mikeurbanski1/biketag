@@ -7,3 +7,7 @@ export interface BaseDto {
 }
 
 export type BaseDtoWithoutId<E extends BaseDto> = Omit<E, 'id'>;
+
+export interface PrimitiveResponse<E> {
+    result: E;
+}

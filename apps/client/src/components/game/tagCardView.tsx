@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 
-import { GameDto, TagDto } from '@biketag/models';
-import { gameHasTag, Logger } from '@biketag/utils';
+import { EnrichedTagDto, GameDto, TagDto } from '@biketag/models';
+import { Logger } from '@biketag/utils';
 
 import { ApiManager } from '../../api';
 import { TagCard } from '../tag/tagCard';
@@ -9,7 +9,7 @@ import { TagCard } from '../tag/tagCard';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const logger = new Logger({ prefix: '' });
 
-type TagCardType = TagDto | 'addTag';
+type TagCardType = TagDto | EnrichedTagDto | 'addTag';
 
 interface TagCardProps {
     game: GameDto;
@@ -17,29 +17,31 @@ interface TagCardProps {
     selectTag: (tag: TagCardType) => void;
 }
 
+const isEnrichedTag = (tag: TagCardType): tag is EnrichedTagDto => Object.prototype.hasOwnProperty.call(tag, 'userCanAddSubtag');
+
 export const TagCardView: React.FC<TagCardProps> = (props) => {
     const { game, userCanAddRootTag } = props;
     const { pendingRootTag } = game;
 
-    let initLoading = true;
-    const initTags: TagCardType[] = [];
+    // let initLoading = true;
+    // const initTags: TagCardType[] = [];
 
-    // if there are two or fewer tags (ignoring pending tag), then we know all of them from the game itself and do not need to load
-    // otherwise we will load everything and display it together later
-    if (!gameHasTag(game) || game.latestRootTag.id === game.firstRootTag.id || game.latestRootTag.id === game.firstRootTag.nextRootTagId) {
-        initLoading = false;
+    // // if there are two or fewer tags (ignoring pending tag), then we know all of them from the game itself and do not need to load
+    // // otherwise we will load everything and display it together later
+    // if (!gameHasTag(game) || game.latestRootTag.id === game.firstRootTag.id || game.latestRootTag.id === game.firstRootTag.nextRootTagId) {
+    //     initLoading = false;
 
-        if (gameHasTag(game)) {
-            const { firstRootTag, latestRootTag } = game;
-            initTags.push(latestRootTag);
-            if (firstRootTag && firstRootTag.id !== latestRootTag.id) {
-                initTags.push(firstRootTag);
-            }
-        }
-    }
+    //     if (gameHasTag(game)) {
+    //         const { firstRootTag, latestRootTag } = game;
+    //         initTags.push(latestRootTag);
+    //         if (firstRootTag && firstRootTag.id !== latestRootTag.id) {
+    //             initTags.push(firstRootTag);
+    //         }
+    //     }
+    // }
 
-    const [loading, setLoading] = React.useState(initLoading);
-    const [tags, setTags] = React.useState<TagCardType[]>(initTags);
+    const [loading, setLoading] = React.useState(true);
+    const [tags, setTags] = React.useState<TagCardType[]>([]);
     const [refreshKey] = React.useState(0);
 
     useEffect(() => {
@@ -72,7 +74,7 @@ export const TagCardView: React.FC<TagCardProps> = (props) => {
     return (
         <div className="tag-card-view">
             {tagsToRender.map((tag) => (
-                <TagCard key={tag === 'addTag' ? 'addTag' : tag.id} tag={tag} selectTag={() => props.selectTag(tag)} />
+                <TagCard key={tag === 'addTag' ? 'addTag' : tag.id} tag={tag} knownCanAddTag={isEnrichedTag(tag) ? tag.userCanAddSubtag : undefined} selectTag={() => props.selectTag(tag)} />
             ))}
         </div>
     );

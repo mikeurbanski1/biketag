@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useContext, useEffect } from 'react';
 
 import '../../styles/createEditGame.css';
 
@@ -10,12 +10,12 @@ import { UserBeingAdded } from '../../models/user';
 import { NavHeader } from '../common/navHeader';
 import { Select } from '../common/select';
 import UserSelection from '../userSelection';
+import { UserContext } from '../common/context';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const logger = new Logger({ prefix: '[CreateEditGame]' });
 
 interface CreateEditGameProps {
-    user: UserDto;
     game?: GameDto;
     doneCreatingGame: (game?: GameDto) => void;
 }
@@ -34,6 +34,7 @@ const integrationChannelToName = (channel: TagStreamChannel): string => channel.
 
 export const CreateEditGame: React.FC<CreateEditGameProps> = (props: CreateEditGameProps) => {
     const { tagStreamIntegration } = props.game ?? {};
+    const user = useContext(UserContext)!;
 
     const [name, setName] = React.useState<string>(props.game?.name ?? '');
 
@@ -56,7 +57,7 @@ export const CreateEditGame: React.FC<CreateEditGameProps> = (props: CreateEditG
         ApiManager.userApi.getUsers().then((users) => {
             const selectedUsers = users
                 .reduce((arr, user) => {
-                    if (user.id !== props.user.id) {
+                    if (user.id !== user.id) {
                         const player = props.game?.players.find((playerGame) => playerGame.user.id === user.id);
                         arr.push({
                             user,
@@ -69,7 +70,7 @@ export const CreateEditGame: React.FC<CreateEditGameProps> = (props: CreateEditG
             setSelectedUsers(selectedUsers);
             setLoadingUsers(false);
         });
-    }, [loadingUsers, props.game?.players, props.user.id]);
+    }, [loadingUsers, props.game?.players, user.id]);
 
     useEffect(() => {
         ApiManager.integrationApi.getIntegrationSources(IntegrationType.TAG_STREAM).then((sources) => {

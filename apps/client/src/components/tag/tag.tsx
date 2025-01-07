@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 
 import { TagDto, tagHasRealImage } from '@biketag/models';
 import { convertDateToRelativeDate, Logger } from '@biketag/utils';
@@ -9,16 +9,9 @@ import { DATETIME_FORMAT, TIME_READABLE_FORMAT } from '../../utils/consts';
 import '../../styles/tag.css';
 
 import { ApiManager } from '../../api';
+import { UserContext } from '../common/context';
 
 const logger = new Logger({});
-
-// export interface AddTagProps {
-//     saveTag: ({ imageUrl }: { imageUrl: string }) => void;
-//     isSubtag: boolean;
-//     isFirstTag: boolean;
-//     dateOverride: Dayjs;
-//     previousRootTagDate?: Dayjs;
-// }
 
 type TagTypeWithId = TagDto | string;
 
@@ -26,17 +19,12 @@ interface TagProps {
     tag: TagTypeWithId; // string is a tagId
     isActive: boolean;
     selectTag?: (tag: TagDto) => void;
+    knownUserCanAddTag?: boolean;
 }
 
 interface LoadingTagDefinedProps {
     tag: string;
 }
-
-// interface AddTagDefinedProps {
-//     tag: AddTagTypes;
-//     addTagProps: AddTagProps;
-//     selectTag: (tag: TagType) => void;
-// }
 
 interface RealActiveTagDefinedProps {
     tag: TagDto;
@@ -46,13 +34,7 @@ interface RealInactiveTagDefinedProps extends RealActiveTagDefinedProps {
     selectTag: (tag: TagDto) => void;
 }
 
-// interface LoadingAndTagType {
-//     loading: boolean;
-//     tag?: TagType;
-// }
-
 const isTagToLoad = (props: TagProps): props is TagProps & LoadingTagDefinedProps => typeof props.tag === 'string';
-// const isAddTag = (tag?: TagTypeWithId): tag is AddTagProps => typeof tag === 'object' && !('tagId' in tag);
 const isLoadedTag = (tag?: TagTypeWithId): tag is TagDto => typeof tag === 'object';
 const isInactiveTag = (props: TagProps): props is TagProps & RealInactiveTagDefinedProps => !props.isActive;
 
@@ -61,7 +43,6 @@ const getTimeString = (tag: TagDto): string => {
     const relativeDate = convertDateToRelativeDate(forDate);
     const timeFormat = forDate.format(TIME_READABLE_FORMAT);
     const isPending = tag.isPending;
-    // return isPending ? 'Live at midnight!' : `${relativeDate} — ${timeFormat}`;
     // root tags just have the day (it is a little difficult to decide what to show for a time,
     // when the tag could be posted the day before or this day - the time is not relevant)
     return isPending ? 'Live at midnight!' : tag.isRoot ? relativeDate : `${relativeDate} — ${timeFormat}`;
@@ -69,23 +50,37 @@ const getTimeString = (tag: TagDto): string => {
 
 export const Tag: React.FC<TagProps> = (props: TagProps): React.ReactNode => {
     logger.info(`[Tag] render()`, { props });
+    const user = useContext(UserContext)!;
+    const { knownUserCanAddTag } = props;
+
     // we are only displaying loading if we know we are getting a tag
     // if isLoading is true, tagToRender will be undefined, and vice versa
     // if we have a tag ID, we can also skip loading if we have the cached tag
     const tagToUse = isLoadedTag(props.tag) ? props.tag : ApiManager.tagApi.getTagFromCache({ id: props.tag as string });
     const [isLoading, setIsLoading] = useState<boolean>(!tagToUse && isTagToLoad(props));
     const [tagToRender, setTagToRender] = useState<TagTypeWithId | undefined>(tagToUse);
+    const [userCanAddTag, setUserCanAddTag] = useState<boolean | undefined>(knownUserCanAddTag ?? undefined);
 
     useEffect(() => {
         if (isLoading) {
             ApiManager.tagApi.getTag({ id: props.tag as string }).then((tag) => {
                 setIsLoading(false);
                 setTagToRender(tag);
+                if (userCanAddTag === undefined && tag && tag.isRoot) {
+                    ApiManager.tagApi.canUserAddSubtag({ tagId: tag.id, userId: user.id }).then(({ result }) => {
+                        setUserCanAddTag(result);
+                    });
+                }
+            });
+        } else if (userCanAddTag === undefined && isLoadedTag(tagToRender) && tagToRender.isRoot && !tagToRender.isPending) {
+            ApiManager.tagApi.canUserAddSubtag({ tagId: tagToRender.id, userId: user.id }).then(({ result }) => {
+                setUserCanAddTag(result);
             });
         }
-    });
+    }, [isLoading, props.tag, tagToRender, user.id, userCanAddTag]);
 
-    if (isLoading) {
+    if (isLoading || (userCanAddTag === undefined && isLoadedTag(tagToRender) && tagToRender.isRoot && !tagToRender.isPending)) {
+        logger.info(`[Tag]`, { userCanAddTag: userCanAddTag ?? 'undefined' });
         return <div className="tag loading">Loading...</div>;
         // } else if (isAddTag(tagToRender)) {
         //     if (!props.selectTag) {
@@ -105,6 +100,14 @@ export const Tag: React.FC<TagProps> = (props: TagProps): React.ReactNode => {
             classes.push('subtag');
         }
 
+        if (tagToRender.creator.id === user.id) {
+            classes.push('tag-creator');
+        } else if (userCanAddTag || tagToRender.isPending) {
+            classes.push('tag-incomplete');
+        } else if (userCanAddTag === false) {
+            classes.push('tag-complete');
+        }
+
         const className = classes.join(' ');
 
         // if (!tagToRender.isPending || tagHasRealImage(tagToRender)) {
@@ -120,8 +123,6 @@ export const Tag: React.FC<TagProps> = (props: TagProps): React.ReactNode => {
             </div>
         );
 
-        // {`data:image/jpeg;base64,${data}`}
-
         return (
             <div className={className} onClick={onClick}>
                 <div className={`tag-image-container ${tagToRender.isPending ? 'pending-tag-image' : ''}`}>
@@ -130,15 +131,5 @@ export const Tag: React.FC<TagProps> = (props: TagProps): React.ReactNode => {
                 {footer}
             </div>
         );
-        // } else {
-        //     // pending tag with obfuscated image (we are not the creator)
-        //     return (
-        //         <div className={`tag ${className}`} onClick={onClick}>
-        //             <div className="tag-details">
-        //                 The next tag posted by <span className="tag-creator">{tagToRender.creator.name}</span> will go live at midnight!
-        //             </div>
-        //         </div>
-        //     );
-        // }
     }
 };

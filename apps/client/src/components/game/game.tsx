@@ -1,7 +1,7 @@
 import { Dayjs } from 'dayjs';
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useContext, useEffect } from 'react';
 
-import { GameDto, GameRoles, PlayerScores, TagDto, tagHasRealImage, UserDto } from '@biketag/models';
+import { GameDto, GameRoles, PlayerScores, TagDto, tagHasRealImage } from '@biketag/models';
 import { Logger } from '@biketag/utils';
 
 import { ApiManager } from '../../api';
@@ -9,6 +9,7 @@ import { ApiManager } from '../../api';
 import '../../styles/game.css';
 
 import { GameHeaderParentView } from '../../models/game';
+import { UserContext } from '../common/context';
 import { CreateEditGame } from './createEditGame';
 import { GameDetails } from './gameDetails';
 import { GameHeader } from './gameHeader';
@@ -28,7 +29,6 @@ type PlayerDetailsTableRow = PlayerScores & {
 };
 
 interface ViewGameProps {
-    user: UserDto;
     gameId: string;
     gameName: string;
     doneViewingGame: () => void;
@@ -45,6 +45,8 @@ const getPlayerDetailsTable = (game: GameDto): PlayerDetailsTableRow[] => {
 };
 
 export const Game: React.FC<ViewGameProps> = (props: ViewGameProps) => {
+    const user = useContext(UserContext)!;
+
     const [game, setGame] = React.useState<GameDto | undefined>(undefined);
     const [editingGame, setEditingGame] = React.useState(false);
     const [loadingGame, setLoadingGame] = React.useState(true);
@@ -85,23 +87,23 @@ export const Game: React.FC<ViewGameProps> = (props: ViewGameProps) => {
     useEffect(() => {
         const tagToUse = currentRootTag ?? game?.latestRootTag;
         if (tagToUse) {
-            ApiManager.tagApi.canUserAddTag({ userId: props.user.id, gameId: props.gameId, dateOverride: props.dateOverride }).then((userCanAddRootTag) => {
-                setUserCanAddRootTag(userCanAddRootTag);
+            ApiManager.tagApi.canUserAddTag({ userId: user.id, gameId: props.gameId, dateOverride: props.dateOverride }).then(({ result }) => {
+                setUserCanAddRootTag(result);
             });
         } else if (!loadingGame) {
             setUserCanAddRootTag(true);
         }
-    }, [game?.latestRootTag, canAddRootTagRefreshKey, currentRootTag, props.user.id, props.gameId, props.dateOverride, loadingGame]);
+    }, [game?.latestRootTag, canAddRootTagRefreshKey, currentRootTag, user.id, props.gameId, props.dateOverride, loadingGame]);
 
     useEffect(() => {
         if (currentRootTag) {
-            ApiManager.tagApi.canUserAddSubtag({ userId: props.user.id, tagId: currentRootTag.id }).then((userCanAddSubtag) => {
-                setUserCanAddSubtag(userCanAddSubtag);
+            ApiManager.tagApi.canUserAddSubtag({ userId: user.id, tagId: currentRootTag.id }).then(({ result }) => {
+                setUserCanAddSubtag(result);
             });
         } else {
             setUserCanAddSubtag(false);
         }
-    }, [currentRootTag, props.user.id]);
+    }, [currentRootTag, user.id]);
 
     const createNewSubtag = useCallback(
         ({ imageUrl }: { imageUrl: string }) => {
@@ -190,14 +192,14 @@ export const Game: React.FC<ViewGameProps> = (props: ViewGameProps) => {
     );
 
     if (editingGame) {
-        return <CreateEditGame user={props.user} doneCreatingGame={() => setEditingGame(false)} game={game!} />;
+        return <CreateEditGame doneCreatingGame={() => setEditingGame(false)} game={game!} />;
     }
 
     let innerDiv: React.ReactNode;
     if (!game || loadingGame) {
         innerDiv = <div className="game-details">Loading...</div>;
     } else if (currentView === GameHeaderParentView.DETAILS) {
-        innerDiv = <GameDetails game={game} user={props.user} playerDetailsTable={playerDetailsTable} setEditingGame={() => setEditingGame(true)} deleteGame={() => props.deleteGame()} />;
+        innerDiv = <GameDetails game={game} playerDetailsTable={playerDetailsTable} setEditingGame={() => setEditingGame(true)} deleteGame={() => props.deleteGame()} />;
     } else if (currentView === GameHeaderParentView.SCROLLER) {
         innerDiv = (
             <TagScroller

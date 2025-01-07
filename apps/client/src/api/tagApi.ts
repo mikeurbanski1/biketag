@@ -1,7 +1,7 @@
 import { AxiosError } from 'axios';
 import { Dayjs } from 'dayjs';
 
-import { CreateTagDto, TagDto } from '@biketag/models';
+import { CreateTagDto, EnrichedTagDto, PrimitiveResponse, TagDto } from '@biketag/models';
 
 import { AbstractApi } from './abstractApi';
 
@@ -9,6 +9,10 @@ export class TagNotFoundError extends Error {}
 
 export class TagApi extends AbstractApi {
     private tagCache: Record<string, TagDto> = {};
+    //userId to gameId to result
+    private userCanAddRootTagCache: Record<string, Record<string, boolean>> = {};
+    // userId to tagId (root tag) to result
+    private userCanAddSubtagCache: Record<string, Record<string, boolean>> = {};
 
     constructor({ clientId }: { clientId: string }) {
         super({ clientId, logPrefix: '[TagApi]' });
@@ -70,7 +74,10 @@ export class TagApi extends AbstractApi {
         }
     }
 
-    public async canUserAddTag({ userId, gameId, dateOverride }: { userId: string; gameId: string; dateOverride?: Dayjs }): Promise<boolean> {
+    public async canUserAddTag({ userId, gameId, dateOverride }: { userId: string; gameId: string; dateOverride?: Dayjs }): Promise<PrimitiveResponse<boolean>> {
+        if (userId in this.userCanAddRootTagCache && gameId in this.userCanAddRootTagCache[userId]) {
+            return { result: this.userCanAddRootTagCache[userId][gameId] };
+        }
         try {
             const resp = await this.axiosInstance.request<{ result: boolean }>({
                 method: 'get',
@@ -81,25 +88,39 @@ export class TagApi extends AbstractApi {
                 throw new Error(`Unexpected response: ${resp.status} - ${resp.statusText}`);
             }
             const { result } = resp.data;
+            if (userId in this.userCanAddRootTagCache) {
+                this.userCanAddRootTagCache[userId][gameId] = result;
+            } else {
+                this.userCanAddRootTagCache[userId] = { [gameId]: result };
+            }
             this.logger.info('[canUserAddTag] got response', { data: resp.data });
-            return result;
+            return { result };
         } catch (err) {
             this.logger.error(`[canUserAddTag] got an error response`, { err });
             throw err;
         }
     }
 
-    public async canUserAddSubtag({ userId, tagId }: { userId: string; tagId: string }): Promise<boolean> {
+    public async canUserAddSubtag({ userId, tagId }: { userId: string; tagId: string }): Promise<PrimitiveResponse<boolean>> {
+        if (userId in this.userCanAddSubtagCache && tagId in this.userCanAddSubtagCache[userId]) {
+            return { result: this.userCanAddSubtagCache[userId][tagId] };
+        }
         try {
-            const resp = await this.axiosInstance.request<boolean>({
+            const resp = await this.axiosInstance.request<{ result: boolean }>({
                 method: 'get',
-                url: `/tags/user/${userId}/in-chain/${tagId}`,
+                url: `/tags/user/${userId}/can-add-subtag/${tagId}`,
             });
             if (resp.status !== 200) {
                 throw new Error(`Unexpected response: ${resp.status} - ${resp.statusText}`);
             }
+            const { result } = resp.data;
+            if (userId in this.userCanAddSubtagCache) {
+                this.userCanAddSubtagCache[userId][tagId] = result;
+            } else {
+                this.userCanAddSubtagCache[userId] = { [tagId]: result };
+            }
             this.logger.info('[canUserAddSubtag] got response', { data: resp.data });
-            return !resp.data; // if the user is in the chain than we cannot add a tag
+            return { result };
         } catch (err) {
             this.logger.error(`[canUserAddSubtag] got an error response`, { err });
             throw err;
@@ -125,6 +146,7 @@ export class TagApi extends AbstractApi {
                     tagId: newTag.previousRootTagId,
                     update: { nextRootTagId: newTag.id },
                 });
+                this.userCanAddRootTagCache[newTag.creator.id] = { [newTag.gameId]: false };
             } else {
                 this.updateTagInCache({
                     tagId: newTag.parentTagId,
@@ -134,6 +156,7 @@ export class TagApi extends AbstractApi {
                     tagId: newTag.rootTagId,
                     update: { lastTagInChainId: newTag.id },
                 });
+                this.userCanAddSubtagCache[newTag.creator.id] = { [newTag.rootTagId!]: false };
             }
 
             return resp.data;
@@ -143,12 +166,12 @@ export class TagApi extends AbstractApi {
         }
     }
 
-    public async getRootTagsForGame({ gameId }: { gameId: string }): Promise<TagDto[]> {
+    public async getRootTagsForGame({ gameId }: { gameId: string }): Promise<EnrichedTagDto[]> {
         try {
-            const tags = await this.getWithPaging<TagDto>({
+            const tags = await this.getWithPaging<EnrichedTagDto>({
                 config: {
                     method: 'get',
-                    url: `/tags/game/${gameId}/root-tags`,
+                    url: `/tags/game/${gameId}/root-tags?enrich=true`,
                 },
             });
             tags.forEach((tag) => {
