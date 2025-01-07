@@ -19,6 +19,7 @@ interface TagProps {
     tag: TagTypeWithId; // string is a tagId
     isActive: boolean;
     selectTag?: (tag: TagDto) => void;
+    knownUserCanAddTag?: boolean;
 }
 
 interface LoadingTagDefinedProps {
@@ -50,6 +51,7 @@ const getTimeString = (tag: TagDto): string => {
 export const Tag: React.FC<TagProps> = (props: TagProps): React.ReactNode => {
     logger.info(`[Tag] render()`, { props });
     const user = useContext(UserContext)!;
+    const { knownUserCanAddTag } = props;
 
     // we are only displaying loading if we know we are getting a tag
     // if isLoading is true, tagToRender will be undefined, and vice versa
@@ -57,17 +59,28 @@ export const Tag: React.FC<TagProps> = (props: TagProps): React.ReactNode => {
     const tagToUse = isLoadedTag(props.tag) ? props.tag : ApiManager.tagApi.getTagFromCache({ id: props.tag as string });
     const [isLoading, setIsLoading] = useState<boolean>(!tagToUse && isTagToLoad(props));
     const [tagToRender, setTagToRender] = useState<TagTypeWithId | undefined>(tagToUse);
+    const [userCanAddTag, setUserCanAddTag] = useState<boolean | undefined>(knownUserCanAddTag ?? undefined);
 
     useEffect(() => {
         if (isLoading) {
             ApiManager.tagApi.getTag({ id: props.tag as string }).then((tag) => {
                 setIsLoading(false);
                 setTagToRender(tag);
+                if (userCanAddTag === undefined && tag && tag.isRoot) {
+                    ApiManager.tagApi.canUserAddSubtag({ tagId: tag.id, userId: user.id }).then(({ result }) => {
+                        setUserCanAddTag(result);
+                    });
+                }
+            });
+        } else if (userCanAddTag === undefined && isLoadedTag(tagToRender) && tagToRender.isRoot && !tagToRender.isPending) {
+            ApiManager.tagApi.canUserAddSubtag({ tagId: tagToRender.id, userId: user.id }).then(({ result }) => {
+                setUserCanAddTag(result);
             });
         }
-    });
+    }, [isLoading, props.tag, tagToRender, user.id, userCanAddTag]);
 
-    if (isLoading) {
+    if (isLoading || (userCanAddTag === undefined && isLoadedTag(tagToRender) && tagToRender.isRoot && !tagToRender.isPending)) {
+        logger.info(`[Tag]`, { userCanAddTag: userCanAddTag ?? 'undefined' });
         return <div className="tag loading">Loading...</div>;
         // } else if (isAddTag(tagToRender)) {
         //     if (!props.selectTag) {
@@ -89,6 +102,10 @@ export const Tag: React.FC<TagProps> = (props: TagProps): React.ReactNode => {
 
         if (tagToRender.creator.id === user.id) {
             classes.push('tag-creator');
+        } else if (userCanAddTag || tagToRender.isPending) {
+            classes.push('tag-incomplete');
+        } else if (userCanAddTag === false) {
+            classes.push('tag-complete');
         }
 
         const className = classes.join(' ');

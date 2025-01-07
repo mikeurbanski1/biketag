@@ -24,7 +24,17 @@ interface TagViewProps {
     selectTag: (tag: TagDto) => void;
 }
 
-const getTagComponent = ({ tag, isActive, selectTag }: { tag: TagDto | string; isActive: boolean; selectTag: (tag: TagDto) => void }): React.ReactNode => {
+const getTagComponent = ({
+    tag,
+    isActive,
+    selectTag,
+    knownUserCanAddTag,
+}: {
+    tag: TagDto | string;
+    isActive: boolean;
+    selectTag: (tag: TagDto) => void;
+    knownUserCanAddTag?: boolean;
+}): React.ReactNode => {
     let tagKey: string;
     if (!tag) {
         tagKey = 'undefined';
@@ -40,7 +50,7 @@ const getTagComponent = ({ tag, isActive, selectTag }: { tag: TagDto | string; i
     if (!isActive) {
         selectThisTag = (tag: TagDto) => selectTag(tag);
     }
-    return <Tag key={tagKey} tag={tag} isActive={isActive} selectTag={selectThisTag} />;
+    return <Tag key={tagKey} tag={tag} isActive={isActive} selectTag={selectThisTag} knownUserCanAddTag={knownUserCanAddTag} />;
 };
 
 export const TagScroller: React.FC<TagViewProps> = ({
@@ -90,17 +100,17 @@ export const TagScroller: React.FC<TagViewProps> = ({
     if (showingAddRootTag) {
         centerTagElement = addRootTag;
         if (currentTag) {
-            leftTagElement = getTagComponent({ tag: currentTag, isActive: false, selectTag });
+            leftTagElement = getTagComponent({ tag: currentTag, isActive: false, selectTag, knownUserCanAddTag: userCanAddSubtag });
         }
     } else if (showingAddSubtag) {
         centerTagElement = addSubtag;
         if (currentTag) {
-            topTagElement = getTagComponent({ tag: currentTag, isActive: false, selectTag });
+            topTagElement = getTagComponent({ tag: currentTag, isActive: false, selectTag, knownUserCanAddTag: userCanAddSubtag });
         }
     } else if (showingPendingTag) {
         centerTagElement = getTagComponent({ tag: game.pendingRootTag!, isActive: true, selectTag });
         if (currentTag) {
-            leftTagElement = getTagComponent({ tag: currentTag, isActive: false, selectTag });
+            leftTagElement = getTagComponent({ tag: currentTag, isActive: false, selectTag, knownUserCanAddTag: userCanAddSubtag });
         }
     } else if (currentTag) {
         // showing an actual tag - this will always be true, but we have a type assertion now
@@ -125,7 +135,8 @@ export const TagScroller: React.FC<TagViewProps> = ({
             }
         } else {
             if (currentTag.parentTagId) {
-                topTagElement = getTagComponent({ tag: currentTag.parentTagId, isActive: false, selectTag });
+                // knownUserCanAddTag will be set if the parent tag is the root tag
+                topTagElement = getTagComponent({ tag: currentTag.parentTagId, isActive: false, selectTag, knownUserCanAddTag: userCanAddSubtag });
             }
             if (currentTag.nextTagId) {
                 bottomTagElement = getTagComponent({ tag: currentTag.nextTagId, isActive: false, selectTag });

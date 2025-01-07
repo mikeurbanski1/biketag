@@ -9,12 +9,12 @@ import { ApiManager } from '../../api';
 import '../../styles/game.css';
 
 import { GameHeaderParentView } from '../../models/game';
+import { UserContext } from '../common/context';
 import { CreateEditGame } from './createEditGame';
 import { GameDetails } from './gameDetails';
 import { GameHeader } from './gameHeader';
 import { TagCardView } from './tagCardView';
 import { TagScroller } from './tagScroller';
-import { UserContext } from '../common/context';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const logger = new Logger({ prefix: '[ViewGame]' });
@@ -87,8 +87,8 @@ export const Game: React.FC<ViewGameProps> = (props: ViewGameProps) => {
     useEffect(() => {
         const tagToUse = currentRootTag ?? game?.latestRootTag;
         if (tagToUse) {
-            ApiManager.tagApi.canUserAddTag({ userId: user.id, gameId: props.gameId, dateOverride: props.dateOverride }).then((userCanAddRootTag) => {
-                setUserCanAddRootTag(userCanAddRootTag);
+            ApiManager.tagApi.canUserAddTag({ userId: user.id, gameId: props.gameId, dateOverride: props.dateOverride }).then(({ result }) => {
+                setUserCanAddRootTag(result);
             });
         } else if (!loadingGame) {
             setUserCanAddRootTag(true);
@@ -97,8 +97,8 @@ export const Game: React.FC<ViewGameProps> = (props: ViewGameProps) => {
 
     useEffect(() => {
         if (currentRootTag) {
-            ApiManager.tagApi.canUserAddSubtag({ userId: user.id, tagId: currentRootTag.id }).then((userCanAddSubtag) => {
-                setUserCanAddSubtag(userCanAddSubtag);
+            ApiManager.tagApi.canUserAddSubtag({ userId: user.id, tagId: currentRootTag.id }).then(({ result }) => {
+                setUserCanAddSubtag(result);
             });
         } else {
             setUserCanAddSubtag(false);

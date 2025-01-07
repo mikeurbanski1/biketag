@@ -12,11 +12,11 @@
 }
 
 .tag-complete {
-    background-color: var(--tag-complete-color);
+    background-color: var(--root-tag-complete-color);
 }
 
 .tag-incomplete {
-    background-color: var(--tag-incomplete-color);
+    background-color: var(--root-tag-incomplete-color);
 }
 
 .subtag {

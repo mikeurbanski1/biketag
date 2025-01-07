@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 import { Body, Controller, Get, Header, Path, Post, Query, Res, Route, SuccessResponse, TsoaResponse } from 'tsoa';
 
-import { CreateTagDto, TagDto } from '@biketag/models';
+import { CreateTagDto, PrimitiveResponse, TagDto } from '@biketag/models';
 import { Logger, USER_ID_HEADER } from '@biketag/utils';
 
 import { TagService } from './tagService';
@@ -33,18 +33,18 @@ export class TagController extends Controller {
         return tag!;
     }
 
-    @Get('/user/{userId}/in-chain/{tagId}')
+    @Get('/user/{userId}/can-add-subtag/{tagId}')
     @SuccessResponse('200', 'Ok')
-    public async userInTagChain(@Path() userId: string, @Path() tagId: string): Promise<boolean> {
-        logger.info(`[userInTagChain]`, { userId, tagId });
-        const res = await this.tagsService.userInTagChain({ userId, tagId });
-        logger.info('[userInTagChain] got result', { res });
-        return res;
+    public async canUserAddSubtag(@Path() userId: string, @Path() tagId: string): Promise<PrimitiveResponse<boolean>> {
+        logger.info(`[canUserAddSubtag]`, { userId, tagId });
+        const result = !(await this.tagsService.userInTagChain({ userId, tagId }));
+        logger.info('[canUserAddSubtag] got result', { result });
+        return { result };
     }
 
     @Get('/user/{userId}/game/{gameId}/can-post-new-tag')
     @SuccessResponse('200', 'Ok')
-    public async canPostNewTag(@Path() userId: string, @Path() gameId: string, @Query('dateOverride') dateOverride?: string): Promise<{ result: boolean; reason?: string }> {
+    public async canPostNewTag(@Path() userId: string, @Path() gameId: string, @Query('dateOverride') dateOverride?: string): Promise<PrimitiveResponse<boolean>> {
         logger.info(`[canPostNewTag]`, { userId, gameId });
         const res = await this.tagsService.canPostNewTag({ userId, gameId, dateOverride: dateOverride ? dayjs(dateOverride) : undefined });
         logger.info('[canPostNewTag] got result', { res });
