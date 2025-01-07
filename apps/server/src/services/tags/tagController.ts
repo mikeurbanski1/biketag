@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 import { Body, Controller, Get, Header, Path, Post, Query, Res, Route, SuccessResponse, TsoaResponse } from 'tsoa';
 
-import { CreateTagDto, TagDto, TagWithUserContext } from '@biketag/models';
+import { CreateTagDto, TagDto } from '@biketag/models';
 import { Logger, USER_ID_HEADER } from '@biketag/utils';
 
 import { TagService } from './tagService';
@@ -14,10 +14,7 @@ export class TagController extends Controller {
 
     @Get('/{id}')
     @SuccessResponse('200', 'ok')
-    public async getTag(
-        @Path() id: string, 
-        @Header(USER_ID_HEADER) userId: string,
-        @Res() notFoundResponse: TsoaResponse<404, { reason: string }>): Promise<TagWithUserContext> {
+    public async getTag(@Path() id: string, @Header(USER_ID_HEADER) userId: string, @Res() notFoundResponse: TsoaResponse<404, { reason: string }>): Promise<TagDto> {
         logger.info(`[getTag] id: ${id}`);
         const tag = await this.tagsService.getWithPendingCheck({ tagId: id, userId });
         if (!tag) {
@@ -56,9 +53,9 @@ export class TagController extends Controller {
 
     @Get('/game/{gameId}/root-tags')
     @SuccessResponse('200', 'Ok')
-    public async getRootTags(@Path() gameId: string, @Query() page: number = 1, @Query() pageSize: number = 10, @Header(USER_ID_HEADER) userId: string): Promise<{ items: TagWithUserContext[]; total: number }> {
+    public async getRootTags(@Path() gameId: string, @Query() page: number = 1, @Query() pageSize: number = 10): Promise<{ items: TagDto[]; total: number }> {
         logger.info(`[getRootTags]`, { gameId, page, pageSize });
-        const { items, total } = await this.tagsService.getRootTags({ userId, gameId, page, pageSize });
+        const { items, total } = await this.tagsService.getRootTags({ gameId, page, pageSize });
         logger.info('[getRootTags] got tags', { items, total });
         return { items, total };
     }

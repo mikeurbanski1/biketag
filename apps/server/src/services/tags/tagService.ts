@@ -3,7 +3,7 @@ import dayjs, { Dayjs } from 'dayjs';
 import { Jimp } from 'jimp';
 import { UUID } from 'mongodb';
 
-import { BaseEntityWithoutId, CreateTagParams, GameEntity, TagDto, TagEntity, tagFields, TagStreamIntegration, TagWithImage, TagWithImageData, TagWithUserContext, UserDto } from '@biketag/models';
+import { BaseEntityWithoutId, CreateTagParams, GameEntity, TagDto, TagEntity, tagFields, TagStreamIntegration, TagWithImage, TagWithImageData, UserDto } from '@biketag/models';
 import { convertDateToRelativeDate, getDateOnly, isEarlierDate, isSameDate } from '@biketag/utils';
 
 import { CannotPostTagError, tagServiceErrors } from '../../common/errors';
@@ -33,7 +33,11 @@ export class TagService extends BaseService<TagDto, CreateTagParams, TagEntity, 
         const image = await Jimp.read(imageUrl);
 
         const blurredImage = await image.blur(20).getBase64('image/jpeg');
+        this.logger.info(`[getImageAsBase64] blurred image`, { blurredImage });
 
+        // image.blur(25).write(`/tmp/blurred-${new UUID()}.png`);
+        // const axiosInstance = axios.create();
+        // const response = await axiosInstance.get(imageUrl, { responseType: 'arraybuffer' });
         return blurredImage;
     }
 
@@ -44,50 +48,6 @@ export class TagService extends BaseService<TagDto, CreateTagParams, TagEntity, 
         delete tagDto.imageUrl;
 
         return tagDto as TagWithImageData;
-    }
-
-    private async bulkConvertToTagResponse({
-        tags,
-        userId,
-        knownPendingTagId,
-    }: {
-        tags: TagEntity[];
-        userId: string;
-        knownPendingTagId?: string | null; // if null, then it asserts that there is no pending tag
-    }): Promise<TagWithUserContext[]> {
-        if (knownPendingTagId === undefined) {
-            knownPendingTagId = (await this.gamesService.getRequiredAsEntity({ id: tags[0].gameId })).pendingRootTagId;
-        }
-        return await Promise.all(tags.map((tag) => this.convertToTagResponse({ tag, userId, knownPendingTagId })));
-    }
-
-    private async convertToTagResponse({
-        tag,
-        userId,
-        knownPendingTagId,
-        knownCreator,
-    }: {
-        tag: TagEntity;
-        userId: string;
-        knownPendingTagId?: string | null; // if null, then it asserts that there is no pending tag
-        knownCreator?: UserDto;
-    }): Promise<TagWithUserContext> {
-
-        const pendingTagId = knownPendingTagId ?? (knownPendingTagId === null ? undefined : (await this.gamesService.getRequiredAsEntity({ id: tag.gameId })).pendingRootTagId);
-
-        if (tag.creatorId !== userId && pendingTagId === tag.id) {
-            return {
-                ...await this.generateNonCreatorPendingTag({ tag, creator: knownCreator }),
-                isCreator: false,
-                canAddSubtag: false,
-            };
-        } else {
-            return {
-                ...await this.convertToDto(tag, { creator: knownCreator}),
-                isCreator: tag.creatorId === userId,
-                canAddSubtag: !await this.userInTagChain({ userId, tagId: tag.id }),
-            };
-        }
     }
 
     /**
@@ -104,13 +64,16 @@ export class TagService extends BaseService<TagDto, CreateTagParams, TagEntity, 
         userId: string;
         knownPendingTagId?: string;
         knownCreator?: UserDto;
-    }): Promise<TagWithUserContext | null> {
+    }): Promise<TagDto | null> {
         const tag = await this.dalService.getById({ id: tagId });
         if (!tag) {
             return null;
         }
 
-        return await this.convertToTagResponse({ tag, userId, knownPendingTagId, knownCreator });
+        if (tag.creatorId !== userId && (knownPendingTagId ?? (await this.gamesService.getRequiredAsEntity({ id: tag.gameId })).pendingRootTagId) === tagId) {
+            return this.generateNonCreatorPendingTag({ tag, creator: knownCreator });
+        }
+        return await this.convertToDto(tag);
     }
 
     public async getAsPendingTag({ id }: { id: string }): Promise<TagDto> {
@@ -292,14 +255,11 @@ export class TagService extends BaseService<TagDto, CreateTagParams, TagEntity, 
         await this.dalService.update({ id: tagId, updateParams });
     }
 
-    public async getRootTags({ userId, gameId, page, pageSize }: { userId: string; gameId: string; page: number; pageSize: number }): Promise<{ items: TagWithUserContext[]; total: number }> {
+    public async getRootTags({ gameId, page, pageSize }: { gameId: string; page: number; pageSize: number }): Promise<{ items: TagDto[]; total: number }> {
         this.logger.info(`[getRootTags]`, { gameId, page, pageSize });
         const filter = { gameId, isRoot: true, isPending: false };
         const { items, total } = await this.dalService.findAll({ filter, skip: (page - 1) * pageSize, limit: pageSize, returnTotal: true, sort: { forDate: -1 } });
-        
-        const game = await this.gamesService.getRequiredAsEntity({ id: gameId });
-        const tags = await this.bulkConvertToTagResponse({ tags: items, userId, knownPendingTagId: game.pendingRootTagId ?? null });
-        
+        const tags = await Promise.all(items.map((tag) => this.convertToDto(tag)));
         this.logger.info(`[getRootTags] got tags`, { tags, total });
         return { items: tags, total };
     }
@@ -334,6 +294,50 @@ export class TagService extends BaseService<TagDto, CreateTagParams, TagEntity, 
             return rootTag;
         }
     }
+
+    /**
+     * Sets the tag ID to be the next tag of the current last tag in the chain. Returns that tag.
+     *
+     * OLD VERSION before adding lastTagInChain link
+     */
+    // private async setLastTagInChain({ tag, tagId, rootTag }: { tag: CreateTagParams; tagId: string; rootTag: TagEntity }): Promise<TagEntity> {
+    //     this.logger.info(`[setLastTagInChain]`, { tag });
+    //     const rootTagId = tag.rootTagId!;
+    //     // find the tag that is in this game,
+    //     // and, either:
+    //     // - has the same root tag as the tag we are adding, or
+    //     // - is the rootTag of this chain (meaning we are adding the first subtag)
+    //     // and has no next tag (is the last in the chain)
+    //     const filter = {
+    //         $and: [
+    //             {
+    //                 gameId: tag.gameId,
+    //             },
+    //             {
+    //                 $or: [
+    //                     {
+    //                         rootTagId,
+    //                     },
+    //                     {
+    //                         $and: [
+    //                             {
+    //                                 ...this.dalService.getIdFilter(rootTagId),
+    //                                 isRoot: true,
+    //                             },
+    //                         ],
+    //                     },
+    //                 ],
+    //             },
+    //             {
+    //                 nextTagId: { $exists: false },
+    //             },
+    //         ],
+    //     };
+    //     const parentTag = (await this.dalService.findOne({ filter }))!;
+    //     await this.updateTagLinks({ tagIdToUpdate: parentTag.id, tagIdToSet: tagId, fields: ['nextTagId'] });
+    //     await this.updateTagLinks({ tagIdToUpdate: parentTag.id, tagIdToSet: tagId, fields: ['nextTagId'] });
+    //     return parentTag;
+    // }
 
     /**
      * Returns whether the given user is the creator of this tag or any tag in the chain below this one (should generally be called with the root tag)

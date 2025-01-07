@@ -1,4 +1,4 @@
-import { BaseDto, TagDto, TagWithUserContext } from '.';
+import { BaseDto, TagDto } from '.';
 import { GameScore, TagStreamIntegration } from '../common';
 import { GameRoles, PlayerGame, PlayerGameDto } from '../common/game';
 import { UserDto } from './user';
@@ -8,11 +8,15 @@ export interface GameDto extends BaseDto {
     name: string;
     creator: UserDto;
     players: PlayerGameDto[];
-    firstRootTag?: TagWithUserContext;
-    latestRootTag?: TagWithUserContext;
-    pendingRootTag?: TagWithUserContext;
+    firstRootTag?: TagDto;
+    latestRootTag?: TagDto;
+    pendingRootTag?: TagDto;
     gameScore: GameScore;
     tagStreamIntegration?: TagStreamIntegration;
+}
+
+export interface GameDtoWithPendingTagOwner extends GameDto {
+    ownerPendingTag: TagDto;
 }
 
 export type GameSummary = Pick<GameDto, 'id' | 'name' | 'creator'>;
