@@ -105,7 +105,7 @@
     row-gap: 10px;
     height: 100%;
     width: 100%;
-    overflow: scroll;
+    /* overflow: scroll; */
 }
 
 .game-header {
@@ -151,6 +151,68 @@ on top of the empty space
 .collapsed > .game-header-link {
     grid-column: 1;
     grid-row: auto;
+}
+
+.game-card-view {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, 250px);
+    grid-auto-rows: 332px;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    gap: 10px;
+    row-gap: 10px;
+    height: 100%;
+    width: 100%;
+    /* overflow: scroll; */
+}
+
+.game-card {
+    box-shadow: 5px 5px 5px rgb(0, 0, 0, 0.5);
+    background-color: rgb(201, 201, 201);
+    border-radius: 10px;
+    filter: brightness(100%); /* for cards, we do not need to dim clickable */
+    width: 100%;
+    height: 100%;
+    display: grid;
+    grid-template-rows: 1fr auto;
+    /* display: grid; */
+    /* grid-template-rows: 1fr auto; */
+
+    --game-card-padding: 12.5px;
+}
+
+.game-card:hover {
+    filter: brightness(110%);
+    cursor: pointer;
+}
+
+.game-card-image-placeholder {
+    margin: auto;
+    font-style: italic;
+}
+
+.game-card-image-container {
+    width: calc(100% - 25px);
+    height: calc(100% - 25px);
+    margin: auto;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+}
+
+.game-card-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.game-card-footer {
+    margin: auto;
+    padding-bottom: var(--game-card-padding);
+    width: calc(100% - 2 * var(--game-card-padding));
+    text-align: center;
+    color: blue;
 }
 
 /* .cards-header {

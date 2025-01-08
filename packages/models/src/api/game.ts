@@ -19,7 +19,7 @@ export interface GameDtoWithPendingTagOwner extends GameDto {
     ownerPendingTag: TagDto;
 }
 
-export type GameSummary = Pick<GameDto, 'id' | 'name' | 'creator'>;
+export type GameSummary = Pick<GameDto, 'id' | 'name' | 'creator'> & { latestRootTagImageUrl?: string };
 
 export interface CreateGameDto {
     name: string;
