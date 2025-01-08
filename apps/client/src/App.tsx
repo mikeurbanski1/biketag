@@ -6,12 +6,12 @@ import { GameDto, GameSummary, UserDto } from '@biketag/models';
 import { Logger } from '@biketag/utils';
 
 import { ApiManager } from './api';
+import { UserContext } from './components/common/context';
 import { NavBar } from './components/common/navBar';
 import { CreateEditGame } from './components/game/createEditGame';
 import { Game } from './components/game/game';
 import { GameList } from './components/game/gameList';
 import { Login } from './components/login';
-import { UserContext } from './components/common/context';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const logger = new Logger({});
@@ -98,7 +98,7 @@ export const App: React.FC = () => {
     } else if (appState === AppState.CREATING_GAME) {
         inner = <CreateEditGame doneCreatingGame={doneCreatingGame} />;
     } else if (appState === AppState.HOME) {
-        inner = <GameList selectGame={setGameCallback} startCreateGame={startCreateGame} />;
+        inner = <GameList selectGame={setGameCallback} />;
     } else if (appState === AppState.VIEWING_GAME) {
         inner = <Game gameId={game!.id} gameName={game!.name} deleteGame={deleteGame} doneViewingGame={doneViewingGame} dateOverride={dateOverride} />;
     }

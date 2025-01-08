@@ -222,7 +222,8 @@ export class GameService extends BaseService<GameDto, CreateGameParams, GameEnti
 
         const games = await this.dalService.getGamesForPlayer({ userId });
         const creators = await Promise.all(games.map((game) => this.usersService.getRequired({ id: game.creatorId })));
-        return games.map((game, index) => ({ id: game.id, name: game.name, creator: creators[index] }));
+        const rootTags = await Promise.all(games.map((game) => (game.latestRootTagId ? this.tagsService.getRequiredAsEntity({ id: game.latestRootTagId }) : undefined)));
+        return games.map((game, index) => ({ id: game.id, name: game.name, creator: creators[index], latestRootTagImageUrl: rootTags[index]?.imageUrl }));
     }
 
     private setPlayerInGame({ game, userId, role }: { game: GameEntity; userId: string; role: GameRoles }): void {
