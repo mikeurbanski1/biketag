@@ -20,23 +20,20 @@ export const GameList: React.FC<GameListProps> = ({ selectGame }: GameListProps)
 
     useEffect(() => {
         ApiManager.gameApi.getGameSummaryForPlayer({ userId: user.id }).then((games) => {
+            games.sort((a, b) => b.lastActivityDate.localeCompare(a.lastActivityDate));
             setGames(games);
             setLoading(false);
         });
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    return (
-        <div className="landing">
-            {loading ? (
-                <div className="game-card-view">Loading games...</div>
-            ) : (
-                <div className="game-card-view">
-                    {games.map((game) => (
-                        <GameCard key={game.id} game={game} selectGame={() => selectGame(game)} />
-                    ))}
-                </div>
-            )}
+    return loading ? (
+        <div className="game-card-view">Loading games...</div>
+    ) : (
+        <div className="game-card-view">
+            {games.map((game) => (
+                <GameCard key={game.id} game={game} selectGame={() => selectGame(game)} />
+            ))}
         </div>
     );
 };

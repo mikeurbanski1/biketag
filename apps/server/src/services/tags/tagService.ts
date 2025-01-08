@@ -4,7 +4,7 @@ import { Jimp } from 'jimp';
 import { UUID } from 'mongodb';
 
 import { BaseEntityWithoutId, CreateTagParams, EnrichedTagDto, GameEntity, TagDto, TagEntity, tagFields, TagStreamIntegration, TagWithImage, TagWithImageData, UserDto } from '@biketag/models';
-import { convertDateToRelativeDate, getDateOnly, isEarlierDate, isSameDate } from '@biketag/utils';
+import { convertDateToRelativeDate, DATE_HIDDEN_FORMAT, getDateOnly, isEarlierDate, isSameDate } from '@biketag/utils';
 
 import { CannotPostTagError, tagServiceErrors } from '../../common/errors';
 import { PostTagStream } from '../../common/models/enum';
@@ -166,7 +166,7 @@ export class TagService extends BaseService<TagDto, CreateTagParams, TagEntity, 
             params.postedDate = dayjs().toISOString();
         }
 
-        let forDate = params.postedDate;
+        let forDate = dayjs(params.postedDate).format(DATE_HIDDEN_FORMAT);
 
         // create a new tag object id now so we can update references with fewer calls / cleaner flow
         const tagUuid = new UUID().toString();
@@ -176,7 +176,7 @@ export class TagService extends BaseService<TagDto, CreateTagParams, TagEntity, 
         if (isRoot) {
             isPending = await this.checkIfTagShouldBePending({ gameId, dateOverride: dayjs(params.postedDate) });
             if (isPending) {
-                forDate = dayjs(params.postedDate).add(1, 'day').format('YYYY-MM-DD');
+                forDate = dayjs(params.postedDate).add(1, 'day').format(DATE_HIDDEN_FORMAT);
             }
             if (isPending && game.pendingRootTagId) {
                 throw new CannotPostTagError('There is already a pending tag for this game');

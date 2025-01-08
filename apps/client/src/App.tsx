@@ -29,7 +29,7 @@ export const App: React.FC = () => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [clientId, setClientId] = React.useState<string>(uuidv4());
     const [user, setUser] = React.useState<UserDto | undefined>(undefined);
-    const [game, setGame] = React.useState<GameSummary | undefined>(undefined);
+    const [game, setGame] = React.useState<{ id: string; name: string } | undefined>(undefined);
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [dateOverride, setDateOverride] = React.useState<Dayjs>(dayjs());
 

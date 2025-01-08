@@ -1,7 +1,7 @@
 import dayjs, { Dayjs } from 'dayjs';
 
 import { CreateTagParams, GameRoles, IntegrationSource, TagDto } from '@biketag/models';
-import { Logger } from '@biketag/utils';
+import { DATE_HIDDEN_FORMAT, Logger } from '@biketag/utils';
 
 import { PostTagStream } from '../common/models/enum';
 import { MongoDbProvider } from '../dal/providers/mongoProvider';
@@ -139,6 +139,7 @@ const bootstrapData = async () => {
                 serverId: '1324105214868983839',
                 channelId: '1324152064284033065',
             },
+            createdDateOverride: dayjs().subtract(7, 'days').format(DATE_HIDDEN_FORMAT),
         }),
         await gameService.create({
             name: "Mike's bike tag!",
@@ -156,6 +157,7 @@ const bootstrapData = async () => {
                 serverId: '1324105214868983839',
                 channelId: '1324152085301956618',
             },
+            createdDateOverride: dayjs().subtract(6, 'days').format(DATE_HIDDEN_FORMAT),
         }),
         await gameService.create({
             name: "Katie's bike tag!",
@@ -171,6 +173,7 @@ const bootstrapData = async () => {
                 serverId: '1324105214868983839',
                 channelId: '1324152112019669024',
             },
+            createdDateOverride: dayjs().subtract(1, 'days').format(DATE_HIDDEN_FORMAT),
         }),
     ];
 
