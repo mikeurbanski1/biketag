@@ -4,6 +4,7 @@ import { GameScore, PlayerGame, TagStreamIntegration } from '../common';
 export interface GameEntity extends BaseEntity {
     name: string;
     creatorId: string;
+    createdDate: string;
     players: PlayerGame[];
     firstRootTagId?: string;
     latestRootTagId?: string;

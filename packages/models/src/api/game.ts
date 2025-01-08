@@ -7,6 +7,7 @@ export interface GameDto extends BaseDto {
     id: string;
     name: string;
     creator: UserDto;
+    createdDate: string;
     players: PlayerGameDto[];
     firstRootTag?: TagDto;
     latestRootTag?: TagDto;
@@ -19,7 +20,7 @@ export interface GameDtoWithPendingTagOwner extends GameDto {
     ownerPendingTag: TagDto;
 }
 
-export type GameSummary = Pick<GameDto, 'id' | 'name' | 'creator'> & { latestRootTagImageUrl?: string };
+export type GameSummary = Pick<GameDto, 'id' | 'name' | 'creator' | 'createdDate'> & { latestRootTagImageUrl?: string; lastActivityDate: string };
 
 export interface CreateGameDto {
     name: string;
@@ -27,6 +28,7 @@ export interface CreateGameDto {
     firstRootTagId?: string;
     latestRootTagId?: string;
     tagStreamIntegration?: TagStreamIntegration;
+    createdDateOverride?: string;
 }
 
 export interface CreateGameParams extends CreateGameDto {

@@ -64,7 +64,7 @@ export class GameApi extends AbstractApi {
 
     public async getGameSummaryForPlayer({ userId }: { userId: string }): Promise<GameSummary[]> {
         try {
-            const resp = await this.axiosInstance.request<GameDto[]>({
+            const resp = await this.axiosInstance.request<GameSummary[]>({
                 method: 'get',
                 url: `/games/player/${userId}/summary`,
             });

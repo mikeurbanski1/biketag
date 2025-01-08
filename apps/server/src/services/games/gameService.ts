@@ -1,5 +1,7 @@
+import dayjs from 'dayjs';
+
 import { BaseEntityWithoutId, CreateGameParams, GameDto, GameEntity, GameRoles, GameSummary, PlayerGame, PlayerScores, TagStats } from '@biketag/models';
-import { copyDefinedProperties } from '@biketag/utils';
+import { copyDefinedProperties, DATE_HIDDEN_FORMAT } from '@biketag/utils';
 
 import { CannotRemovePlayerError, gameServiceErrors, UserNotFoundError } from '../../common/errors';
 import { GameDalService } from '../../dal/services/gameDalService';
@@ -39,6 +41,7 @@ export class GameService extends BaseService<GameDto, CreateGameParams, GameEnti
             id: entity.id,
             name: entity.name,
             creator: await this.usersService.getRequired({ id: entity.creatorId }),
+            createdDate: entity.createdDate,
             players: await Promise.all(entity.players.map(async (p) => ({ ...p, user: await this.usersService.getRequired({ id: p.userId }) }))),
             firstRootTag: entity.firstRootTagId ? await this.tagsService.getRequired({ id: entity.firstRootTagId }) : undefined,
             latestRootTag: entity.latestRootTagId ? await this.tagsService.getRequired({ id: entity.latestRootTagId }) : undefined,
@@ -60,6 +63,7 @@ export class GameService extends BaseService<GameDto, CreateGameParams, GameEnti
         return Promise.resolve({
             name: dto.name,
             creatorId: dto.creatorId,
+            createdDate: dto.createdDateOverride ?? dayjs().format(DATE_HIDDEN_FORMAT),
             players: dto.players,
             gameScore: { playerScores: {} },
             tagStreamIntegration: dto.tagStreamIntegration,
@@ -87,7 +91,7 @@ export class GameService extends BaseService<GameDto, CreateGameParams, GameEnti
 
         playerScores[creator] = { points: 0, totalTagsPosted: 0, newTagsPosted: 0, tagsPostedOnTime: 0, tagsWon: 0 };
 
-        const game = await this.dalService.create({ ...params, gameScore: { playerScores } });
+        const game = await this.dalService.create({ ...params, createdDate: params.createdDateOverride ?? dayjs().format(DATE_HIDDEN_FORMAT), gameScore: { playerScores } });
         return await this.convertToDto(game);
     }
 
@@ -223,7 +227,14 @@ export class GameService extends BaseService<GameDto, CreateGameParams, GameEnti
         const games = await this.dalService.getGamesForPlayer({ userId });
         const creators = await Promise.all(games.map((game) => this.usersService.getRequired({ id: game.creatorId })));
         const rootTags = await Promise.all(games.map((game) => (game.latestRootTagId ? this.tagsService.getRequiredAsEntity({ id: game.latestRootTagId }) : undefined)));
-        return games.map((game, index) => ({ id: game.id, name: game.name, creator: creators[index], latestRootTagImageUrl: rootTags[index]?.imageUrl }));
+        return games.map((game, index) => ({
+            id: game.id,
+            name: game.name,
+            creator: creators[index],
+            createdDate: game.createdDate,
+            latestRootTagImageUrl: rootTags[index]?.imageUrl,
+            lastActivityDate: rootTags[index]?.forDate ?? game.createdDate,
+        }));
     }
 
     private setPlayerInGame({ game, userId, role }: { game: GameEntity; userId: string; role: GameRoles }): void {
