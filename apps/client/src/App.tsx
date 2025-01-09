@@ -117,7 +117,18 @@ export const App: React.FC = () => {
     } else if (appState === AppState.HOME) {
         inner = <GameList selectGame={setGameCallback} starredGames={userSettings!.starredGames} setUserStarredGame={setUserStarredGame} />;
     } else if (appState === AppState.VIEWING_GAME) {
-        inner = <Game gameId={game!.id} gameName={game!.name} deleteGame={deleteGame} doneViewingGame={doneViewingGame} dateOverride={dateOverride} />;
+        const gameIsStarred = userSettings!.starredGames.includes(game!.id);
+        inner = (
+            <Game
+                gameId={game!.id}
+                gameName={game!.name}
+                deleteGame={deleteGame}
+                doneViewingGame={doneViewingGame}
+                dateOverride={dateOverride}
+                isStarred={gameIsStarred}
+                setUserStarredGame={() => setUserStarredGame({ gameId: game!.id, isStarred: !gameIsStarred })}
+            />
+        );
     }
 
     return (

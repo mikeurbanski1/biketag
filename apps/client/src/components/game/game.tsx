@@ -9,6 +9,7 @@ import { ApiManager } from '../../api';
 import '../../styles/game.css';
 
 import { GameHeaderParentView } from '../../models/game';
+import { ClickableIcon } from '../common/clickableIcon';
 import { UserContext } from '../common/context';
 import { CreateEditGame } from './createEditGame';
 import { GameDetails } from './gameDetails';
@@ -34,6 +35,8 @@ interface ViewGameProps {
     doneViewingGame: () => void;
     deleteGame: () => void;
     dateOverride: Dayjs;
+    isStarred: boolean;
+    setUserStarredGame: () => void;
 }
 
 const getPlayerDetailsTable = (game: GameDto): PlayerDetailsTableRow[] => {
@@ -226,7 +229,7 @@ export const Game: React.FC<ViewGameProps> = (props: ViewGameProps) => {
             {game && (
                 <GameHeader game={game} setView={setNewView} parentView={currentView} collapsed={currentView === GameHeaderParentView.SCROLLER && currentTag !== undefined && !currentTag.isRoot} />
             )}
-            {game && <div className="game-view-star-icon">star</div>}
+            {game && <ClickableIcon selectedIcon="★" unselectedIcon="☆" isSelected={props.isStarred} className="game-view-star-icon" onClick={props.setUserStarredGame} />}
             {innerDiv}
         </div>
     );

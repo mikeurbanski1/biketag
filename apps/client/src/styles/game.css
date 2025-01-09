@@ -231,7 +231,7 @@ on top of the empty space
 
 .game-view-star-icon {
     position: absolute;
-    top: var(0);
+    top: 0;
     right: var(--main-body-margin);
     cursor: pointer;
     color: #ec00c1;
