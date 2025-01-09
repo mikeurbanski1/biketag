@@ -217,7 +217,7 @@ on top of the empty space
     line-height: 1em;
 }
 
-.game-favorite-icon {
+.game-card-star-icon {
     position: absolute;
     bottom: var(--game-card-padding);
     right: var(--game-card-padding);
@@ -225,6 +225,14 @@ on top of the empty space
     color: #ec00c1;
 }
 
-.game-favorite-icon:hover {
+.game-card-star-icon:hover {
     cursor: pointer;
+}
+
+.game-view-star-icon {
+    position: absolute;
+    top: var(0);
+    right: var(--main-body-margin);
+    cursor: pointer;
+    color: #ec00c1;
 }

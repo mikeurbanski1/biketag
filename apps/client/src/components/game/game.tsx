@@ -226,6 +226,7 @@ export const Game: React.FC<ViewGameProps> = (props: ViewGameProps) => {
             {game && (
                 <GameHeader game={game} setView={setNewView} parentView={currentView} collapsed={currentView === GameHeaderParentView.SCROLLER && currentTag !== undefined && !currentTag.isRoot} />
             )}
+            {game && <div className="game-view-star-icon">star</div>}
             {innerDiv}
         </div>
     );
