@@ -1,5 +1,3 @@
-import { Dayjs } from 'dayjs';
-
 import { TagDto } from '../api';
 import { TagEntity } from '../dal';
 
@@ -17,16 +15,18 @@ export const tagHasRealImage = (tag: TagDto): tag is TagDto & { imageUrl: string
 };
 
 interface SubtagDefinedFields {
-    subtagRootTag: TagDto;
+    rootTagId: string;
+    isRoot: false;
 }
 
 interface RootTagDefinedFields {
-    setCurrentRootTag: (tag: TagDto) => void;
-    setFakeRootTagActive: (fakeRootTagActive: boolean) => void;
-    dateOverride: Dayjs;
-    userCanAddRootTag: boolean;
-    userCanAddSubtag: boolean;
+    isRoot: true;
 }
 
-export const subtagCheck = <E extends TagDto | TagEntity>(tag: E): tag is E & SubtagDefinedFields => !tag.isRoot;
-export const rootTagCheck = <E extends TagDto | TagEntity>(tag: E): tag is E & RootTagDefinedFields => tag.isRoot;
+export function isSubtag<E extends TagDto | TagEntity>(tag: E): tag is E & SubtagDefinedFields {
+    return !tag.isRoot;
+}
+
+export function isRootTag<E extends TagDto | TagEntity>(tag: E): tag is E & RootTagDefinedFields {
+    return tag.isRoot;
+}
