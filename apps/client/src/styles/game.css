@@ -235,4 +235,5 @@ on top of the empty space
     right: var(--main-body-margin);
     cursor: pointer;
     color: #ec00c1;
+    z-index: 1;
 }
