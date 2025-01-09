@@ -1,5 +1,5 @@
 // @ts-ignore
-import { afterEach, beforeEach, describe, expect, it, vitest } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vitest } from 'vitest';
 
 import { GameRoles } from '@biketag/models';
 
@@ -9,10 +9,14 @@ import { UserService } from '../../src/services/users/userService';
 
 describe('GamesService tests', () => {
     describe('create tests', async () => {
+        beforeAll(() => {
+            vitest.useFakeTimers();
+            vitest.setSystemTime(new Date('2021-01-01T09:00:00Z'));
+        });
         beforeEach(() => {
             vitest.spyOn(UserService.prototype, 'get').mockResolvedValue({ id: '1', name: 'test' });
             vitest.spyOn(UserService.prototype, 'getRequired').mockImplementation(async ({ id }) => ({ id, name: 'test' }));
-            vitest.spyOn(GameDalService.prototype, 'create').mockResolvedValue({ id: '1', name: 'test', creatorId: '1', players: [{ userId: '2', role: GameRoles.ADMIN }] });
+            vitest.spyOn(GameDalService.prototype, 'create').mockImplementation(async (obj) => ({ id: '1', ...obj }));
         });
         afterEach(() => {
             vitest.restoreAllMocks();
