@@ -7,10 +7,10 @@ import { Logger } from '@biketag/utils';
 
 import { ApiManager } from '../../api';
 import { UserBeingAdded } from '../../models/user';
+import { UserContext } from '../common/context';
 import { NavHeader } from '../common/navHeader';
 import { Select } from '../common/select';
 import UserSelection from '../userSelection';
-import { UserContext } from '../common/context';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const logger = new Logger({ prefix: '[CreateEditGame]' });

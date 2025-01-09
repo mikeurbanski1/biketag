@@ -6,7 +6,6 @@
         "baseUrl": "./src",
     },
     "include": [
-        "./src",
-        "src/common/types.ts",
+        "./src"
     ],
 }

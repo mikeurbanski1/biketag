@@ -28,6 +28,7 @@ export class AbstractApi {
         if (userId) {
             this.axiosInstance.defaults.headers[USER_ID_HEADER] = userId;
             this.userId = userId;
+            this.logger.info(`[setUser] done`);
         } else if (userId === null) {
             this.userId = null;
             delete this.axiosInstance.defaults.headers[USER_ID_HEADER];

@@ -7,7 +7,7 @@ const logger = new Logger({ prefix: '[MongoDbProvider]' });
 
 dotenv.config();
 
-export const collectionNames = ['users', 'games', 'tags'] as const;
+export const collectionNames = ['users', 'games', 'tags', 'user_settings'] as const;
 export type CollectionName = (typeof collectionNames)[number];
 
 export class MongoDbProvider {
