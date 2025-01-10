@@ -1,9 +1,11 @@
 import React, { ChangeEvent } from 'react';
 
+import { PrivateUserDto } from '@biketag/models';
+
 import { ApiManager } from '../api';
 
 interface LoginProps {
-    setUser: ({ name, id }: { name: string; id: string }) => void;
+    setUser: (user: PrivateUserDto) => void;
 }
 
 export const Login: React.FC<LoginProps> = ({ setUser }: LoginProps) => {
@@ -21,7 +23,7 @@ export const Login: React.FC<LoginProps> = ({ setUser }: LoginProps) => {
     const login = () => {
         ApiManager.userApi
             .login({ name })
-            .then(({ id }) => setUser({ name, id }))
+            .then(setUser)
             .catch((err) => {
                 if (err instanceof Error) {
                     setErrorMessage(err.message);
@@ -32,7 +34,7 @@ export const Login: React.FC<LoginProps> = ({ setUser }: LoginProps) => {
     const signUp = () => {
         ApiManager.userApi
             .signup({ name })
-            .then(({ id }) => setUser({ name, id }))
+            .then(setUser)
             .catch((err) => {
                 if (err instanceof Error) {
                     setErrorMessage(err.message);

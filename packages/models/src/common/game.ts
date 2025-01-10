@@ -1,4 +1,4 @@
-import { UserDto } from '../api';
+import { PublicUserDto } from '../api';
 
 export enum GameRoles {
     ADMIN = 'ADMIN',
@@ -11,5 +11,5 @@ export interface PlayerGame {
 }
 
 export interface PlayerGameDto extends Omit<PlayerGame, 'userId'> {
-    user: UserDto;
+    user: PublicUserDto;
 }

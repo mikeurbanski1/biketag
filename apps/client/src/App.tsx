@@ -2,7 +2,7 @@ import dayjs, { Dayjs } from 'dayjs';
 import React, { ReactNode, useCallback, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
-import { GameDto, GameSummary, UserDto, UserSettingsDto } from '@biketag/models';
+import { GameDto, GameSummary, PrivateUserDto, UserSettingsDto } from '@biketag/models';
 import { Logger } from '@biketag/utils';
 
 import { ApiManager } from './api';
@@ -28,7 +28,7 @@ export const App: React.FC = () => {
     const [previousState, setPreviousState] = React.useState<AppState | undefined>(undefined);
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [clientId, setClientId] = React.useState<string>(uuidv4());
-    const [user, setUser] = React.useState<UserDto | undefined>(undefined);
+    const [user, setUser] = React.useState<PrivateUserDto | undefined>(undefined);
     const [userSettings, setUserSettings] = React.useState<UserSettingsDto | undefined>(undefined);
     const [game, setGame] = React.useState<{ id: string; name: string } | undefined>(undefined);
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -38,7 +38,7 @@ export const App: React.FC = () => {
         ApiManager.initialize({ clientId });
     }, [clientId]);
 
-    const setUserCallback = useCallback((user: UserDto) => {
+    const setUserCallback = useCallback((user: PrivateUserDto) => {
         ApiManager.setUser({ userId: user.id });
         ApiManager.userSettingsApi.getUserSettings().then((settings) => {
             setUser(user);

@@ -3,7 +3,7 @@ import dayjs, { Dayjs } from 'dayjs';
 import { Jimp } from 'jimp';
 import { UUID } from 'mongodb';
 
-import { BaseEntityWithoutId, CreateTagParams, EnrichedTagDto, GameEntity, TagDto, TagEntity, tagFields, TagStreamIntegration, TagWithImage, TagWithImageData, UserDto } from '@biketag/models';
+import { BaseEntityWithoutId, CreateTagParams, EnrichedTagDto, GameEntity, PublicUserDto, TagDto, TagEntity, tagFields, TagStreamIntegration, TagWithImage, TagWithImageData } from '@biketag/models';
 import { convertDateToRelativeDate, DATE_HIDDEN_FORMAT, getDateOnly, isEarlierDate, isSameDate } from '@biketag/utils';
 
 import { CannotPostTagError, tagServiceErrors } from '../../common/errors';
@@ -15,16 +15,16 @@ import { validateExists } from '../entityValidators';
 import { GameService } from '../games/gameService';
 import { DiscordIntegrationService } from '../integrations/services/discordIntegrationService';
 import { ScoreService } from '../scores/scoreService';
-import { UserService } from '../users/userService';
+import { PrivateUserService } from '../users/privateUserService';
 
-export class TagService extends BaseService<TagDto, CreateTagParams, TagEntity, TagDalService> {
-    private readonly usersService: UserService;
+export class TagService extends BaseService<TagDto, CreateTagParams, CreateTagParams, TagEntity, TagDalService> {
+    private readonly usersService: PrivateUserService;
     private readonly gamesService: GameService;
     private readonly scoreService: ScoreService;
 
-    constructor({ usersService, gamesService }: { usersService?: UserService; gamesService?: GameService } = {}) {
+    constructor({ usersService, gamesService }: { usersService?: PrivateUserService; gamesService?: GameService } = {}) {
         super({ prefix: 'TagService', dalService: new TagDalService(), serviceErrors: tagServiceErrors });
-        this.usersService = usersService ?? new UserService();
+        this.usersService = usersService ?? new PrivateUserService();
         this.gamesService = gamesService ?? new GameService({ tagsService: this });
         this.scoreService = new ScoreService();
     }
@@ -41,7 +41,7 @@ export class TagService extends BaseService<TagDto, CreateTagParams, TagEntity, 
         return blurredImage;
     }
 
-    private async generateNonCreatorPendingTag({ tag, creator }: { tag: TagEntity; creator?: UserDto }): Promise<TagWithImageData> {
+    private async generateNonCreatorPendingTag({ tag, creator }: { tag: TagEntity; creator?: PublicUserDto }): Promise<TagWithImageData> {
         const tagDto = await this.convertToDto(tag, { creator });
 
         tagDto.imageData = await this.getImageAsBase64(tag.imageUrl);
@@ -63,7 +63,7 @@ export class TagService extends BaseService<TagDto, CreateTagParams, TagEntity, 
         tagId: string;
         userId: string;
         knownPendingTagId?: string;
-        knownCreator?: UserDto;
+        knownCreator?: PublicUserDto;
     }): Promise<TagDto | null> {
         const tag = await this.dalService.getById({ id: tagId });
         if (!tag) {

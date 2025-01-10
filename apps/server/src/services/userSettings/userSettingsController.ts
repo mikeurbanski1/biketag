@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Header, Path, Post, Put, Res, Route, SuccessResponse, TsoaResponse } from 'tsoa';
 
-import { CreateUserParams, CreateUserSettingsParams, UserDto, UserSettingsDto } from '@biketag/models';
+import { CreateUserParams, CreateUserSettingsParams, UserSettingsDto } from '@biketag/models';
 import { Logger, USER_ID_HEADER } from '@biketag/utils';
 
 import { UserSettingsService } from './userSettingsService';

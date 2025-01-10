@@ -1,5 +1,5 @@
-import { BaseService } from './baseService';
+import { ReadOnlyBaseService } from './baseService';
 
-export const validateExists = async <E extends BaseService<any, any, any, any>>(id: string, service: E): Promise<void> => {
+export const validateExists = async <E extends ReadOnlyBaseService<any, any, any>>(id: string, service: E): Promise<void> => {
     await service.getRequired({ id });
 };

@@ -1,7 +1,13 @@
 import { BaseDto } from '.';
 
-export interface UserDto extends BaseDto {
+export interface PublicUserDto extends BaseDto {
     name: string;
 }
 
-export type CreateUserParams = Omit<UserDto, 'id'>;
+export interface PrivateUserDto extends PublicUserDto {
+    lastSeenGames: { [gameId: string]: string };
+}
+
+export type CreateUserParams = {
+    name: string;
+};

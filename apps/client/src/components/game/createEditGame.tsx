@@ -2,7 +2,7 @@ import React, { useContext, useEffect } from 'react';
 
 import '../../styles/createEditGame.css';
 
-import { CreateGameDto, GameDto, GameRoles, IntegrationServer, IntegrationSource, IntegrationType, TagStreamChannel, UserDto } from '@biketag/models';
+import { CreateGameDto, GameDto, GameRoles, IntegrationServer, IntegrationSource, IntegrationType, PublicUserDto, TagStreamChannel } from '@biketag/models';
 import { Logger } from '@biketag/utils';
 
 import { ApiManager } from '../../api';
@@ -98,7 +98,7 @@ export const CreateEditGame: React.FC<CreateEditGameProps> = (props: CreateEditG
         });
     }, [tagStreamIntegrationSource, serverId]);
 
-    const handleUserSelect = (index: number, user: UserDto, role?: GameRoles): void => {
+    const handleUserSelect = (index: number, user: PublicUserDto, role?: GameRoles): void => {
         const newUsers = selectedUsers;
         newUsers[index] = { user, role };
         setSelectedUsers(newUsers);

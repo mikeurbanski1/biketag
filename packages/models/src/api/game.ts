@@ -1,12 +1,12 @@
 import { BaseDto, TagDto } from '.';
 import { GameScore, TagStreamIntegration } from '../common';
 import { GameRoles, PlayerGame, PlayerGameDto } from '../common/game';
-import { UserDto } from './user';
+import { PublicUserDto } from './user';
 
 export interface GameDto extends BaseDto {
     id: string;
     name: string;
-    creator: UserDto;
+    creator: PublicUserDto;
     createdDate: string;
     players: PlayerGameDto[];
     firstRootTag?: TagDto;

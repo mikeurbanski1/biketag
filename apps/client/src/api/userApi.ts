@@ -1,6 +1,6 @@
 import { AxiosError } from 'axios';
 
-import { CreateUserParams, UserDto } from '@biketag/models';
+import { CreateUserParams, PrivateUserDto, PublicUserDto } from '@biketag/models';
 
 import { AbstractApi } from './abstractApi';
 
@@ -12,9 +12,9 @@ export class UserApi extends AbstractApi {
         super({ clientId, logPrefix: '[UserApi]' });
     }
 
-    public async login({ name }: CreateUserParams): Promise<UserDto> {
+    public async login({ name }: CreateUserParams): Promise<PrivateUserDto> {
         try {
-            const resp = await this.axiosInstance.request<UserDto>({
+            const resp = await this.axiosInstance.request<PrivateUserDto>({
                 method: 'post',
                 url: '/users/login',
                 data: {
@@ -41,9 +41,9 @@ export class UserApi extends AbstractApi {
         }
     }
 
-    public async signup({ name }: CreateUserParams): Promise<UserDto> {
+    public async signup({ name }: CreateUserParams): Promise<PrivateUserDto> {
         try {
-            const resp = await this.axiosInstance.request<{ id: string }>({
+            const resp = await this.axiosInstance.request<PrivateUserDto>({
                 method: 'post',
                 url: '/users',
                 data: {
@@ -54,7 +54,7 @@ export class UserApi extends AbstractApi {
                 throw new SignupFailedError(`Unexpected response: ${resp.status} - ${resp.statusText}`);
             }
             this.logger.info('[signup] got 201 response', { data: resp.data });
-            return { name, id: resp.data.id };
+            return resp.data;
         } catch (err) {
             this.logger.info(`[signup]`, { err });
             if (err instanceof AxiosError) {
@@ -64,9 +64,9 @@ export class UserApi extends AbstractApi {
         }
     }
 
-    public async getUsers(): Promise<UserDto[]> {
+    public async getUsers(): Promise<PublicUserDto[]> {
         try {
-            const resp = await this.axiosInstance.request<UserDto[]>({
+            const resp = await this.axiosInstance.request<PublicUserDto[]>({
                 method: 'get',
                 url: '/users',
             });

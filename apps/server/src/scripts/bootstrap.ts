@@ -8,7 +8,7 @@ import { MongoDbProvider } from '../dal/providers/mongoProvider';
 import { QueueManager } from '../queue/manager';
 import { GameService } from '../services/games/gameService';
 import { TagService } from '../services/tags/tagService';
-import { UserService } from '../services/users/userService';
+import { PrivateUserService } from '../services/users/privateUserService';
 import { UserSettingsService } from '../services/userSettings/userSettingsService';
 
 const logger = new Logger({ prefix: '[Bootstrap]' });
@@ -117,7 +117,7 @@ const bootstrapData = async () => {
 
     logger.info(`[bootstrapData] creating users`);
 
-    const userService = new UserService();
+    const userService = new PrivateUserService();
     const gameService = new GameService();
     const tagService = new TagService();
     const userSettingsService = new UserSettingsService();

@@ -8,15 +8,15 @@ import { GameDalService } from '../../dal/services/gameDalService';
 import { BaseService } from '../baseService';
 import { validateExists } from '../entityValidators';
 import { TagService } from '../tags/tagService';
-import { UserService } from '../users/userService';
+import { PrivateUserService } from '../users/privateUserService';
 
-export class GameService extends BaseService<GameDto, CreateGameParams, GameEntity, GameDalService> {
-    private readonly usersService: UserService;
+export class GameService extends BaseService<GameDto, CreateGameParams, CreateGameParams, GameEntity, GameDalService> {
+    private readonly usersService: PrivateUserService;
     private readonly tagsService: TagService;
 
-    constructor({ usersService, tagsService }: { usersService?: UserService; tagsService?: TagService } = {}) {
+    constructor({ usersService, tagsService }: { usersService?: PrivateUserService; tagsService?: TagService } = {}) {
         super({ prefix: 'GameService', dalService: new GameDalService(), serviceErrors: gameServiceErrors });
-        this.usersService = usersService ?? new UserService();
+        this.usersService = usersService ?? new PrivateUserService();
         this.tagsService = tagsService ?? new TagService({ gamesService: this });
     }
 

@@ -41,7 +41,7 @@ const isInactiveTag = (props: TagProps): props is TagProps & RealInactiveTagDefi
 const getTimeString = (tag: TagDto): string => {
     const forDate = dayjs(tag.forDate);
     const relativeDate = convertDateToRelativeDate(forDate);
-    const timeFormat = forDate.format(TIME_READABLE_FORMAT);
+    const timeFormat = dayjs(tag.postedDate).format(TIME_READABLE_FORMAT);
     const isPending = tag.isPending;
     // root tags just have the day (it is a little difficult to decide what to show for a time,
     // when the tag could be posted the day before or this day - the time is not relevant)

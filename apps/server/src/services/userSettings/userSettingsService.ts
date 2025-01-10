@@ -4,7 +4,7 @@ import { userSettingsServiceErrors } from '../../common/errors';
 import { UserSettingsDalService } from '../../dal/services/userSettingsDalService';
 import { BaseService } from '../baseService';
 
-export class UserSettingsService extends BaseService<UserSettingsDto, CreateUserSettingsParams, UserSettingsEntity, UserSettingsDalService> {
+export class UserSettingsService extends BaseService<UserSettingsDto, CreateUserSettingsParams, CreateUserSettingsParams, UserSettingsEntity, UserSettingsDalService> {
     constructor() {
         super({ prefix: 'UserSettingsService', dalService: new UserSettingsDalService(), serviceErrors: userSettingsServiceErrors });
     }

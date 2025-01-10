@@ -1,6 +1,6 @@
 import { BaseDto } from '.';
 import { TagStats } from '../common';
-import { UserDto } from './user';
+import { PublicUserDto } from './user';
 
 // export interface MinimalTag extends BaseDto {
 //     // name: string;
@@ -18,7 +18,7 @@ import { UserDto } from './user';
 
 export interface TagDto extends BaseDto {
     // name: string;
-    creator: UserDto;
+    creator: PublicUserDto;
     gameId: string;
     parentTagId?: string;
     nextTagId?: string;

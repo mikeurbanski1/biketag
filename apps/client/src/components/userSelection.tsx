@@ -1,16 +1,11 @@
 import React, { useState } from 'react';
 
-import { GameRoles } from '@biketag/models';
-
-interface UserDto {
-    id: string;
-    name: string;
-}
+import { GameRoles, PublicUserDto } from '@biketag/models';
 
 interface UserSelectionProps {
-    user: UserDto;
+    user: PublicUserDto;
     index: number;
-    onSelect: (index: number, user: UserDto, role?: GameRoles) => void;
+    onSelect: (index: number, user: PublicUserDto, role?: GameRoles) => void;
     gameRole?: GameRoles;
 }
 

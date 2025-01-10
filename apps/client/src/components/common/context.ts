@@ -1,5 +1,5 @@
 import { createContext } from 'react';
 
-import { UserDto } from '@biketag/models';
+import { PrivateUserDto } from '@biketag/models';
 
-export const UserContext = createContext<UserDto | undefined>(undefined);
+export const UserContext = createContext<PrivateUserDto | undefined>(undefined);

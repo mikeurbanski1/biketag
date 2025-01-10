@@ -6,10 +6,10 @@ import { Logger } from '@biketag/utils';
 import { ServiceErrors } from '../common/errors';
 import { BaseDalService } from '../dal/services/baseDalService';
 
-export abstract class BaseService<ResponseDto extends BaseDto, UpsertDTO, EntityType extends BaseEntity, DalType extends BaseDalService<EntityType>> {
+export abstract class ReadOnlyBaseService<ResponseDto extends BaseDto, EntityType extends BaseEntity, DalType extends BaseDalService<EntityType>> {
     protected readonly logger: Logger;
     protected readonly dalService: DalType;
-    private readonly serviceErrors: ServiceErrors;
+    protected readonly serviceErrors: ServiceErrors;
 
     constructor({ prefix, dalService, serviceErrors }: { prefix: string; dalService: DalType; serviceErrors: ServiceErrors }) {
         this.logger = new Logger({ prefix: `[BaseService][${prefix}]` });
@@ -80,7 +80,23 @@ export abstract class BaseService<ResponseDto extends BaseDto, UpsertDTO, Entity
         return res;
     }
 
-    public async create(params: UpsertDTO): Promise<ResponseDto> {
+    protected async convertToDtoList(entity: EntityType[]): Promise<ResponseDto[]> {
+        return (await Promise.all(entity.map((e) => this.convertToDto(e)))) as ResponseDto[];
+    }
+
+    protected abstract convertToDto(entity: EntityType | null, overrides?: Partial<ResponseDto>): Promise<ResponseDto | null>;
+}
+
+export abstract class BaseService<ResponseDto extends BaseDto, CreateDto, UpsertDTO, EntityType extends BaseEntity, DalType extends BaseDalService<EntityType>> extends ReadOnlyBaseService<
+    ResponseDto,
+    EntityType,
+    DalType
+> {
+    constructor({ prefix, dalService, serviceErrors }: { prefix: string; dalService: DalType; serviceErrors: ServiceErrors }) {
+        super({ prefix, dalService, serviceErrors });
+    }
+
+    public async create(params: CreateDto): Promise<ResponseDto> {
         this.logger.info('[create]', { params });
         const entity = await this.convertToNewEntity(params);
         const res = await this.dalService.create(entity);
@@ -88,7 +104,7 @@ export abstract class BaseService<ResponseDto extends BaseDto, UpsertDTO, Entity
         return (await this.convertToDto(res))!;
     }
 
-    public async createWithId(params: UpsertDTO & { id: string }): Promise<ResponseDto> {
+    public async createWithId(params: CreateDto & { id: string }): Promise<ResponseDto> {
         this.logger.info('[create]', { params });
         const entity = await this.convertToNewEntity(params);
         const res = await this.dalService.create({ ...entity, id: params.id });
@@ -112,11 +128,6 @@ export abstract class BaseService<ResponseDto extends BaseDto, UpsertDTO, Entity
         return res;
     }
 
-    protected async convertToDtoList(entity: EntityType[]): Promise<ResponseDto[]> {
-        return (await Promise.all(entity.map((e) => this.convertToDto(e)))) as ResponseDto[];
-    }
-
     protected abstract convertToUpsertEntity(dto: UpsertDTO): Promise<Partial<BaseEntityWithoutId<EntityType>>>;
-    protected abstract convertToNewEntity(dto: UpsertDTO): Promise<BaseEntityWithoutId<EntityType>>;
-    protected abstract convertToDto(entity: EntityType | null, overrides?: Partial<ResponseDto>): Promise<ResponseDto | null>;
+    protected abstract convertToNewEntity(dto: CreateDto): Promise<BaseEntityWithoutId<EntityType>>;
 }
