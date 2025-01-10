@@ -9,6 +9,13 @@ export class UserNotFoundError extends BaseExistsCheckError {
     public static entityName = 'User';
 }
 
+export class UserSettingsExistsError extends BaseExistsCheckError {
+    public static entityName = 'User';
+}
+export class UserSettingsNotFoundError extends BaseExistsCheckError {
+    public static entityName = 'User';
+}
+
 export class GameExistsError extends BaseExistsCheckError {
     public static entityName = 'Game';
 }
@@ -43,15 +50,20 @@ export interface ServiceErrors {
 
 export const userServiceErrors: ServiceErrors = {
     notFoundErrorClass: UserNotFoundError,
-    existsErrorClass: UserExistsError
+    existsErrorClass: UserExistsError,
+};
+
+export const userSettingsServiceErrors: ServiceErrors = {
+    notFoundErrorClass: UserSettingsNotFoundError,
+    existsErrorClass: UserSettingsExistsError,
 };
 
 export const gameServiceErrors: ServiceErrors = {
     notFoundErrorClass: GameNotFoundError,
-    existsErrorClass: GameExistsError
+    existsErrorClass: GameExistsError,
 };
 
 export const tagServiceErrors: ServiceErrors = {
     notFoundErrorClass: TagNotFoundError,
-    existsErrorClass: TagExistsError
+    existsErrorClass: TagExistsError,
 };

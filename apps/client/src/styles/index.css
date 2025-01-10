@@ -80,7 +80,9 @@ div {
 }
 
 .main {
-    margin-top: 25px;
+    --main-body-margin: 25px;
+
+    margin-top: var(--main-body-margin);
     overflow: hidden;
 }
 

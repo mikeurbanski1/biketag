@@ -2,7 +2,7 @@ import dayjs, { Dayjs } from 'dayjs';
 import React, { ReactNode, useCallback, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
-import { GameDto, GameSummary, UserDto } from '@biketag/models';
+import { GameDto, GameSummary, UserDto, UserSettingsDto } from '@biketag/models';
 import { Logger } from '@biketag/utils';
 
 import { ApiManager } from './api';
@@ -29,6 +29,7 @@ export const App: React.FC = () => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [clientId, setClientId] = React.useState<string>(uuidv4());
     const [user, setUser] = React.useState<UserDto | undefined>(undefined);
+    const [userSettings, setUserSettings] = React.useState<UserSettingsDto | undefined>(undefined);
     const [game, setGame] = React.useState<{ id: string; name: string } | undefined>(undefined);
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [dateOverride, setDateOverride] = React.useState<Dayjs>(dayjs());
@@ -38,10 +39,25 @@ export const App: React.FC = () => {
     }, [clientId]);
 
     const setUserCallback = useCallback((user: UserDto) => {
-        setUser(user);
-        setAppState(AppState.HOME);
         ApiManager.setUser({ userId: user.id });
+        ApiManager.userSettingsApi.getUserSettings().then((settings) => {
+            setUser(user);
+            setUserSettings(settings);
+            setAppState(AppState.HOME);
+        });
     }, []);
+
+    const setUserStarredGame = useCallback(
+        ({ gameId, isStarred }: { gameId: string; isStarred: boolean }) => {
+            const currentStarredGames = userSettings!.starredGames;
+            const newStarredGames = isStarred ? currentStarredGames.concat(gameId) : currentStarredGames.filter((id) => id !== gameId);
+            ApiManager.userSettingsApi.updateUserSettings({ starredGames: newStarredGames }).then((settings) => {
+                logger.info(`[App] updated starred games to ${newStarredGames}`);
+                setUserSettings(settings);
+            });
+        },
+        [userSettings]
+    );
 
     const doneCreatingGame = useCallback(
         (game?: GameDto): void => {
@@ -88,6 +104,7 @@ export const App: React.FC = () => {
     const handleLogout = () => {
         setAppState(AppState.LOGGED_OUT);
         setUser(undefined);
+        setUserSettings(undefined);
         ApiManager.setUser({ userId: null });
     };
 
@@ -98,9 +115,20 @@ export const App: React.FC = () => {
     } else if (appState === AppState.CREATING_GAME) {
         inner = <CreateEditGame doneCreatingGame={doneCreatingGame} />;
     } else if (appState === AppState.HOME) {
-        inner = <GameList selectGame={setGameCallback} />;
+        inner = <GameList selectGame={setGameCallback} starredGames={userSettings!.starredGames} setUserStarredGame={setUserStarredGame} />;
     } else if (appState === AppState.VIEWING_GAME) {
-        inner = <Game gameId={game!.id} gameName={game!.name} deleteGame={deleteGame} doneViewingGame={doneViewingGame} dateOverride={dateOverride} />;
+        const gameIsStarred = userSettings!.starredGames.includes(game!.id);
+        inner = (
+            <Game
+                gameId={game!.id}
+                gameName={game!.name}
+                deleteGame={deleteGame}
+                doneViewingGame={doneViewingGame}
+                dateOverride={dateOverride}
+                isStarred={gameIsStarred}
+                setUserStarredGame={() => setUserStarredGame({ gameId: game!.id, isStarred: !gameIsStarred })}
+            />
+        );
     }
 
     return (

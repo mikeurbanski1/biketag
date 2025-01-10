@@ -1,4 +1,5 @@
 export * from './user';
+export * from './userSettings';
 export * from './game';
 export * from './tag';
 

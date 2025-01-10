@@ -1,14 +1,21 @@
 import React from 'react';
 
 import { GameSummary } from '@biketag/models';
-import { convertDateToRelativeDate } from '@biketag/utils';
+import { convertDateToRelativeDate, Logger } from '@biketag/utils';
+
+import { ClickableIcon } from '../common/clickableIcon';
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const logger = new Logger({ prefix: '' });
 
 interface GameCardProps {
     game: GameSummary;
+    isStarred: boolean;
     selectGame: () => void;
+    setStarredGame: () => void;
 }
 
-export const GameCard: React.FC<GameCardProps> = ({ game, selectGame }: GameCardProps) => {
+export const GameCard: React.FC<GameCardProps> = ({ game, isStarred, selectGame, setStarredGame }: GameCardProps) => {
     let innerElement: React.ReactNode;
     if (game.latestRootTagImageUrl) {
         innerElement = <img src={game.latestRootTagImageUrl} className="game-card-image" />;
@@ -23,6 +30,7 @@ export const GameCard: React.FC<GameCardProps> = ({ game, selectGame }: GameCard
         <div className="game-card" onClick={selectGame} title={`Created ${gameCreatedDate}${lastTagDate}`}>
             <div className="game-card-image-container">{innerElement}</div>
             <div className="game-card-footer">{game.name}</div>
+            <ClickableIcon selectedIcon="★" unselectedIcon="☆" isSelected={isStarred} className="game-card-star-icon" onClick={setStarredGame} />
         </div>
     );
 };

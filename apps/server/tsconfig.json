@@ -14,6 +14,7 @@
         "strictPropertyInitialization": true,
         "noImplicitThis": true,
         "alwaysStrict": true,
+        "skipLibCheck": true,
         /* Additional Checks */
         "noImplicitReturns": true,
         "noFallthroughCasesInSwitch": true,
@@ -32,6 +33,9 @@
             "rollup/parseAst": [
                 "node_modules/.pnpm/rollup@4.24.3/node_modules/rollup/dist/parseAst"
             ]
-        }
-    }
+        },
+    },
+    "exclude": [
+        "test"
+    ]
 }

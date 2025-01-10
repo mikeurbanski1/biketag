@@ -88,6 +88,14 @@ export abstract class BaseService<ResponseDto extends BaseDto, UpsertDTO, Entity
         return (await this.convertToDto(res))!;
     }
 
+    public async createWithId(params: UpsertDTO & { id: string }): Promise<ResponseDto> {
+        this.logger.info('[create]', { params });
+        const entity = await this.convertToNewEntity(params);
+        const res = await this.dalService.create({ ...entity, id: params.id });
+        this.logger.info(`[create] result`, { res });
+        return (await this.convertToDto(res))!;
+    }
+
     public async update({ id, updateParams }: { id: string; updateParams: UpsertDTO }): Promise<ResponseDto> {
         this.logger.info('[update]', { id, updateParams });
         await this.dalService.getByIdRequired({ id });

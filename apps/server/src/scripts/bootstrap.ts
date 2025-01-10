@@ -9,6 +9,7 @@ import { QueueManager } from '../queue/manager';
 import { GameService } from '../services/games/gameService';
 import { TagService } from '../services/tags/tagService';
 import { UserService } from '../services/users/userService';
+import { UserSettingsService } from '../services/userSettings/userSettingsService';
 
 const logger = new Logger({ prefix: '[Bootstrap]' });
 
@@ -108,6 +109,10 @@ const bootstrapData = async () => {
     await tagsCollection.createIndex({ gameId: 1, isRoot: 1 });
     await tagsCollection.createIndex({ gameId: 1, rootTagId: 1 });
 
+    let userSettingsCollection = provider.getCollection('user_settings');
+    logger.info(`[bootstrapData] dropping user_settings collection: ${await userSettingsCollection.drop()}`);
+    userSettingsCollection = provider.getCollection('user_settings');
+
     logger.info('[bootstrapData] dropped and recreated collections');
 
     logger.info(`[bootstrapData] creating users`);
@@ -115,6 +120,7 @@ const bootstrapData = async () => {
     const userService = new UserService();
     const gameService = new GameService();
     const tagService = new TagService();
+    const userSettingsService = new UserSettingsService();
 
     const names = ['Mike', 'Jenny', 'Katie', 'Henry', 'Hung', 'Breanne', 'Rhys'];
     const users = await Promise.all(names.map((name) => userService.create({ name })));
@@ -178,6 +184,13 @@ const bootstrapData = async () => {
     ];
 
     logger.info(`[bootstrapData] created games`, { games });
+    logger.info(`[bootstrapData] setting user settings`);
+
+    userSettingsService.update({ id: users[0].id, updateParams: { starredGames: [games[1].id] } });
+    userSettingsService.update({ id: users[1].id, updateParams: { starredGames: [games[0].id] } });
+    userSettingsService.update({ id: users[2].id, updateParams: { starredGames: [games[2].id] } });
+    userSettingsService.update({ id: users[6].id, updateParams: { starredGames: [games[0].id, games[1].id] } });
+
     logger.info(`[bootstrapData] creating tags`);
 
     const tags: TagDto[] = [];

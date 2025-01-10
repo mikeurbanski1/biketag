@@ -3,10 +3,13 @@ import { CreateUserParams, UserDto, UserEntity } from '@biketag/models';
 import { userServiceErrors } from '../../common/errors';
 import { UserDalService } from '../../dal/services/userDalService';
 import { BaseService } from '../baseService';
+import { UserSettingsService } from '../userSettings/userSettingsService';
 
 export class UserService extends BaseService<UserDto, CreateUserParams, UserEntity, UserDalService> {
+    private readonly userSettingsService: UserSettingsService;
     constructor() {
         super({ prefix: 'UserService', dalService: new UserDalService(), serviceErrors: userServiceErrors });
+        this.userSettingsService = new UserSettingsService();
     }
 
     protected convertToUpsertEntity(dto: CreateUserParams): Promise<CreateUserParams> {
@@ -29,6 +32,12 @@ export class UserService extends BaseService<UserDto, CreateUserParams, UserEnti
             id: entity.id,
             name: entity.name,
         };
+    }
+
+    public override async create({ name }: CreateUserParams): Promise<UserDto> {
+        const resp = await super.create({ name });
+        await this.userSettingsService.createDefault({ userId: resp.id });
+        return resp;
     }
 
     public async getUserByName({ name }: { name: string }): Promise<UserEntity | null> {

@@ -168,6 +168,7 @@ on top of the empty space
 }
 
 .game-card {
+    position: relative;
     box-shadow: 5px 5px 5px rgb(0, 0, 0, 0.5);
     background-color: rgb(201, 201, 201);
     border-radius: 10px;
@@ -216,8 +217,23 @@ on top of the empty space
     line-height: 1em;
 }
 
-/* .cards-header {
-    border: 1px solid red;
-    height: calc(15% - 50px);
-    margin: 25px auto;
-} */
+.game-card-star-icon {
+    position: absolute;
+    bottom: var(--game-card-padding);
+    right: var(--game-card-padding);
+    cursor: pointer;
+    color: #ec00c1;
+}
+
+.game-card-star-icon:hover {
+    cursor: pointer;
+}
+
+.game-view-star-icon {
+    position: absolute;
+    top: 0;
+    right: var(--main-body-margin);
+    cursor: pointer;
+    color: #ec00c1;
+    z-index: 1;
+}
