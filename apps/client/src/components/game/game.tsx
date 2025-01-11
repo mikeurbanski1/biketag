@@ -88,8 +88,9 @@ export const Game: React.FC<ViewGameProps> = ({ deleteGame, dateOverride, setUse
                 setShowingAddRootTag(latestRootTag === undefined);
             } else if (currentView === GameHeaderParentView.CARDS && !latestRootTag) {
                 // when starting the view, if there is no tag, go straight to add tag in tag scroller
-                navigate(`/home/game/${game.id}/scroller/addTag`);
+                navigate(`/home/game/${game.id}/scroller`);
                 setShowingAddRootTag(true);
+                setCurrentView(GameHeaderParentView.SCROLLER);
             }
         });
     }, [loadingGame, gameId, game?.latestRootTag, currentView, navigate]);
@@ -183,7 +184,7 @@ export const Game: React.FC<ViewGameProps> = ({ deleteGame, dateOverride, setUse
                 setShowingAddSubtag(false);
             }
             setCurrentView(GameHeaderParentView.SCROLLER);
-            navigate(`/home/game/${game!.id}/scroller/${tag === 'addTag' ? tag : tag.id}`);
+            navigate(`/home/game/${game!.id}/scroller`);
         },
         [navigate, currentView, game, currentTag?.id]
     );
@@ -221,7 +222,7 @@ export const Game: React.FC<ViewGameProps> = ({ deleteGame, dateOverride, setUse
                             element={<GameDetails game={game} playerDetailsTable={playerDetailsTable} setEditingGame={() => setEditingGame(true)} deleteGame={() => deleteGame(game.id)} />}
                         ></Route>
                         <Route
-                            path="scroller/:tagId"
+                            path="scroller"
                             element={
                                 <TagScroller
                                     game={game}

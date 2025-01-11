@@ -1,5 +1,4 @@
 import { Dayjs } from 'dayjs';
-import { useParams } from 'react-router-dom';
 
 import { GameDto, TagDto } from '@biketag/models';
 import { Logger } from '@biketag/utils';
@@ -54,10 +53,6 @@ const getTagComponent = ({
     return <Tag key={tagKey} tag={tag} isActive={isActive} selectTag={selectThisTag} knownUserCanAddTag={knownUserCanAddTag} />;
 };
 
-type RouteParams = {
-    tagId: string;
-};
-
 export const TagScroller: React.FC<TagViewProps> = ({
     game,
     dateOverride,
@@ -77,8 +72,6 @@ export const TagScroller: React.FC<TagViewProps> = ({
     let rightTagElement: React.ReactNode | undefined = undefined;
     let topTagElement: React.ReactNode | undefined = undefined;
     let bottomTagElement: React.ReactNode | undefined = undefined;
-
-    // const { tagId } = useParams() as RouteParams;
 
     const addRootTag = (
         <AddTag

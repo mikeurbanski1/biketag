@@ -24,6 +24,7 @@ const viewToClassMap: Record<GameHeaderParentView, string> = {
 
 export const GameHeader: React.FC<GameHeaderProps> = ({ game, parentView, collapsed, setView }: GameHeaderProps) => {
     const className = viewToClassMap[parentView];
+    logger.info(`[GameHeader]`, { parentView, collapsed, className });
 
     const viewDetails =
         parentView !== GameHeaderParentView.DETAILS ? (
