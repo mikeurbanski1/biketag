@@ -7,11 +7,6 @@ import { UserSettingsApi } from './userSettingsApi';
 
 export * from './userApi';
 
-export type Apis = {
-    usersApi: UserApi;
-    gamesApi: GameApi;
-};
-
 export class ApiManager {
     public static userApi: UserApi;
     public static userSettingsApi: UserSettingsApi;
@@ -20,16 +15,18 @@ export class ApiManager {
     public static integrationApi: IntegrationApi;
     private static apisList: AbstractApi[];
 
-    public static setUser({ userId, clientId }: { userId?: string | null; clientId?: string | null }) {
+    public static setUser({ userId, clientId }: { userId?: string | null; clientId?: string }) {
         this.apisList.forEach((api) => api.setUser({ userId, clientId }));
     }
 
-    public static initialize({ clientId }: { clientId: string }) {
-        this.userApi = new UserApi({ clientId });
-        this.userSettingsApi = new UserSettingsApi({ clientId });
-        this.gameApi = new GameApi({ clientId });
-        this.tagApi = new TagApi({ clientId });
-        this.integrationApi = new IntegrationApi({ clientId });
+    public static initialize({ clientId, userId }: { clientId: string; userId?: string }) {
+        this.userApi = new UserApi();
+        this.userSettingsApi = new UserSettingsApi();
+        this.gameApi = new GameApi();
+        this.tagApi = new TagApi();
+        this.integrationApi = new IntegrationApi();
         this.apisList = [this.userApi, this.gameApi, this.tagApi, this.userSettingsApi];
+
+        this.setUser({ userId, clientId });
     }
 }

@@ -13,9 +13,11 @@
         "@biketag/models": "workspace:*",
         "@biketag/utils": "workspace:*",
         "@types/axios": "^0.14.4",
+        "@uidotdev/usehooks": "^2.4.1",
         "axios": "^1.7.7",
         "react": "^18.3.1",
         "react-dom": "^18.3.1",
+        "react-router-dom": "^7.1.1",
         "uuid": "^11.0.2"
     },
     "devDependencies": {

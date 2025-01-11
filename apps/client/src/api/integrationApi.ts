@@ -3,8 +3,8 @@ import { IntegrationServer, IntegrationSource, IntegrationType, TagStreamChannel
 import { AbstractApi } from './abstractApi';
 
 export class IntegrationApi extends AbstractApi {
-    constructor({ clientId }: { clientId: string }) {
-        super({ clientId, logPrefix: '[IntegrationApi]' });
+    constructor() {
+        super({ logPrefix: '[IntegrationApi]' });
     }
 
     public async getIntegrationSources(integrationType: IntegrationType): Promise<IntegrationSource[]> {

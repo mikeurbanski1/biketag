@@ -40,9 +40,9 @@ export const TagCardView: React.FC<TagCardProps> = (props) => {
     //     }
     // }
 
-    const [loading, setLoading] = React.useState(true);
+    // skip loading a game that has no tags
+    const [loading, setLoading] = React.useState(game.latestRootTag !== undefined);
     const [tags, setTags] = React.useState<TagCardType[]>([]);
-    const [refreshKey] = React.useState(0);
 
     useEffect(() => {
         if (!loading) {
@@ -55,7 +55,7 @@ export const TagCardView: React.FC<TagCardProps> = (props) => {
             // logger.info(`[TagCardView][useEffect] setting tags`, { instanceId, tagsToSet });
             setTags(gameTags);
         });
-    }, [refreshKey, game.id, loading]);
+    }, [game.id, loading]);
 
     // return this here so that we are outside of the grid and the loading text does not move from the game loading screen
     if (loading) {

@@ -20,7 +20,6 @@ export abstract class BaseDalService<E extends BaseEntity> {
     public async create(params: BaseEntityWithoutId<E> | E): Promise<E> {
         this.logger.info(`[create]`, { params });
         const collection = await this.getCollection();
-        this.logger.info(`[create] got collection`);
         const entity = this.convertToDalEntity(params);
         await collection.insertOne(entity as OptionalUnlessRequiredId<E>);
         return this.convertFromDalEntity(entity);
@@ -51,6 +50,7 @@ export abstract class BaseDalService<E extends BaseEntity> {
     }
 
     protected async validateId({ id, checkExists = true }: { id: string; checkExists?: boolean }): Promise<E> {
+        this.logger.info(`[validateId]`, { id, checkExists });
         let entity: E | null = null;
         if (!UUID.isValid(id) || (checkExists && !(entity = await this.getById({ id }))) || entity === null) {
             const { notFoundErrorClass } = this.serviceErrors;

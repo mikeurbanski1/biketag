@@ -1,4 +1,4 @@
-import { CreateUserSettingsParams, UserSettingsDto, UserSettingsEntity } from '@biketag/models';
+import { BaseEntityWithoutId, CreateUserSettingsParams, UserSettingsDto, UserSettingsEntity } from '@biketag/models';
 
 import { userSettingsServiceErrors } from '../../common/errors';
 import { UserSettingsDalService } from '../../dal/services/userSettingsDalService';
@@ -9,11 +9,11 @@ export class UserSettingsService extends BaseService<UserSettingsDto, CreateUser
         super({ prefix: 'UserSettingsService', dalService: new UserSettingsDalService(), serviceErrors: userSettingsServiceErrors });
     }
 
-    protected convertToUpsertEntity(dto: CreateUserSettingsParams): Promise<Partial<Pick<UserSettingsEntity, 'starredGames'>>> {
-        return Promise.resolve({ starredGames: dto.starredGames });
+    protected convertToUpsertEntity(dto: CreateUserSettingsParams): Promise<Partial<BaseEntityWithoutId<UserSettingsEntity>>> {
+        return Promise.resolve(dto);
     }
-    protected convertToNewEntity(dto: UserSettingsDto): Promise<Pick<UserSettingsEntity, 'starredGames'>> {
-        return Promise.resolve({ starredGames: dto.starredGames });
+    protected convertToNewEntity(dto: UserSettingsDto & { id?: string }): Promise<UserSettingsEntity> {
+        return Promise.resolve(dto);
     }
     protected convertToDto(entity: UserSettingsEntity | null, overrides?: Partial<UserSettingsDto> | undefined): Promise<UserSettingsDto | null> {
         if (!entity) {
@@ -27,6 +27,6 @@ export class UserSettingsService extends BaseService<UserSettingsDto, CreateUser
     }
 
     public createDefault({ userId }: { userId: string }): Promise<UserSettingsDto> {
-        return this.createWithId({ id: userId, starredGames: [] });
+        return this.create({ id: userId, starredGames: [] });
     }
 }

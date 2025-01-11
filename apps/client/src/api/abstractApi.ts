@@ -8,13 +8,12 @@ export class AbstractApi {
     protected readonly logger;
     protected readonly axiosInstance;
     private userId: string | null;
-    constructor({ clientId, logPrefix }: { clientId: string; logPrefix: string }) {
+    constructor({ logPrefix }: { logPrefix: string }) {
         this.axiosInstance = axios.create({
             baseURL: getUrl(),
             headers: {
                 'Content-Type': 'application/json',
                 Accept: 'application/json',
-                [CLIENT_ID_HEADER]: clientId,
             },
         });
         this.logger = new Logger({ prefix: logPrefix });
@@ -22,9 +21,9 @@ export class AbstractApi {
     }
 
     /**
-     * Update or clear the user attribute headers. Pass null to delete the header. Pass undefined to leave it unchanged.
+     * Update or clear the user attribute headers. Pass null to delete the header (userId only). Pass undefined to leave it unchanged.
      */
-    public setUser({ userId, clientId }: { userId?: string | null; clientId?: string | null }) {
+    public setUser({ userId, clientId }: { userId?: string | null; clientId?: string }) {
         if (userId) {
             this.axiosInstance.defaults.headers[USER_ID_HEADER] = userId;
             this.userId = userId;

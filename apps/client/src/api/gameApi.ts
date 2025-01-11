@@ -9,8 +9,8 @@ export class GameNotFoundError extends Error {}
 export class CreateGameFailedError extends Error {}
 
 export class GameApi extends AbstractApi {
-    constructor({ clientId }: { clientId: string }) {
-        super({ clientId, logPrefix: '[GameApi]' });
+    constructor() {
+        super({ logPrefix: '[GameApi]' });
     }
 
     public async getGame({ id, convertPendingTagForOwner }: { id: string; convertPendingTagForOwner: boolean }): Promise<GameDto> {

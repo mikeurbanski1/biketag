@@ -3,8 +3,8 @@ import { CreateUserSettingsParams, UserSettingsDto } from '@biketag/models';
 import { AbstractApi } from './abstractApi';
 
 export class UserSettingsApi extends AbstractApi {
-    constructor({ clientId }: { clientId: string }) {
-        super({ clientId, logPrefix: '[UserSettingsApi]' });
+    constructor() {
+        super({ logPrefix: '[UserSettingsApi]' });
     }
 
     public async getUserSettings(): Promise<UserSettingsDto> {

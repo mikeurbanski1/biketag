@@ -80,18 +80,10 @@ export abstract class BaseService<ResponseDto extends BaseDto, UpsertDTO, Entity
         return res;
     }
 
-    public async create(params: UpsertDTO): Promise<ResponseDto> {
+    public async create(params: UpsertDTO & { id?: string }): Promise<ResponseDto> {
         this.logger.info('[create]', { params });
         const entity = await this.convertToNewEntity(params);
         const res = await this.dalService.create(entity);
-        this.logger.info(`[create] result`, { res });
-        return (await this.convertToDto(res))!;
-    }
-
-    public async createWithId(params: UpsertDTO & { id: string }): Promise<ResponseDto> {
-        this.logger.info('[create]', { params });
-        const entity = await this.convertToNewEntity(params);
-        const res = await this.dalService.create({ ...entity, id: params.id });
         this.logger.info(`[create] result`, { res });
         return (await this.convertToDto(res))!;
     }
@@ -117,6 +109,6 @@ export abstract class BaseService<ResponseDto extends BaseDto, UpsertDTO, Entity
     }
 
     protected abstract convertToUpsertEntity(dto: UpsertDTO): Promise<Partial<BaseEntityWithoutId<EntityType>>>;
-    protected abstract convertToNewEntity(dto: UpsertDTO): Promise<BaseEntityWithoutId<EntityType>>;
+    protected abstract convertToNewEntity(dto: UpsertDTO & { id?: string }): Promise<BaseEntityWithoutId<EntityType> | EntityType>;
     protected abstract convertToDto(entity: EntityType | null, overrides?: Partial<ResponseDto>): Promise<ResponseDto | null>;
 }
