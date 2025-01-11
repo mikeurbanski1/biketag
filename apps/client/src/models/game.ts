@@ -1,5 +1,5 @@
 export enum GameHeaderParentView {
-    CARDS = 'cards',
+    CARDS = '/',
     SCROLLER = 'scroller',
     DETAILS = 'details',
 }

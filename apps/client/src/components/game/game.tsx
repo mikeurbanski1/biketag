@@ -1,5 +1,5 @@
 import { Dayjs } from 'dayjs';
-import React, { useCallback, useContext, useEffect } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 
 import { GameDto, GameRoles, PlayerScores, TagDto, tagHasRealImage } from '@biketag/models';
 import { Logger } from '@biketag/utils';
@@ -7,6 +7,8 @@ import { Logger } from '@biketag/utils';
 import { ApiManager } from '../../api';
 
 import '../../styles/game.css';
+
+import { Route, Routes, useNavigate, useParams } from 'react-router-dom';
 
 import { GameHeaderParentView } from '../../models/game';
 import { ClickableIcon } from '../common/clickableIcon';
@@ -30,14 +32,15 @@ type PlayerDetailsTableRow = PlayerScores & {
 };
 
 interface ViewGameProps {
-    gameId: string;
-    gameName: string;
-    doneViewingGame: () => void;
-    deleteGame: () => void;
+    deleteGame: (gameId: string) => void;
     dateOverride: Dayjs;
-    isStarred: boolean;
-    setUserStarredGame: () => void;
+    setUserStarredGame: ({ gameId, isStarred }: { gameId: string; isStarred: boolean }) => void;
+    userStarredGames: string[];
 }
+
+type RouteParams = {
+    gameId: string;
+};
 
 const getPlayerDetailsTable = (game: GameDto): PlayerDetailsTableRow[] => {
     return [{ id: game.creator.id, name: game.creator.name, role: 'OWNER' as PlayerTableRole, ...game.gameScore.playerScores[game.creator.id] }].concat(
@@ -47,29 +50,33 @@ const getPlayerDetailsTable = (game: GameDto): PlayerDetailsTableRow[] => {
     );
 };
 
-export const Game: React.FC<ViewGameProps> = (props: ViewGameProps) => {
+export const Game: React.FC<ViewGameProps> = ({ deleteGame, dateOverride, setUserStarredGame, userStarredGames }: ViewGameProps) => {
     const user = useContext(UserContext)!;
 
-    const [game, setGame] = React.useState<GameDto | undefined>(undefined);
-    const [editingGame, setEditingGame] = React.useState(false);
-    const [loadingGame, setLoadingGame] = React.useState(true);
-    const [playerDetailsTable, setPlayerDetailsTable] = React.useState<PlayerDetailsTableRow[]>([]);
-    const [currentView, setCurrentView] = React.useState<GameHeaderParentView>(GameHeaderParentView.CARDS);
-    const [userCanAddRootTag, setUserCanAddRootTag] = React.useState(false);
-    const [userCanAddSubtag, setUserCanAddSubtag] = React.useState(false);
-    const [showingPendingTag, setShowingPendingTag] = React.useState(false);
-    const [showingAddRootTag, setShowingAddRootTag] = React.useState(false);
-    const [showingAddSubtag, setShowingAddSubtag] = React.useState(false);
-    const [currentRootTag, setCurrentRootTag] = React.useState<TagDto | undefined>(undefined);
-    const [currentTag, setCurrentTag] = React.useState<TagDto | undefined>(undefined);
-    const [canAddRootTagRefreshKey, setCanAddRootTagRefreshKey] = React.useState(0);
+    const [game, setGame] = useState<GameDto | undefined>(undefined);
+    const [editingGame, setEditingGame] = useState(false);
+    const [loadingGame, setLoadingGame] = useState(true);
+    const [playerDetailsTable, setPlayerDetailsTable] = useState<PlayerDetailsTableRow[]>([]);
+    const [currentView, setCurrentView] = useState<GameHeaderParentView>(GameHeaderParentView.CARDS);
+    const [userCanAddRootTag, setUserCanAddRootTag] = useState(false);
+    const [userCanAddSubtag, setUserCanAddSubtag] = useState(false);
+    const [showingPendingTag, setShowingPendingTag] = useState(false);
+    const [showingAddRootTag, setShowingAddRootTag] = useState(false);
+    const [showingAddSubtag, setShowingAddSubtag] = useState(false);
+    const [currentRootTag, setCurrentRootTag] = useState<TagDto | undefined>(undefined);
+    const [currentTag, setCurrentTag] = useState<TagDto | undefined>(undefined);
+    const [canAddRootTagRefreshKey, setCanAddRootTagRefreshKey] = useState(0);
+
+    const { gameId } = useParams() as RouteParams;
+
+    const navigate = useNavigate();
 
     useEffect(() => {
         if (!loadingGame) {
             return;
         }
 
-        ApiManager.gameApi.getGame({ id: props.gameId, convertPendingTagForOwner: true }).then((game) => {
+        ApiManager.gameApi.getGame({ id: gameId, convertPendingTagForOwner: true }).then((game) => {
             setGame(game);
             setLoadingGame(false);
             setPlayerDetailsTable(getPlayerDetailsTable(game));
@@ -81,22 +88,22 @@ export const Game: React.FC<ViewGameProps> = (props: ViewGameProps) => {
                 setShowingAddRootTag(latestRootTag === undefined);
             } else if (currentView === GameHeaderParentView.CARDS && !latestRootTag) {
                 // when starting the view, if there is no tag, go straight to add tag in tag scroller
-                setCurrentView(GameHeaderParentView.SCROLLER);
+                navigate(`/home/game/${game.id}/scroller/addTag`);
                 setShowingAddRootTag(true);
             }
         });
-    }, [loadingGame, props.gameId, game?.latestRootTag, currentView]);
+    }, [loadingGame, gameId, game?.latestRootTag, currentView, navigate]);
 
     useEffect(() => {
         const tagToUse = currentRootTag ?? game?.latestRootTag;
         if (tagToUse) {
-            ApiManager.tagApi.canUserAddTag({ userId: user.id, gameId: props.gameId, dateOverride: props.dateOverride }).then(({ result }) => {
+            ApiManager.tagApi.canUserAddTag({ userId: user.id, gameId, dateOverride: dateOverride }).then(({ result }) => {
                 setUserCanAddRootTag(result);
             });
         } else if (!loadingGame) {
             setUserCanAddRootTag(true);
         }
-    }, [game?.latestRootTag, canAddRootTagRefreshKey, currentRootTag, user.id, props.gameId, props.dateOverride, loadingGame]);
+    }, [game?.latestRootTag, canAddRootTagRefreshKey, currentRootTag, user.id, gameId, dateOverride, loadingGame]);
 
     useEffect(() => {
         if (currentRootTag) {
@@ -176,8 +183,9 @@ export const Game: React.FC<ViewGameProps> = (props: ViewGameProps) => {
                 setShowingAddSubtag(false);
             }
             setCurrentView(GameHeaderParentView.SCROLLER);
+            navigate(`/home/game/${game!.id}/scroller/${tag === 'addTag' ? tag : tag.id}`);
         },
-        [game, currentTag, currentView]
+        [navigate, currentView, game, currentTag?.id]
     );
 
     const setNewView = useCallback(
@@ -198,39 +206,42 @@ export const Game: React.FC<ViewGameProps> = (props: ViewGameProps) => {
         return <CreateEditGame doneCreatingGame={() => setEditingGame(false)} game={game!} />;
     }
 
-    let innerDiv: React.ReactNode;
-    if (!game || loadingGame) {
-        innerDiv = <div className="game-details">Loading...</div>;
-    } else if (currentView === GameHeaderParentView.DETAILS) {
-        innerDiv = <GameDetails game={game} playerDetailsTable={playerDetailsTable} setEditingGame={() => setEditingGame(true)} deleteGame={() => props.deleteGame()} />;
-    } else if (currentView === GameHeaderParentView.SCROLLER) {
-        innerDiv = (
-            <TagScroller
-                game={game}
-                dateOverride={props.dateOverride}
-                currentRootTag={currentRootTag}
-                currentTag={currentTag}
-                userCanAddRootTag={userCanAddRootTag}
-                userCanAddSubtag={userCanAddSubtag}
-                showingAddRootTag={showingAddRootTag}
-                showingAddSubtag={showingAddSubtag}
-                showingPendingTag={showingPendingTag}
-                createNewTag={({ imageUrl, isSubtag }: { imageUrl: string; isSubtag: boolean }) => (isSubtag ? createNewSubtag({ imageUrl }) : createNewRootTag({ imageUrl }))}
-                setAddTagAsActive={(isSubtag: boolean) => (isSubtag ? setShowingAddSubtag(true) : setShowingAddRootTag(true))}
-                selectTag={selectTag}
-            />
-        );
-    } else {
-        innerDiv = <TagCardView game={game} selectTag={selectTag} userCanAddRootTag={userCanAddRootTag} />;
-    }
+    const isStarred = userStarredGames.includes(gameId);
 
     return (
         <div className="game-view">
             {game && (
-                <GameHeader game={game} setView={setNewView} parentView={currentView} collapsed={currentView === GameHeaderParentView.SCROLLER && currentTag !== undefined && !currentTag.isRoot} />
+                <>
+                    <GameHeader game={game} setView={setNewView} parentView={currentView} collapsed={currentView === GameHeaderParentView.SCROLLER && currentTag !== undefined && !currentTag.isRoot} />
+                    <ClickableIcon selectedIcon="★" unselectedIcon="☆" isSelected={isStarred} className="game-view-star-icon" onClick={() => setUserStarredGame({ gameId, isStarred: !isStarred })} />
+                    <Routes>
+                        <Route index element={<TagCardView game={game} selectTag={selectTag} userCanAddRootTag={userCanAddRootTag} />}></Route>
+                        <Route
+                            path="details"
+                            element={<GameDetails game={game} playerDetailsTable={playerDetailsTable} setEditingGame={() => setEditingGame(true)} deleteGame={() => deleteGame(game.id)} />}
+                        ></Route>
+                        <Route
+                            path="scroller/:tagId"
+                            element={
+                                <TagScroller
+                                    game={game}
+                                    dateOverride={dateOverride}
+                                    currentRootTag={currentRootTag}
+                                    currentTag={currentTag}
+                                    userCanAddRootTag={userCanAddRootTag}
+                                    userCanAddSubtag={userCanAddSubtag}
+                                    showingAddRootTag={showingAddRootTag}
+                                    showingAddSubtag={showingAddSubtag}
+                                    showingPendingTag={showingPendingTag}
+                                    createNewTag={({ imageUrl, isSubtag }: { imageUrl: string; isSubtag: boolean }) => (isSubtag ? createNewSubtag({ imageUrl }) : createNewRootTag({ imageUrl }))}
+                                    setAddTagAsActive={(isSubtag: boolean) => (isSubtag ? setShowingAddSubtag(true) : setShowingAddRootTag(true))}
+                                    selectTag={selectTag}
+                                />
+                            }
+                        ></Route>
+                    </Routes>
+                </>
             )}
-            {game && <ClickableIcon selectedIcon="★" unselectedIcon="☆" isSelected={props.isStarred} className="game-view-star-icon" onClick={props.setUserStarredGame} />}
-            {innerDiv}
         </div>
     );
 };
