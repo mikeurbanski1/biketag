@@ -8,8 +8,8 @@ export class LoginFailedError extends Error {}
 export class SignupFailedError extends Error {}
 
 export class UserApi extends AbstractApi {
-    constructor({ clientId }: { clientId: string }) {
-        super({ clientId, logPrefix: '[UserApi]' });
+    constructor() {
+        super({ logPrefix: '[UserApi]' });
     }
 
     public async login({ name }: CreateUserParams): Promise<UserDto> {

@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 import { GameSummary } from '@biketag/models';
 
@@ -8,7 +8,7 @@ import { GameCard } from './gameCard';
 
 interface GameListProps {
     selectGame: (game: GameSummary) => void;
-    starredGames: string[];
+    starredGames?: string[];
     setUserStarredGame: (args: { gameId: string; isStarred: boolean }) => void;
 }
 
@@ -20,7 +20,7 @@ export const GameList: React.FC<GameListProps> = ({ selectGame, starredGames, se
     // const [refreshKey, setRefreshKey] = useState<number>(0);
     // const [error, setError] = useState<string | null>(null);
 
-    const starredGameLookup = new Set(starredGames);
+    const starredGameLookup = useMemo(() => new Set(starredGames), [starredGames]);
 
     useEffect(() => {
         ApiManager.gameApi.getGameSummaryForPlayer({ userId: user.id }).then((games) => {

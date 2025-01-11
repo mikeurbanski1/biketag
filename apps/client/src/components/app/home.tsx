@@ -1,8 +1,9 @@
+import { useLocalStorage } from '@uidotdev/usehooks';
 import { Dayjs } from 'dayjs';
 import { useCallback } from 'react';
 import { Navigate, Route, Routes, useNavigate } from 'react-router-dom';
 
-import { GameDto, GameSummary, UserSettingsDto } from '@biketag/models';
+import { GameDto, GameSummary, UserDto, UserSettingsDto } from '@biketag/models';
 import { Logger } from '@biketag/utils';
 
 import { ApiManager } from '../../api';
@@ -26,7 +27,9 @@ interface UserDefinedHomeProps {
 const userProvided = (props: HomeProps): props is HomeProps & UserDefinedHomeProps => props.userSettings !== undefined;
 
 export const Home: React.FC<HomeProps> = (props: HomeProps) => {
+    logger.info(`[Home] in home render`);
     const navigate = useNavigate();
+    const [storedUser] = useLocalStorage<UserDto | undefined>('user', undefined);
 
     const doneCreatingGame = useCallback(
         (game?: GameDto): void => {
@@ -55,15 +58,15 @@ export const Home: React.FC<HomeProps> = (props: HomeProps) => {
         [navigate]
     );
 
-    if (userProvided(props)) {
+    if (userProvided(props) || storedUser) {
         const { userSettings, setUserStarredGame, dateOverride } = props;
         return (
             <Routes>
                 <Route path="create-game" element={<CreateEditGame doneCreatingGame={doneCreatingGame} />}></Route>
-                <Route path="my-games" element={<GameList selectGame={setGameCallback} starredGames={userSettings.starredGames} setUserStarredGame={setUserStarredGame} />}></Route>
+                <Route path="my-games" element={<GameList selectGame={setGameCallback} starredGames={userSettings?.starredGames} setUserStarredGame={setUserStarredGame} />}></Route>
                 <Route
                     path="game/:gameId/*"
-                    element={<Game deleteGame={deleteGame} dateOverride={dateOverride} setUserStarredGame={setUserStarredGame} userStarredGames={userSettings.starredGames} />}
+                    element={<Game deleteGame={deleteGame} dateOverride={dateOverride} setUserStarredGame={setUserStarredGame} userStarredGames={userSettings?.starredGames} />}
                 ></Route>
             </Routes>
         );

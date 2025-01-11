@@ -35,7 +35,7 @@ interface ViewGameProps {
     deleteGame: (gameId: string) => void;
     dateOverride: Dayjs;
     setUserStarredGame: ({ gameId, isStarred }: { gameId: string; isStarred: boolean }) => void;
-    userStarredGames: string[];
+    userStarredGames?: string[];
 }
 
 type RouteParams = {
@@ -51,6 +51,7 @@ const getPlayerDetailsTable = (game: GameDto): PlayerDetailsTableRow[] => {
 };
 
 export const Game: React.FC<ViewGameProps> = ({ deleteGame, dateOverride, setUserStarredGame, userStarredGames }: ViewGameProps) => {
+    logger.info(`[Game] in game render`);
     const user = useContext(UserContext)!;
 
     const [game, setGame] = useState<GameDto | undefined>(undefined);
@@ -207,7 +208,7 @@ export const Game: React.FC<ViewGameProps> = ({ deleteGame, dateOverride, setUse
         return <CreateEditGame doneCreatingGame={() => setEditingGame(false)} game={game!} />;
     }
 
-    const isStarred = userStarredGames.includes(gameId);
+    const isStarred = userStarredGames !== undefined && userStarredGames.includes(gameId);
 
     return (
         <div className="game-view">

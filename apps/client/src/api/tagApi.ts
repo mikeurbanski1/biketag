@@ -14,8 +14,8 @@ export class TagApi extends AbstractApi {
     // userId to tagId (root tag) to result
     private userCanAddSubtagCache: Record<string, Record<string, boolean>> = {};
 
-    constructor({ clientId }: { clientId: string }) {
-        super({ clientId, logPrefix: '[TagApi]' });
+    constructor() {
+        super({ logPrefix: '[TagApi]' });
     }
 
     public clearCache(): void {
