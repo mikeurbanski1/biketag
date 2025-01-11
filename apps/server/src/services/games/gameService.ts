@@ -72,7 +72,7 @@ export class GameService extends BaseService<GameDto, CreateGameParams, GameEnti
 
     private async validateIntegrations(params: CreateGameParams): Promise<void> {}
 
-    public override async create(params: CreateGameParams): Promise<GameDto> {
+    public override async create(params: CreateGameParams & { id?: string }): Promise<GameDto> {
         const { creatorId: creator, players } = params;
         const user = await this.usersService.get({ id: creator });
         if (!user) {

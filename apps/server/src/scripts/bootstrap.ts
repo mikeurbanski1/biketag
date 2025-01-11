@@ -1,7 +1,9 @@
+import { writeFileSync } from 'node:fs';
+
 import dayjs, { Dayjs } from 'dayjs';
 
 import { CreateTagParams, GameRoles, IntegrationSource, TagDto } from '@biketag/models';
-import { DATE_HIDDEN_FORMAT, Logger } from '@biketag/utils';
+import { createAttributeMap, DATE_HIDDEN_FORMAT, Logger } from '@biketag/utils';
 
 import { PostTagStream } from '../common/models/enum';
 import { MongoDbProvider } from '../dal/providers/mongoProvider';
@@ -122,15 +124,25 @@ const bootstrapData = async () => {
     const tagService = new TagService();
     const userSettingsService = new UserSettingsService();
 
+    const {
+        users: usersToCreate,
+        games: gamesToCreate,
+        tags: tagsToCreate,
+    } = require('./bootstrapData.json') as { users: Record<string, { id: string }>; games: Record<string, { id: string }>; tags: Record<string, { id: string }> };
+
     const names = ['Mike', 'Jenny', 'Katie', 'Henry', 'Hung', 'Breanne', 'Rhys'];
-    const users = await Promise.all(names.map((name) => userService.create({ name })));
+    const users = await Promise.all(names.map((name) => userService.create({ id: usersToCreate[name]!.id, name })));
 
     logger.info(`[bootstrapData] created users`, { users });
     logger.info(`[bootstrapData] creating games`);
 
+    const gameNames = ["Jenny's bike tag!", "Mike's bike tag!", "Katie's bike tag!"];
+    let nextGame = 0;
+
     const games = [
         await gameService.create({
-            name: "Jenny's bike tag!",
+            id: gamesToCreate[gameNames[nextGame]].id,
+            name: gameNames[nextGame++],
             creatorId: users[1].id,
             players: [
                 { userId: users[0].id, role: GameRoles.ADMIN },
@@ -148,7 +160,8 @@ const bootstrapData = async () => {
             createdDateOverride: dayjs().subtract(7, 'days').format(DATE_HIDDEN_FORMAT),
         }),
         await gameService.create({
-            name: "Mike's bike tag!",
+            id: gamesToCreate[gameNames[nextGame]].id,
+            name: gameNames[nextGame++],
             creatorId: users[0].id,
             players: [
                 { userId: users[1].id, role: GameRoles.ADMIN },
@@ -166,7 +179,8 @@ const bootstrapData = async () => {
             createdDateOverride: dayjs().subtract(6, 'days').format(DATE_HIDDEN_FORMAT),
         }),
         await gameService.create({
-            name: "Katie's bike tag!",
+            id: gamesToCreate[gameNames[nextGame]].id,
+            name: gameNames[nextGame++],
             creatorId: users[2].id,
             players: [
                 { userId: users[0].id, role: GameRoles.ADMIN },
@@ -186,71 +200,79 @@ const bootstrapData = async () => {
     logger.info(`[bootstrapData] created games`, { games });
     logger.info(`[bootstrapData] setting user settings`);
 
-    userSettingsService.update({ id: users[0].id, updateParams: { starredGames: [games[1].id] } });
-    userSettingsService.update({ id: users[1].id, updateParams: { starredGames: [games[0].id] } });
-    userSettingsService.update({ id: users[2].id, updateParams: { starredGames: [games[2].id] } });
-    userSettingsService.update({ id: users[6].id, updateParams: { starredGames: [games[0].id, games[1].id] } });
+    await userSettingsService.update({ id: users[0].id, updateParams: { starredGames: [games[1].id] } });
+    await userSettingsService.update({ id: users[1].id, updateParams: { starredGames: [games[0].id] } });
+    await userSettingsService.update({ id: users[2].id, updateParams: { starredGames: [games[2].id] } });
+    await userSettingsService.update({ id: users[6].id, updateParams: { starredGames: [games[0].id, games[1].id] } });
 
     logger.info(`[bootstrapData] creating tags`);
 
     const tags: TagDto[] = [];
     let nextImage = 0;
 
-    let obj: CreateTagParams = { imageUrl: imageUrls[nextImage++], creatorId: users[0].id, gameId: games[0].id, isRoot: true, postedDate: newRootDate() };
+    let obj: CreateTagParams & { id: string } = {
+        id: tagsToCreate[imageUrls[nextImage]]!.id,
+        imageUrl: imageUrls[nextImage++],
+        creatorId: users[0].id,
+        gameId: games[0].id,
+        isRoot: true,
+        postedDate: newRootDate(),
+    };
     let tag1a = await tagService.create(obj);
 
-    obj = { imageUrl: imageUrls[nextImage++], creatorId: users[1].id, gameId: games[0].id, isRoot: false, postedDate: newChainDate(), rootTagId: tag1a.id };
+    obj = { id: tagsToCreate[imageUrls[nextImage]]!.id, imageUrl: imageUrls[nextImage++], creatorId: users[1].id, gameId: games[0].id, isRoot: false, postedDate: newChainDate(), rootTagId: tag1a.id };
     let tag1b = await tagService.create(obj);
 
-    obj = { imageUrl: imageUrls[nextImage++], creatorId: users[2].id, gameId: games[0].id, isRoot: false, postedDate: newChainDate(), rootTagId: tag1a.id };
+    obj = { id: tagsToCreate[imageUrls[nextImage]]!.id, imageUrl: imageUrls[nextImage++], creatorId: users[2].id, gameId: games[0].id, isRoot: false, postedDate: newChainDate(), rootTagId: tag1a.id };
     let tag1c = await tagService.create(obj);
 
-    obj = { imageUrl: imageUrls[nextImage++], creatorId: users[3].id, gameId: games[0].id, isRoot: false, postedDate: newChainDate(), rootTagId: tag1a.id };
+    obj = { id: tagsToCreate[imageUrls[nextImage]]!.id, imageUrl: imageUrls[nextImage++], creatorId: users[3].id, gameId: games[0].id, isRoot: false, postedDate: newChainDate(), rootTagId: tag1a.id };
     let tag1d = await tagService.create(obj);
 
-    obj = { imageUrl: imageUrls[nextImage++], creatorId: users[4].id, gameId: games[0].id, isRoot: false, postedDate: newChainDate(), rootTagId: tag1a.id };
+    obj = { id: tagsToCreate[imageUrls[nextImage]]!.id, imageUrl: imageUrls[nextImage++], creatorId: users[4].id, gameId: games[0].id, isRoot: false, postedDate: newChainDate(), rootTagId: tag1a.id };
     let tag1e = await tagService.create(obj);
 
-    obj = { imageUrl: imageUrls[nextImage++], creatorId: users[5].id, gameId: games[0].id, isRoot: false, postedDate: newChainDate(), rootTagId: tag1a.id };
+    obj = { id: tagsToCreate[imageUrls[nextImage]]!.id, imageUrl: imageUrls[nextImage++], creatorId: users[5].id, gameId: games[0].id, isRoot: false, postedDate: newChainDate(), rootTagId: tag1a.id };
     let tag1f = await tagService.create(obj);
 
-    obj = { imageUrl: imageUrls[nextImage++], creatorId: users[1].id, gameId: games[0].id, isRoot: true, postedDate: newRootDate() };
+    obj = { id: tagsToCreate[imageUrls[nextImage]]!.id, imageUrl: imageUrls[nextImage++], creatorId: users[1].id, gameId: games[0].id, isRoot: true, postedDate: newRootDate() };
     let tag2a = await tagService.create(obj);
 
-    obj = { imageUrl: imageUrls[nextImage++], creatorId: users[5].id, gameId: games[0].id, isRoot: false, postedDate: newChainDate(), rootTagId: tag2a.id };
+    obj = { id: tagsToCreate[imageUrls[nextImage]]!.id, imageUrl: imageUrls[nextImage++], creatorId: users[5].id, gameId: games[0].id, isRoot: false, postedDate: newChainDate(), rootTagId: tag2a.id };
     let tag2b = await tagService.create(obj);
 
-    obj = { imageUrl: imageUrls[nextImage++], creatorId: users[3].id, gameId: games[0].id, isRoot: false, postedDate: newChainDate(), rootTagId: tag2a.id };
+    obj = { id: tagsToCreate[imageUrls[nextImage]]!.id, imageUrl: imageUrls[nextImage++], creatorId: users[3].id, gameId: games[0].id, isRoot: false, postedDate: newChainDate(), rootTagId: tag2a.id };
     let tag2c = await tagService.create(obj);
 
-    obj = { imageUrl: imageUrls[nextImage++], creatorId: users[0].id, gameId: games[0].id, isRoot: false, postedDate: newChainDate(), rootTagId: tag2a.id };
+    obj = { id: tagsToCreate[imageUrls[nextImage]]!.id, imageUrl: imageUrls[nextImage++], creatorId: users[0].id, gameId: games[0].id, isRoot: false, postedDate: newChainDate(), rootTagId: tag2a.id };
     let tag2d = await tagService.create(obj);
 
-    obj = { imageUrl: imageUrls[nextImage++], creatorId: users[5].id, gameId: games[0].id, isRoot: true, postedDate: newRootDate() };
+    obj = { id: tagsToCreate[imageUrls[nextImage]]!.id, imageUrl: imageUrls[nextImage++], creatorId: users[5].id, gameId: games[0].id, isRoot: true, postedDate: newRootDate() };
     let tag3a = await tagService.create(obj);
 
-    obj = { imageUrl: imageUrls[nextImage++], creatorId: users[1].id, gameId: games[0].id, isRoot: false, postedDate: newChainDate(), rootTagId: tag3a.id };
+    obj = { id: tagsToCreate[imageUrls[nextImage]]!.id, imageUrl: imageUrls[nextImage++], creatorId: users[1].id, gameId: games[0].id, isRoot: false, postedDate: newChainDate(), rootTagId: tag3a.id };
     let tag3b = await tagService.create(obj);
 
-    obj = { imageUrl: imageUrls[nextImage++], creatorId: users[2].id, gameId: games[0].id, isRoot: false, postedDate: newChainDate(), rootTagId: tag3a.id };
+    obj = { id: tagsToCreate[imageUrls[nextImage]]!.id, imageUrl: imageUrls[nextImage++], creatorId: users[2].id, gameId: games[0].id, isRoot: false, postedDate: newChainDate(), rootTagId: tag3a.id };
     let tag3c = await tagService.create(obj);
 
-    obj = { imageUrl: imageUrls[nextImage++], creatorId: users[4].id, gameId: games[0].id, isRoot: false, postedDate: newChainDate(), rootTagId: tag3a.id };
+    obj = { id: tagsToCreate[imageUrls[nextImage]]!.id, imageUrl: imageUrls[nextImage++], creatorId: users[4].id, gameId: games[0].id, isRoot: false, postedDate: newChainDate(), rootTagId: tag3a.id };
     let tag3d = await tagService.create(obj);
 
-    obj = { imageUrl: imageUrls[nextImage++], creatorId: users[3].id, gameId: games[0].id, isRoot: false, postedDate: newChainDate(), rootTagId: tag3a.id };
+    obj = { id: tagsToCreate[imageUrls[nextImage]]!.id, imageUrl: imageUrls[nextImage++], creatorId: users[3].id, gameId: games[0].id, isRoot: false, postedDate: newChainDate(), rootTagId: tag3a.id };
     let tag3e = await tagService.create(obj);
 
-    obj = { imageUrl: imageUrls[nextImage++], creatorId: users[1].id, gameId: games[0].id, isRoot: true, postedDate: newRootDate() };
+    obj = { id: tagsToCreate[imageUrls[nextImage]]!.id, imageUrl: imageUrls[nextImage++], creatorId: users[1].id, gameId: games[0].id, isRoot: true, postedDate: newRootDate() };
     let tag4a = await tagService.create(obj);
 
-    obj = { imageUrl: imageUrls[nextImage++], creatorId: users[0].id, gameId: games[0].id, isRoot: false, postedDate: newChainDate(), rootTagId: tag4a.id };
+    obj = { id: tagsToCreate[imageUrls[nextImage]]!.id, imageUrl: imageUrls[nextImage++], creatorId: users[0].id, gameId: games[0].id, isRoot: false, postedDate: newChainDate(), rootTagId: tag4a.id };
     let tag4b = await tagService.create(obj);
 
-    obj = { imageUrl: imageUrls[nextImage++], creatorId: users[4].id, gameId: games[0].id, isRoot: false, postedDate: newChainDate(), rootTagId: tag4a.id };
+    obj = { id: tagsToCreate[imageUrls[nextImage]]!.id, imageUrl: imageUrls[nextImage++], creatorId: users[4].id, gameId: games[0].id, isRoot: false, postedDate: newChainDate(), rootTagId: tag4a.id };
     let tag4c = await tagService.create(obj);
 
     obj = {
+        id: tagsToCreate[imageUrls[nextImage]]!.id,
         imageUrl: imageUrls[nextImage++],
         creatorId: users[5].id,
         gameId: games[0].id,
@@ -262,13 +284,14 @@ const bootstrapData = async () => {
     };
     let tag4d = await tagService.create(obj);
 
-    obj = { imageUrl: imageUrls[nextImage++], creatorId: users[2].id, gameId: games[0].id, isRoot: false, postedDate: newChainDate(), rootTagId: tag4a.id };
+    obj = { id: tagsToCreate[imageUrls[nextImage]]!.id, imageUrl: imageUrls[nextImage++], creatorId: users[2].id, gameId: games[0].id, isRoot: false, postedDate: newChainDate(), rootTagId: tag4a.id };
     let tag4e = await tagService.create(obj);
 
-    obj = { imageUrl: imageUrls[nextImage++], creatorId: users[2].id, gameId: games[1].id, isRoot: true, postedDate: newRootDate() };
+    obj = { id: tagsToCreate[imageUrls[nextImage]]!.id, imageUrl: imageUrls[nextImage++], creatorId: users[2].id, gameId: games[1].id, isRoot: true, postedDate: newRootDate() };
     let tag5a = await tagService.create(obj);
 
     obj = {
+        id: tagsToCreate[imageUrls[nextImage]]!.id,
         imageUrl: imageUrls[nextImage++],
         creatorId: users[3].id,
         gameId: games[1].id,
@@ -281,6 +304,7 @@ const bootstrapData = async () => {
     let tag5b = await tagService.create(obj);
 
     obj = {
+        id: tagsToCreate[imageUrls[nextImage]]!.id,
         imageUrl: imageUrls[nextImage++],
         creatorId: users[4].id,
         gameId: games[1].id,
@@ -292,6 +316,7 @@ const bootstrapData = async () => {
     let tag5c = await tagService.create(obj);
 
     obj = {
+        id: tagsToCreate[imageUrls[nextImage]]!.id,
         imageUrl: imageUrls[nextImage++],
         creatorId: users[5].id,
         gameId: games[1].id,
@@ -304,6 +329,7 @@ const bootstrapData = async () => {
     let tag5d = await tagService.create(obj);
 
     obj = {
+        id: tagsToCreate[imageUrls[nextImage]]!.id,
         imageUrl: imageUrls[nextImage++],
         creatorId: users[0].id,
         gameId: games[1].id,
@@ -315,10 +341,11 @@ const bootstrapData = async () => {
     };
     let tag5e = await tagService.create(obj);
 
-    obj = { imageUrl: imageUrls[nextImage++], creatorId: users[3].id, gameId: games[1].id, isRoot: true, postedDate: newRootDate() };
+    obj = { id: tagsToCreate[imageUrls[nextImage]]!.id, imageUrl: imageUrls[nextImage++], creatorId: users[3].id, gameId: games[1].id, isRoot: true, postedDate: newRootDate() };
     let tag6a = await tagService.create(obj);
 
     obj = {
+        id: tagsToCreate[imageUrls[nextImage]]!.id,
         imageUrl: imageUrls[nextImage++],
         creatorId: users[1].id,
         gameId: games[1].id,
@@ -331,6 +358,7 @@ const bootstrapData = async () => {
     let tag6b = await tagService.create(obj);
 
     obj = {
+        id: tagsToCreate[imageUrls[nextImage]]!.id,
         imageUrl: imageUrls[nextImage++],
         creatorId: users[2].id,
         gameId: games[1].id,
@@ -343,6 +371,7 @@ const bootstrapData = async () => {
     let tag6c = await tagService.create(obj);
 
     obj = {
+        id: tagsToCreate[imageUrls[nextImage]]!.id,
         imageUrl: imageUrls[nextImage++],
         creatorId: users[0].id,
         gameId: games[1].id,
@@ -357,7 +386,7 @@ const bootstrapData = async () => {
     // get a same day tag post
     rootCounter--;
 
-    obj = { imageUrl: imageUrls[nextImage++], creatorId: users[1].id, gameId: games[1].id, isRoot: true, postedDate: newRootDate() };
+    obj = { id: tagsToCreate[imageUrls[nextImage]]!.id, imageUrl: imageUrls[nextImage++], creatorId: users[1].id, gameId: games[1].id, isRoot: true, postedDate: newRootDate() };
     let tag7a = await tagService.create(obj);
 
     tags.push(
@@ -397,7 +426,14 @@ const bootstrapData = async () => {
         logger.info(`[bootstrapData] root tag local creation time`, { imageUrl: tag.imageUrl, postedDate: dayjs(tag.postedDate).format('YYYY/MM/DD') });
     });
 
-    // logger.info(`[bootstrapData] created tags`, { tags });
+    const userNameToObjectMap = createAttributeMap(users, 'name', ['id']);
+    const gameNameToObjectMap = createAttributeMap(games, 'name', ['id']);
+    const tagImageUrlToObjectMap = createAttributeMap(tags, 'imageUrl', ['id']);
+    const results = { users: userNameToObjectMap, games: gameNameToObjectMap, tags: tagImageUrlToObjectMap };
+
+    writeFileSync('src/scripts/bootstrapData.json', JSON.stringify(results, null, 2));
+
+    logger.info(`[bootstrapData] bootstrap names and IDs`, { ...results });
 };
 
 bootstrapData()

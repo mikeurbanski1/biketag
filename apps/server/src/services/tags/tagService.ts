@@ -158,10 +158,13 @@ export class TagService extends BaseService<TagDto, CreateTagParams, TagEntity, 
         tag.discordMessageId = messageId;
     }
 
-    public override async create(params: CreateTagParams): Promise<TagDto> {
-        this.logger.info(`[create]`, { params });
+    public override async create(params: CreateTagParams & { id?: string }): Promise<TagDto> {
+        this.logger.info(`[create]1`, { params });
         const { isRoot, gameId } = params;
+
+        this.logger.info(`[create] game1`);
         const game = await this.gamesService.getRequiredAsEntity({ id: gameId });
+        this.logger.info(`[create] game2`);
         if (!params.postedDate) {
             params.postedDate = dayjs().toISOString();
         }
@@ -169,7 +172,7 @@ export class TagService extends BaseService<TagDto, CreateTagParams, TagEntity, 
         let forDate = dayjs(params.postedDate).format(DATE_HIDDEN_FORMAT);
 
         // create a new tag object id now so we can update references with fewer calls / cleaner flow
-        const tagUuid = new UUID().toString();
+        const tagUuid = params.id ?? new UUID().toString();
 
         let isPending = false;
         let rootTag: TagEntity | undefined;
@@ -214,13 +217,17 @@ export class TagService extends BaseService<TagDto, CreateTagParams, TagEntity, 
             createParams.parentTagId = parentTag.id;
         }
 
+        this.logger.info(`[create] getcreator1`);
         const creator = await this.usersService.getRequired({ id: params.creatorId });
+        this.logger.info(`[create] getcreator2`);
 
         if (game.tagStreamIntegration) {
             await this.postMessageForNewTag({ tag: createParams, creatorName: creator.name, game, rootTag });
         }
 
         const tag = await this.dalService.create(createParams);
+
+        this.logger.info(`[create] created tag1`, { tag });
 
         await this.gamesService.setTagInGame({ gameId, tagId: tagUuid, root: isRoot, isPending });
 

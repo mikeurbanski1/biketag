@@ -16,7 +16,7 @@ export class UserService extends BaseService<UserDto, CreateUserParams, UserEnti
         return Promise.resolve(dto);
     }
 
-    protected convertToNewEntity(dto: CreateUserParams): Promise<CreateUserParams> {
+    protected convertToNewEntity(dto: CreateUserParams): Promise<CreateUserParams & { id?: string }> {
         return Promise.resolve(dto);
     }
 
@@ -34,8 +34,8 @@ export class UserService extends BaseService<UserDto, CreateUserParams, UserEnti
         };
     }
 
-    public override async create({ name }: CreateUserParams): Promise<UserDto> {
-        const resp = await super.create({ name });
+    public override async create(params: CreateUserParams & { id?: string }): Promise<UserDto> {
+        const resp = await super.create(params);
         await this.userSettingsService.createDefault({ userId: resp.id });
         return resp;
     }
