@@ -76,6 +76,7 @@ export class TagApi extends AbstractApi {
 
     public async canUserAddTag({ userId, gameId, dateOverride }: { userId: string; gameId: string; dateOverride?: Dayjs }): Promise<PrimitiveResponse<boolean>> {
         if (userId in this.userCanAddRootTagCache && gameId in this.userCanAddRootTagCache[userId]) {
+            this.logger.info(`[canUserAddTag] returning cached value`, { userId, gameId, result: this.userCanAddRootTagCache[userId][gameId] });
             return { result: this.userCanAddRootTagCache[userId][gameId] };
         }
         try {
@@ -103,6 +104,7 @@ export class TagApi extends AbstractApi {
 
     public async canUserAddSubtag({ userId, tagId }: { userId: string; tagId: string }): Promise<PrimitiveResponse<boolean>> {
         if (userId in this.userCanAddSubtagCache && tagId in this.userCanAddSubtagCache[userId]) {
+            this.logger.info(`[canUserAddSubtag] returning cached value`, { userId, tagId, result: this.userCanAddSubtagCache[userId][tagId] });
             return { result: this.userCanAddSubtagCache[userId][tagId] };
         }
         try {
@@ -157,6 +159,13 @@ export class TagApi extends AbstractApi {
                     update: { lastTagInChainId: newTag.id },
                 });
                 this.userCanAddSubtagCache[newTag.creator.id] = { [newTag.rootTagId!]: false };
+
+                // if the tag's parent tag is also the chain's root tag, then remove the cache so that
+                // we can check for certain whether this user can add a new tag
+                // TODO we only need to do this for the game's latest root tag
+                if (newTag.parentTagId === newTag.rootTagId) {
+                    delete this.userCanAddRootTagCache[newTag.creator.id]?.[newTag.gameId];
+                }
             }
 
             return resp.data;

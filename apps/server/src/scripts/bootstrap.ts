@@ -12,6 +12,7 @@ import { GameService } from '../services/games/gameService';
 import { TagService } from '../services/tags/tagService';
 import { UserService } from '../services/users/userService';
 import { UserSettingsService } from '../services/userSettings/userSettingsService';
+import { DiscordIntegrationService } from '../services/integrations/services/discordIntegrationService';
 
 const logger = new Logger({ prefix: '[Bootstrap]' });
 
@@ -89,7 +90,7 @@ const imageUrls = [
 ];
 
 const bootstrapData = async () => {
-    process.env.POST_TAG_STREAM = PostTagStream.NONE;
+    process.env.POST_TAG_STREAM = PostTagStream.ROOT_ONLY;
 
     provider = await MongoDbProvider.getInstance();
     queueManager = QueueManager.getInstance();
@@ -451,4 +452,5 @@ bootstrapData()
         if (queueManager) {
             queueManager.close().then(() => logger.info('closed queue'));
         }
+        DiscordIntegrationService.close().then(() => logger.info('closed discord'));
     });
