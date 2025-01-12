@@ -56,11 +56,11 @@ export const CreateEditGame: React.FC<CreateEditGameProps> = (props: CreateEditG
         }
         ApiManager.userApi.getUsers().then((users) => {
             const selectedUsers = users
-                .reduce((arr, user) => {
-                    if (user.id !== user.id) {
-                        const player = props.game?.players.find((playerGame) => playerGame.user.id === user.id);
+                .reduce((arr, u) => {
+                    if (u.id !== user.id) {
+                        const player = props.game?.players.find((playerGame) => playerGame.user.id === u.id);
                         arr.push({
-                            user,
+                            user: u,
                             role: player?.role,
                         });
                     }
