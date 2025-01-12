@@ -8,7 +8,7 @@ import { ApiManager } from '../../api';
 
 import '../../styles/game.css';
 
-import { Route, Routes, useNavigate, useParams } from 'react-router-dom';
+import { Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import { GameHeaderParentView } from '../../models/game';
 import { ClickableIcon } from '../common/clickableIcon';
@@ -72,6 +72,9 @@ export const Game: React.FC<ViewGameProps> = ({ deleteGame, dateOverride, setUse
 
     const navigate = useNavigate();
 
+    const { pathname } = useLocation();
+    logger.info(`[Game] in game rende pathnamer`, { pathname });
+
     useEffect(() => {
         if (!loadingGame) {
             return;
@@ -83,18 +86,24 @@ export const Game: React.FC<ViewGameProps> = ({ deleteGame, dateOverride, setUse
             setPlayerDetailsTable(getPlayerDetailsTable(game));
 
             const { latestRootTag } = game;
-            if (currentView === GameHeaderParentView.SCROLLER) {
+            // the second condition will be true if we came here via direct URL
+            if (currentView === GameHeaderParentView.SCROLLER || pathname.includes('scroller')) {
                 setCurrentRootTag(latestRootTag);
                 setCurrentTag(latestRootTag);
                 setShowingAddRootTag(latestRootTag === undefined);
+                if (currentView !== GameHeaderParentView.SCROLLER) {
+                    setCurrentView(GameHeaderParentView.SCROLLER);
+                }
             } else if (currentView === GameHeaderParentView.CARDS && !latestRootTag) {
                 // when starting the view, if there is no tag, go straight to add tag in tag scroller
                 navigate(`/home/game/${game.id}/scroller`);
                 setShowingAddRootTag(true);
                 setCurrentView(GameHeaderParentView.SCROLLER);
+            } else {
+                logger.info('we are here')
             }
         });
-    }, [loadingGame, gameId, game?.latestRootTag, currentView, navigate]);
+    }, [loadingGame, gameId, game?.latestRootTag, currentView, navigate, pathname]);
 
     useEffect(() => {
         const tagToUse = currentRootTag ?? game?.latestRootTag;
