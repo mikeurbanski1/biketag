@@ -74,6 +74,18 @@ export class DiscordIntegrationService implements TagStreamIntegrationInterface 
         this.logger.info(`[deleteMessage] deleted message`, { message });
     }
 
+    public async close(): Promise<void> {
+        await this.client.destroy();
+        DiscordIntegrationService.instance = undefined;
+    }
+
+    public static async close(): Promise<void> {
+        if (DiscordIntegrationService.instance) {
+            await DiscordIntegrationService.instance.close();
+            DiscordIntegrationService.instance = undefined;
+        }
+    }
+
     private convertServer(guild: OAuth2Guild): IntegrationServer {
         return {
             id: guild.id,
