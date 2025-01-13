@@ -16,8 +16,10 @@ import { UserContext } from '../common/context';
 import { CreateEditGame } from './createEditGame';
 import { GameDetails } from './gameDetails';
 import { GameHeader } from './gameHeader';
+import { NewTagScroller } from './newTagScroller';
 import { TagCardView } from './tagCardView';
-import { TagScroller } from './tagScroller';
+
+// import { TagScroller } from './tagScroller';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const logger = new Logger({ prefix: '[ViewGame]' });
@@ -38,10 +40,6 @@ interface ViewGameProps {
     userStarredGames?: string[];
 }
 
-type RouteParams = {
-    gameId: string;
-};
-
 const getPlayerDetailsTable = (game: GameDto): PlayerDetailsTableRow[] => {
     return [{ id: game.creator.id, name: game.creator.name, role: 'OWNER' as PlayerTableRole, ...game.gameScore.playerScores[game.creator.id] }].concat(
         game.players.map((player) => {
@@ -60,15 +58,15 @@ export const Game: React.FC<ViewGameProps> = ({ deleteGame, dateOverride, setUse
     const [playerDetailsTable, setPlayerDetailsTable] = useState<PlayerDetailsTableRow[]>([]);
     const [currentView, setCurrentView] = useState<GameHeaderParentView>(GameHeaderParentView.CARDS);
     const [userCanAddRootTag, setUserCanAddRootTag] = useState(false);
-    const [userCanAddSubtag, setUserCanAddSubtag] = useState(false);
-    const [showingPendingTag, setShowingPendingTag] = useState(false);
-    const [showingAddRootTag, setShowingAddRootTag] = useState(false);
-    const [showingAddSubtag, setShowingAddSubtag] = useState(false);
+    // const [userCanAddSubtag, setUserCanAddSubtag] = useState(false);
+    // const [showingPendingTag, setShowingPendingTag] = useState(false);
+    // const [showingAddRootTag, setShowingAddRootTag] = useState(false);
+    // const [showingAddSubtag, setShowingAddSubtag] = useState(false);
     const [currentRootTag, setCurrentRootTag] = useState<TagDto | undefined>(undefined);
     const [currentTag, setCurrentTag] = useState<TagDto | undefined>(undefined);
     const [canAddRootTagRefreshKey, setCanAddRootTagRefreshKey] = useState(0);
 
-    const { gameId } = useParams() as RouteParams;
+    const { gameId } = useParams() as { gameId: string };
 
     const navigate = useNavigate();
 
@@ -90,17 +88,17 @@ export const Game: React.FC<ViewGameProps> = ({ deleteGame, dateOverride, setUse
             if (currentView === GameHeaderParentView.SCROLLER || pathname.includes('scroller')) {
                 setCurrentRootTag(latestRootTag);
                 setCurrentTag(latestRootTag);
-                setShowingAddRootTag(latestRootTag === undefined);
+                // setShowingAddRootTag(latestRootTag === undefined);
                 if (currentView !== GameHeaderParentView.SCROLLER) {
                     setCurrentView(GameHeaderParentView.SCROLLER);
                 }
             } else if (currentView === GameHeaderParentView.CARDS && !latestRootTag) {
                 // when starting the view, if there is no tag, go straight to add tag in tag scroller
                 navigate(`/home/game/${game.id}/scroller`);
-                setShowingAddRootTag(true);
+                // setShowingAddRootTag(true);
                 setCurrentView(GameHeaderParentView.SCROLLER);
             } else {
-                logger.info('we are here')
+                logger.info('we are here');
             }
         });
     }, [loadingGame, gameId, game?.latestRootTag, currentView, navigate, pathname]);
@@ -116,56 +114,35 @@ export const Game: React.FC<ViewGameProps> = ({ deleteGame, dateOverride, setUse
         }
     }, [game?.latestRootTag, canAddRootTagRefreshKey, currentRootTag, user.id, gameId, dateOverride, loadingGame]);
 
-    useEffect(() => {
-        if (currentRootTag) {
-            ApiManager.tagApi.canUserAddSubtag({ userId: user.id, tagId: currentRootTag.id }).then(({ result }) => {
-                setUserCanAddSubtag(result);
-            });
-        } else {
-            setUserCanAddSubtag(false);
-        }
-    }, [currentRootTag, user.id]);
+    // useEffect(() => {
+    //     if (currentRootTag) {
+    //         ApiManager.tagApi.canUserAddSubtag({ userId: user.id, tagId: currentRootTag.id }).then(({ result }) => {
+    //             setUserCanAddSubtag(result);
+    //         });
+    //     } else {
+    //         setUserCanAddSubtag(false);
+    //     }
+    // }, [currentRootTag, user.id]);
 
-    const createNewSubtag = useCallback(
-        ({ imageUrl }: { imageUrl: string }) => {
-            ApiManager.tagApi.createTag({ imageUrl, gameId: game!.id, isRoot: false, rootTagId: currentRootTag!.id }).then((newTag) => {
-                setUserCanAddSubtag(false);
-                setCurrentTag(newTag);
-                setShowingAddSubtag(false);
-
-                if (newTag.rootTagId === game!.latestRootTag!.id) {
-                    setCanAddRootTagRefreshKey(canAddRootTagRefreshKey + 1);
-                }
-            });
-        },
-        [game, canAddRootTagRefreshKey, currentRootTag]
-    );
+    const refreshUserCanAddTag = useCallback(() => setCanAddRootTagRefreshKey(canAddRootTagRefreshKey + 1), [canAddRootTagRefreshKey]);
 
     const createNewRootTag = useCallback(
-        ({ imageUrl }: { imageUrl: string }) => {
-            ApiManager.tagApi.createTag({ imageUrl, gameId: game!.id, isRoot: true }).then((newTag) => {
-                setUserCanAddRootTag(false);
-                setUserCanAddSubtag(false);
-                setShowingAddRootTag(false);
-
-                if (newTag.isPending) {
-                    setShowingPendingTag(true);
-                    setGame({ ...game!, pendingRootTag: newTag });
-                } else {
-                    setCurrentRootTag(newTag);
-                    setCurrentTag(newTag);
-                    setGame({ ...game!, latestRootTag: newTag });
-                }
-            });
+        (newTag: TagDto) => {
+            if (newTag.isPending) {
+                setGame({ ...game!, pendingRootTag: newTag });
+            } else {
+                setGame({ ...game!, latestRootTag: newTag });
+            }
+            refreshUserCanAddTag();
         },
-        [game]
+        [game, refreshUserCanAddTag]
     );
 
     // handles when an actual tag in the scroller is selected, as well as when any tag or fake tag in the card view is selected
     const selectTag = useCallback(
         (tag: 'addTag' | TagDto) => {
             if (tag === 'addTag') {
-                setShowingAddRootTag(true);
+                // setShowingAddRootTag(true);
                 if (currentView === GameHeaderParentView.CARDS) {
                     // if we jumped straight from the cards to the add tag, we need to initialize the "current" tag
                     setCurrentRootTag(game!.latestRootTag);
@@ -174,7 +151,7 @@ export const Game: React.FC<ViewGameProps> = ({ deleteGame, dateOverride, setUse
             } else if (tagHasRealImage(tag)) {
                 if (tag.id === currentTag?.id) {
                     // we switched back to the current tag from pending tag or add tag
-                    setShowingPendingTag(false);
+                    // setShowingPendingTag(false);
                 } else {
                     setCurrentTag(tag);
                     if (tag.isRoot) {
@@ -182,7 +159,7 @@ export const Game: React.FC<ViewGameProps> = ({ deleteGame, dateOverride, setUse
                     }
                 }
             } else {
-                setShowingPendingTag(true);
+                // setShowingPendingTag(true);
                 if (currentView === GameHeaderParentView.CARDS) {
                     // switched from card view
                     setCurrentRootTag(game!.latestRootTag);
@@ -190,8 +167,8 @@ export const Game: React.FC<ViewGameProps> = ({ deleteGame, dateOverride, setUse
                 }
             }
             if (tag !== 'addTag') {
-                setShowingAddRootTag(false);
-                setShowingAddSubtag(false);
+                // setShowingAddRootTag(false);
+                // setShowingAddSubtag(false);
             }
             setCurrentView(GameHeaderParentView.SCROLLER);
             navigate(`/home/game/${game!.id}/scroller`);
@@ -207,7 +184,7 @@ export const Game: React.FC<ViewGameProps> = ({ deleteGame, dateOverride, setUse
             if (!currentTag && view === GameHeaderParentView.SCROLLER) {
                 setCurrentRootTag(game!.latestRootTag);
                 setCurrentTag(game!.latestRootTag);
-                setShowingAddRootTag(game!.latestRootTag === undefined);
+                // setShowingAddRootTag(game!.latestRootTag === undefined);
             }
         },
         [currentTag, game]
@@ -234,19 +211,12 @@ export const Game: React.FC<ViewGameProps> = ({ deleteGame, dateOverride, setUse
                         <Route
                             path="scroller"
                             element={
-                                <TagScroller
+                                <NewTagScroller
                                     game={game}
                                     dateOverride={dateOverride}
-                                    currentRootTag={currentRootTag}
-                                    currentTag={currentTag}
                                     userCanAddRootTag={userCanAddRootTag}
-                                    userCanAddSubtag={userCanAddSubtag}
-                                    showingAddRootTag={showingAddRootTag}
-                                    showingAddSubtag={showingAddSubtag}
-                                    showingPendingTag={showingPendingTag}
-                                    createNewTag={({ imageUrl, isSubtag }: { imageUrl: string; isSubtag: boolean }) => (isSubtag ? createNewSubtag({ imageUrl }) : createNewRootTag({ imageUrl }))}
-                                    setAddTagAsActive={(isSubtag: boolean) => (isSubtag ? setShowingAddSubtag(true) : setShowingAddRootTag(true))}
-                                    selectTag={selectTag}
+                                    refreshUserCanAddTag={refreshUserCanAddTag}
+                                    createNewRootTagInGame={createNewRootTag}
                                 />
                             }
                         ></Route>

@@ -32,4 +32,7 @@ run()
     })
     .catch((err) => {
         logger.error(`An error occurred deleting messages ${err}`);
+    })
+    .finally(() => {
+        DiscordIntegrationService.close();
     });
