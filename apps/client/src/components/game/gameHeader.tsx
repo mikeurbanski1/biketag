@@ -28,17 +28,17 @@ export const GameHeader: React.FC<GameHeaderProps> = ({ game, parentView, collap
 
     const viewDetails =
         parentView !== GameHeaderParentView.DETAILS ? (
-            <div className="clickable-text game-header-link" onClick={() => setView(GameHeaderParentView.DETAILS)}>
+            <div className="game-header-link">
                 <Link to={`/home/game/${game.id}/details`}>Details</Link>
             </div>
         ) : undefined;
 
-    const viewScroller =
-        parentView !== GameHeaderParentView.SCROLLER ? (
-            <div className="clickable-text game-header-link" onClick={() => setView(GameHeaderParentView.SCROLLER)}>
-                <Link to={`/home/game/${game.id}/scroller`}>Scroller</Link>
-            </div>
-        ) : undefined;
+    // const viewScroller =
+    //     parentView !== GameHeaderParentView.SCROLLER ? (
+    //         <div className="clickable-text game-header-link" onClick={() => setView(GameHeaderParentView.SCROLLER)}>
+    //             <Link to={`/home/game/${game.id}/scroller`}>Scroller</Link>
+    //         </div>
+    //     ) : undefined;
 
     const viewCards =
         parentView !== GameHeaderParentView.CARDS ? (
@@ -52,7 +52,6 @@ export const GameHeader: React.FC<GameHeaderProps> = ({ game, parentView, collap
         return (
             <div className="top-tag-header game-header collapsed">
                 {viewDetails}
-                {viewScroller}
                 {viewCards}
             </div>
         );
@@ -61,7 +60,6 @@ export const GameHeader: React.FC<GameHeaderProps> = ({ game, parentView, collap
             <div className={`${className} game-header`}>
                 <div className="game-header-title">{game.name}</div>
                 {viewDetails}
-                {viewScroller}
                 {viewCards}
             </div>
         );

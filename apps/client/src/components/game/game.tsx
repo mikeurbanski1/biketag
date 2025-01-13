@@ -138,7 +138,7 @@ export const Game: React.FC<ViewGameProps> = ({ deleteGame, dateOverride, setUse
         [game, refreshUserCanAddTag]
     );
 
-    // handles when an actual tag in the scroller is selected, as well as when any tag or fake tag in the card view is selected
+    // Select a tag from the card view
     const selectTag = useCallback(
         (tag: 'addTag' | TagDto) => {
             if (tag === 'addTag') {
@@ -171,7 +171,7 @@ export const Game: React.FC<ViewGameProps> = ({ deleteGame, dateOverride, setUse
                 // setShowingAddSubtag(false);
             }
             setCurrentView(GameHeaderParentView.SCROLLER);
-            navigate(`/home/game/${game!.id}/scroller`);
+            navigate(`/home/game/${game!.id}/scroller/${tag === 'addTag' ? 'addTag' : tag.id}`);
         },
         [navigate, currentView, game, currentTag?.id]
     );
@@ -209,7 +209,19 @@ export const Game: React.FC<ViewGameProps> = ({ deleteGame, dateOverride, setUse
                             element={<GameDetails game={game} playerDetailsTable={playerDetailsTable} setEditingGame={() => setEditingGame(true)} deleteGame={() => deleteGame(game.id)} />}
                         ></Route>
                         <Route
-                            path="scroller"
+                            path="scroller/:rootTagId"
+                            element={
+                                <NewTagScroller
+                                    game={game}
+                                    dateOverride={dateOverride}
+                                    userCanAddRootTag={userCanAddRootTag}
+                                    refreshUserCanAddTag={refreshUserCanAddTag}
+                                    createNewRootTagInGame={createNewRootTag}
+                                />
+                            }
+                        ></Route>
+                        <Route
+                            path="scroller/:rootTagId/:subtagId"
                             element={
                                 <NewTagScroller
                                     game={game}

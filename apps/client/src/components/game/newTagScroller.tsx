@@ -1,9 +1,11 @@
 import { Dayjs } from 'dayjs';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 
 // import { useParams } from 'react-router-dom';
 
 import { GameDto, TagDto } from '@biketag/models';
+import { Logger } from '@biketag/utils';
 
 // import { gameHasTag } from '@biketag/utils';
 
@@ -11,6 +13,8 @@ import { ApiManager } from '../../api';
 import { UserContext } from '../common/context';
 import { AddTag } from '../tag/addTag';
 import { Tag } from '../tag/tag';
+
+const logger = new Logger({ prefix: '' });
 
 export interface NewTagScrollerProps {
     game: GameDto;
@@ -24,39 +28,40 @@ const getTagComponent = ({
     tag,
     isActive,
     selectTag,
+    activeTagIsLoaded,
     knownUserCanAddTag,
 }: {
     tag: TagDto | string;
     isActive: boolean;
-    selectTag: (tag: TagDto) => void;
+    selectTag?: (tag: TagDto) => void;
+    activeTagIsLoaded?: (tag: TagDto) => void;
     knownUserCanAddTag?: boolean;
 }): React.ReactNode => {
     let tagKey: string;
-    if (!tag) {
-        tagKey = 'undefined';
-    } else if (typeof tag === 'object') {
-        tagKey = `tag-${tag.id}`;
+    if (isTag(tag)) {
+        tagKey = tag.id;
     } else {
-        tagKey = `id-${tag}`;
+        tagKey = tag;
     }
 
-    let selectThisTag: ((tag: TagDto) => void) | undefined;
+    // let selectThisTag: ((tag: TagDto) => void) | undefined;
 
-    // if the tag is a real, not pending tag, then the callback actually selects it
-    if (!isActive) {
-        selectThisTag = selectTag;
-    }
-    return <Tag key={tagKey} tag={tag} isActive={isActive} selectTag={selectThisTag} knownUserCanAddTag={knownUserCanAddTag} />;
+    // // if the tag is a real, not pending tag, then the callback actually selects it
+    // if (!isActive) {
+    //     selectThisTag = selectTag;
+    // }
+    return <Tag key={tagKey} tag={tag} isActive={isActive} selectTag={selectTag} activeTagIsLoaded={activeTagIsLoaded} knownUserCanAddTag={knownUserCanAddTag} />;
 };
 
-// const getTagFromGame = ({ game, tagId }: { game: GameDto; tagId?: string }): TagDto | undefined => {
-//     if (!tagId) {
-//         return undefined;
-//     }
-//     return [game.latestRootTag, game.pendingRootTag, game.firstRootTag].find((tag) => tag && tag.id === tagId);
-// };
+const getTagFromGame = ({ game, tagId }: { game: GameDto; tagId?: string }): TagDto | undefined => {
+    if (!tagId) {
+        return undefined;
+    }
+    return [game.latestRootTag, game.pendingRootTag, game.firstRootTag].find((tag) => tag && tag.id === tagId);
+};
 
-// const isTag = (tag?: TagDto | string): tag is TagDto => typeof tag === 'object';
+const isTag = (tag?: TagDto | string): tag is TagDto => typeof tag === 'object';
+const isTagId = (tag: string) => tag !== 'addTag';
 
 // const isSameTag = (tag1?: TagDto | string, tag2?: TagDto | string): boolean => {
 //     if (!tag1 || !tag2) {
@@ -68,13 +73,18 @@ const getTagComponent = ({
 // };
 
 export const NewTagScroller: React.FC<NewTagScrollerProps> = ({ game, dateOverride, userCanAddRootTag, refreshUserCanAddTag, createNewRootTagInGame }: NewTagScrollerProps) => {
-    // const { tagId } = useParams() as { tagId: string };
+    const { rootTagId, subtagId } = useParams() as { rootTagId: string; subtagId: string }; // can also be 'addTag'
+    logger.info(`[NewTagScroller]`, { rootTagId, subtagId });
+
     const user = useContext(UserContext)!;
 
-    const [currentRootTag, setCurrentRootTag] = useState<TagDto | undefined>(game.latestRootTag);
-    const [currentTag, setCurrentTag] = useState<TagDto | undefined>(game.latestRootTag);
-    const [showingAddRootTag, setShowingAddRootTag] = useState(game.latestRootTag === undefined);
-    const [showingAddSubtag, setShowingAddSubtag] = useState(false);
+    const navigate = useNavigate();
+
+    const [currentRootTag, setCurrentRootTag] = useState<TagDto | undefined>(isTagId(rootTagId) ? getTagFromGame({ game, tagId: rootTagId }) : game.latestRootTag);
+    logger.info(`[NewTagScroller] currentRootTag`, { currentRootTag });
+    const [currentTag, setCurrentTag] = useState<TagDto | string | undefined>(subtagId ?? currentRootTag);
+    const [showingAddRootTag, setShowingAddRootTag] = useState(rootTagId === 'addTag');
+    const [showingAddSubtag, setShowingAddSubtag] = useState(subtagId === 'addTag');
     const [userCanAddSubtag, setUserCanAddSubtag] = useState(false);
 
     useEffect(() => {
@@ -92,45 +102,42 @@ export const NewTagScroller: React.FC<NewTagScrollerProps> = ({ game, dateOverri
             ApiManager.tagApi.createTag({ imageUrl, gameId: game!.id, isRoot: false, rootTagId: currentRootTag!.id }).then((newTag) => {
                 setUserCanAddSubtag(false);
                 setCurrentTag(newTag);
-                setShowingAddSubtag(false);
 
                 if (newTag.rootTagId === game!.latestRootTag!.id) {
                     refreshUserCanAddTag();
                 }
+                navigate(`/home/game/${newTag.gameId}/scroller/${newTag.rootTagId!}/${newTag.id}`);
             });
         },
-        [game, refreshUserCanAddTag, currentRootTag]
+        [game, currentRootTag, navigate, refreshUserCanAddTag]
     );
 
     const createNewRootTag = useCallback(
         ({ imageUrl }: { imageUrl: string }) => {
             ApiManager.tagApi.createTag({ imageUrl, gameId: game!.id, isRoot: true }).then((newTag) => {
                 setUserCanAddSubtag(false);
-                setShowingAddRootTag(false);
                 setCurrentRootTag(newTag);
                 setCurrentTag(newTag);
                 createNewRootTagInGame(newTag);
+                navigate(`/home/game/${newTag.gameId}/scroller/${newTag.id}`);
             });
         },
-        [createNewRootTagInGame, game]
+        [createNewRootTagInGame, game, navigate]
     );
 
-    // handles when an actual tag in the scroller is selected
     const selectTag = useCallback(
         (tag: TagDto) => {
-            // we are scrolling from an actual tag to another actual tag
-            // (otherwise we are coming back from an add tag)
-            if (currentTag && tag.id !== currentTag?.id) {
-                setCurrentTag(tag);
-                if (tag.isRoot) {
-                    setCurrentRootTag(tag);
-                }
-            }
-
+            setCurrentTag(tag);
             setShowingAddRootTag(false);
             setShowingAddSubtag(false);
+            if (tag.isRoot) {
+                setCurrentRootTag(tag);
+                navigate(`/home/game/${tag.gameId}/scroller/${tag.id}`);
+            } else {
+                navigate(`/home/game/${tag.gameId}/scroller/${tag.rootTagId!}/${tag.id}`);
+            }
         },
-        [currentTag]
+        [navigate]
     );
 
     const addRootTag = useMemo(
@@ -138,14 +145,17 @@ export const NewTagScroller: React.FC<NewTagScrollerProps> = ({ game, dateOverri
             <AddTag
                 key="add-root-tag"
                 saveTag={createNewRootTag}
-                setAddTagAsActive={() => setShowingAddRootTag(true)}
+                setAddTagAsActive={() => {
+                    setShowingAddRootTag(true);
+                    navigate(`/home/game/${game.id}/scroller/addTag`);
+                }}
                 isSubtag={false}
                 dateOverride={dateOverride}
                 isActive={showingAddRootTag}
                 isFirstTag={!game.latestRootTag}
             />
         ),
-        [createNewRootTag, dateOverride, game.latestRootTag, showingAddRootTag]
+        [createNewRootTag, dateOverride, game.id, game.latestRootTag, navigate, showingAddRootTag]
     );
 
     const addSubtag = useMemo(
@@ -153,14 +163,17 @@ export const NewTagScroller: React.FC<NewTagScrollerProps> = ({ game, dateOverri
             <AddTag
                 key="add-subtag"
                 saveTag={createNewSubtag}
-                setAddTagAsActive={() => setShowingAddSubtag(true)}
+                setAddTagAsActive={() => {
+                    setShowingAddSubtag(true);
+                    navigate(`/home/game/${game.id}/scroller/${currentRootTag!.id}/addTag`);
+                }}
                 isSubtag={true}
                 dateOverride={dateOverride}
                 isActive={showingAddSubtag}
                 isFirstTag={!currentRootTag?.nextTagId}
             />
         ),
-        [createNewSubtag, currentRootTag, dateOverride, showingAddSubtag]
+        [createNewSubtag, currentRootTag, dateOverride, game.id, navigate, showingAddSubtag]
     );
 
     let centerTagElement: React.ReactNode | undefined = undefined;
@@ -172,38 +185,46 @@ export const NewTagScroller: React.FC<NewTagScrollerProps> = ({ game, dateOverri
     if (showingAddRootTag) {
         centerTagElement = addRootTag;
         if (currentTag) {
-            leftTagElement = getTagComponent({ tag: currentTag, isActive: false, selectTag, knownUserCanAddTag: userCanAddSubtag });
+            leftTagElement = getTagComponent({ tag: currentTag, isActive: false, knownUserCanAddTag: userCanAddSubtag, selectTag });
         }
     } else if (showingAddSubtag) {
         centerTagElement = addSubtag;
         if (currentTag) {
-            topTagElement = getTagComponent({ tag: currentTag, isActive: false, selectTag, knownUserCanAddTag: userCanAddSubtag });
+            topTagElement = getTagComponent({ tag: currentTag, isActive: false, knownUserCanAddTag: userCanAddSubtag, selectTag });
         }
-    } else if (currentTag) {
+    } else if (isTag(currentTag)) {
         // showing an actual tag - this will always be true, but we have a type assertion now
-        centerTagElement = getTagComponent({ tag: currentTag, isActive: true, selectTag });
+        centerTagElement = getTagComponent({ tag: currentTag, isActive: true });
         if (currentTag.isRoot) {
             if (currentTag.previousRootTagId) {
-                leftTagElement = getTagComponent({ tag: currentTag.previousRootTagId, isActive: false, selectTag });
+                leftTagElement = getTagComponent({ tag: getTagFromGame({ game, tagId: currentTag.previousRootTagId }) ?? currentTag.previousRootTagId, isActive: false, selectTag });
             }
 
             if (currentTag.nextRootTagId) {
-                rightTagElement = getTagComponent({ tag: currentTag.nextRootTagId, isActive: false, selectTag });
+                rightTagElement = getTagComponent({ tag: getTagFromGame({ game, tagId: currentTag.nextRootTagId }) ?? currentTag.nextRootTagId, isActive: false, selectTag });
             } else if (userCanAddRootTag) {
                 rightTagElement = addRootTag;
             }
         } else {
             if (currentTag.parentTagId) {
                 // knownUserCanAddTag will be set if the parent tag is the root tag
-                topTagElement = getTagComponent({ tag: currentTag.parentTagId, isActive: false, selectTag, knownUserCanAddTag: userCanAddSubtag });
+                topTagElement = getTagComponent({
+                    tag: getTagFromGame({ game, tagId: currentTag.parentTagId }) ?? currentTag.parentTagId,
+                    isActive: false,
+                    knownUserCanAddTag: userCanAddSubtag,
+                    selectTag,
+                });
             }
         }
 
         if (currentTag.nextTagId) {
-            bottomTagElement = getTagComponent({ tag: currentTag.nextTagId, isActive: false, selectTag });
+            bottomTagElement = getTagComponent({ tag: getTagFromGame({ game, tagId: currentTag.nextTagId }) ?? currentTag.nextTagId, isActive: false, selectTag });
         } else if (userCanAddSubtag) {
             bottomTagElement = addSubtag;
         }
+    } else if (currentTag) {
+        // load the tag and then we will set the others
+        centerTagElement = getTagComponent({ tag: currentTag, isActive: true, activeTagIsLoaded: setCurrentTag });
     }
 
     return (

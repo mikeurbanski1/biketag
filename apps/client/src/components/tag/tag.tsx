@@ -20,6 +20,7 @@ interface TagProps {
     isActive: boolean;
     selectTag?: (tag: TagDto) => void;
     knownUserCanAddTag?: boolean;
+    activeTagIsLoaded?: (tag: TagDto) => void;
 }
 
 interface LoadingTagDefinedProps {
@@ -50,20 +51,24 @@ const getTimeString = (tag: TagDto): string => {
 
 export const Tag: React.FC<TagProps> = (props: TagProps): React.ReactNode => {
     logger.info(`[Tag] render()`, { props });
+    const { tag, knownUserCanAddTag, activeTagIsLoaded } = props;
     const user = useContext(UserContext)!;
-    const { knownUserCanAddTag } = props;
 
     // we are only displaying loading if we know we are getting a tag
     // if isLoading is true, tagToRender will be undefined, and vice versa
     // if we have a tag ID, we can also skip loading if we have the cached tag
-    const tagToUse = isLoadedTag(props.tag) ? props.tag : ApiManager.tagApi.getTagFromCache({ id: props.tag as string });
+    const tagToUse = isLoadedTag(tag) ? tag : ApiManager.tagApi.getTagFromCache({ id: tag as string });
     const [isLoading, setIsLoading] = useState<boolean>(!tagToUse && isTagToLoad(props));
     const [tagToRender, setTagToRender] = useState<TagTypeWithId | undefined>(tagToUse);
     const [userCanAddTag, setUserCanAddTag] = useState<boolean | undefined>(knownUserCanAddTag ?? undefined);
 
     useEffect(() => {
         if (isLoading) {
-            ApiManager.tagApi.getTag({ id: props.tag as string }).then((tag) => {
+            ApiManager.tagApi.getTag({ id: tag as string }).then((tag) => {
+                logger.info(`[Tag] loaded tag`, { tag });
+                if (activeTagIsLoaded) {
+                    activeTagIsLoaded(tag!);
+                }
                 setIsLoading(false);
                 setTagToRender(tag);
                 if (userCanAddTag === undefined && tag && tag.isRoot) {
@@ -77,16 +82,16 @@ export const Tag: React.FC<TagProps> = (props: TagProps): React.ReactNode => {
                 setUserCanAddTag(result);
             });
         }
-    }, [isLoading, props.tag, tagToRender, user.id, userCanAddTag]);
+    }, [isLoading, props, activeTagIsLoaded, tag, tagToRender, user.id, userCanAddTag]);
 
     if (isLoading || (userCanAddTag === undefined && isLoadedTag(tagToRender) && tagToRender.isRoot && !tagToRender.isPending)) {
         logger.info(`[Tag]`, { userCanAddTag: userCanAddTag ?? 'undefined' });
         return <div className="tag loading">Loading...</div>;
         // } else if (isAddTag(tagToRender)) {
-        //     if (!props.selectTag) {
+        //     if (!selectTag) {
         //         throw new Error('selectTag is required when isActive is false');
         //     }
-        //     return <AddTag {...tagToRender} isActive={props.isActive} setAddTagAsActive={() => props.selectTag!(tagToRender)} />;
+        //     return <AddTag {...tagToRender} isActive={isActive} setAddTagAsActive={() => selectTag!(tagToRender)} />;
     } else if (isLoadedTag(tagToRender)) {
         const classes: string[] = ['tag'];
         let onClick: (() => void) | undefined = undefined;
