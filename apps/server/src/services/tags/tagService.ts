@@ -206,10 +206,7 @@ export class TagService extends BaseService<TagDto, CreateTagParams, TagEntity, 
             const { latestRootTagId } = game;
             if (latestRootTagId) {
                 // if this is a pending tag, we will update the tag links once it goes live
-                if (!isPending) {
-                    await this.updateTagLinks({ tagIdToUpdate: latestRootTagId, tagIdToSet: tagUuid, fields: ['nextRootTagId'] });
-                    // await this.dalService.updateMany({ filter: { gameId, rootTagId: latestRootTagId }, updateParams: { nextRootTagId: tagUUID } });
-                }
+                await this.updateTagLinks({ tagIdToUpdate: latestRootTagId, tagIdToSet: tagUuid, fields: ['nextRootTagId'] });
                 createParams.previousRootTagId = latestRootTagId;
             }
         } else {

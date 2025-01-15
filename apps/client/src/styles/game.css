@@ -113,10 +113,13 @@
     height: calc(var(--tag-scroller-sidebar-width) - 50px);
     width: 50%;
     margin: auto;
-    display: grid;
-    grid-template-columns: 50% 50%;
-    grid-template-rows: 50% 50%;
+    /* display: grid;
+    grid-auto-columns: 1fr;
+    grid-template-rows: 50% 50%; */
     text-align: center;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
 }
 
 /* the header positioned in place of the top tag
@@ -130,12 +133,11 @@ on top of the empty space
 }
 
 .game-header-title {
-    grid-column: 1 / span 2;
-    grid-row: 1;
+    width: 100%;
 }
 
 .game-header-link {
-    grid-row: 2;
+    width: 50%;
 }
 
 /* tag scroller view, but not viewing a root tag (there is a tag in the menu space) */

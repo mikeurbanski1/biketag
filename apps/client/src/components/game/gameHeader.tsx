@@ -13,7 +13,6 @@ interface GameHeaderProps {
     game: GameDto;
     parentView: GameHeaderParentView;
     collapsed: boolean;
-    setView: (view: GameHeaderParentView) => void;
 }
 
 const viewToClassMap: Record<GameHeaderParentView, string> = {
@@ -22,27 +21,27 @@ const viewToClassMap: Record<GameHeaderParentView, string> = {
     [GameHeaderParentView.DETAILS]: '',
 };
 
-export const GameHeader: React.FC<GameHeaderProps> = ({ game, parentView, collapsed, setView }: GameHeaderProps) => {
+export const GameHeader: React.FC<GameHeaderProps> = ({ game, parentView, collapsed }: GameHeaderProps) => {
     const className = viewToClassMap[parentView];
     logger.info(`[GameHeader]`, { parentView, collapsed, className });
 
     const viewDetails =
         parentView !== GameHeaderParentView.DETAILS ? (
-            <div className="clickable-text game-header-link" onClick={() => setView(GameHeaderParentView.DETAILS)}>
+            <div className="game-header-link">
                 <Link to={`/home/game/${game.id}/details`}>Details</Link>
             </div>
         ) : undefined;
 
-    const viewScroller =
-        parentView !== GameHeaderParentView.SCROLLER ? (
-            <div className="clickable-text game-header-link" onClick={() => setView(GameHeaderParentView.SCROLLER)}>
-                <Link to={`/home/game/${game.id}/scroller`}>Scroller</Link>
-            </div>
-        ) : undefined;
+    // const viewScroller =
+    //     parentView !== GameHeaderParentView.SCROLLER ? (
+    //         <div className="clickable-text game-header-link" onClick={() => setView(GameHeaderParentView.SCROLLER)}>
+    //             <Link to={`/home/game/${game.id}/scroller`}>Scroller</Link>
+    //         </div>
+    //     ) : undefined;
 
     const viewCards =
         parentView !== GameHeaderParentView.CARDS ? (
-            <div className="clickable-text game-header-link" onClick={() => setView(GameHeaderParentView.CARDS)}>
+            <div className="clickable-text game-header-link">
                 <Link to={`/home/game/${game.id}`}>Cards</Link>
             </div>
         ) : undefined;
@@ -52,7 +51,6 @@ export const GameHeader: React.FC<GameHeaderProps> = ({ game, parentView, collap
         return (
             <div className="top-tag-header game-header collapsed">
                 {viewDetails}
-                {viewScroller}
                 {viewCards}
             </div>
         );
@@ -61,7 +59,6 @@ export const GameHeader: React.FC<GameHeaderProps> = ({ game, parentView, collap
             <div className={`${className} game-header`}>
                 <div className="game-header-title">{game.name}</div>
                 {viewDetails}
-                {viewScroller}
                 {viewCards}
             </div>
         );
