@@ -13,7 +13,6 @@ interface GameHeaderProps {
     game: GameDto;
     parentView: GameHeaderParentView;
     collapsed: boolean;
-    setView: (view: GameHeaderParentView) => void;
 }
 
 const viewToClassMap: Record<GameHeaderParentView, string> = {
@@ -22,7 +21,7 @@ const viewToClassMap: Record<GameHeaderParentView, string> = {
     [GameHeaderParentView.DETAILS]: '',
 };
 
-export const GameHeader: React.FC<GameHeaderProps> = ({ game, parentView, collapsed, setView }: GameHeaderProps) => {
+export const GameHeader: React.FC<GameHeaderProps> = ({ game, parentView, collapsed }: GameHeaderProps) => {
     const className = viewToClassMap[parentView];
     logger.info(`[GameHeader]`, { parentView, collapsed, className });
 
@@ -42,7 +41,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({ game, parentView, collap
 
     const viewCards =
         parentView !== GameHeaderParentView.CARDS ? (
-            <div className="clickable-text game-header-link" onClick={() => setView(GameHeaderParentView.CARDS)}>
+            <div className="clickable-text game-header-link">
                 <Link to={`/home/game/${game.id}`}>Cards</Link>
             </div>
         ) : undefined;
