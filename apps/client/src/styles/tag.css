@@ -19,7 +19,8 @@
     background-color: var(--root-tag-incomplete-color);
 }
 
-.subtag {
+.subtag,
+.loading {
     background-color: var(--subtag-color);
 }
 

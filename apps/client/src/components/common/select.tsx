@@ -1,19 +1,19 @@
 import React from 'react';
 
-interface SelectProps<T> {
+interface SelectProps<T extends { id: string; name: string } | string> {
     value?: string;
     options?: T[];
     onChange: (event: React.ChangeEvent<HTMLSelectElement>) => void;
-    toId: (value: T) => string;
-    toName: (value: T) => string;
     noSelectionText?: string;
     loadingText?: string;
     placeholderText?: string;
     hidden?: boolean;
 }
 
-export const Select = <T,>(props: SelectProps<T>): React.ReactElement => {
-    const { value, onChange, loadingText, placeholderText, toId, toName, hidden, noSelectionText } = props;
+// type SelectProps<T> = (T extends Record<string, unknown>)
+
+export const Select = <T extends { id: string; name: string } | string>(props: SelectProps<T>): React.ReactElement => {
+    const { value, onChange, loadingText, placeholderText, hidden, noSelectionText } = props;
     let { options } = props;
 
     if (options?.length === 0) {
@@ -35,10 +35,10 @@ export const Select = <T,>(props: SelectProps<T>): React.ReactElement => {
             {options && noSelectionOption}
             {options &&
                 options.map((option) => {
-                    const id = toId(option);
+                    const id = typeof option === 'string' ? option : option.id;
                     return (
                         <option key={id} value={id}>
-                            {toName(option)}
+                            {typeof option === 'string' ? option : option.name}
                         </option>
                     );
                 })}
