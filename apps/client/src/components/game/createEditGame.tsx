@@ -24,21 +24,13 @@ type IntegrationOrNone = IntegrationSource | 'None';
 
 const noSource = 'None';
 
-const integrationSourceToNameOrId = (source: IntegrationSource): string => source;
-
-const integrationServerToId = (server: IntegrationServer): string => server.id;
-const integrationServerToName = (server: IntegrationServer): string => server.name;
-
-const integrationChannelToId = (channel: TagStreamChannel): string => channel.id;
-const integrationChannelToName = (channel: TagStreamChannel): string => channel.name;
-
 export const CreateEditGame: React.FC<CreateEditGameProps> = (props: CreateEditGameProps) => {
     const { tagStreamIntegration } = props.game ?? {};
     const user = useContext(UserContext)!;
 
     const [name, setName] = React.useState<string>(props.game?.name ?? '');
 
-    const [tagStreamIntegrationSource, setTagStreamIntegrationSource] = React.useState<IntegrationSource | undefined>(undefined);
+    const [tagStreamIntegrationSource, setTagStreamIntegrationSource] = React.useState<IntegrationSource | undefined>(tagStreamIntegration?.source);
     const [serverId, setServerId] = React.useState<string>(tagStreamIntegration?.serverId ?? '');
     const [channelId, setChannelId] = React.useState<string>(tagStreamIntegration?.channelId ?? '');
     const [integrationSources, setIntegrationSources] = React.useState<IntegrationSource[]>([]);
@@ -82,8 +74,8 @@ export const CreateEditGame: React.FC<CreateEditGameProps> = (props: CreateEditG
         if (!tagStreamIntegrationSource) {
             setServers(undefined);
         } else {
-            ApiManager.integrationApi.getServers({ integrationType: IntegrationType.TAG_STREAM, source: tagStreamIntegrationSource }).then((guilds) => {
-                setServers(guilds);
+            ApiManager.integrationApi.getServers({ integrationType: IntegrationType.TAG_STREAM, source: tagStreamIntegrationSource }).then((servers) => {
+                setServers(servers);
             });
         }
     }, [tagStreamIntegrationSource]);
@@ -169,8 +161,6 @@ export const CreateEditGame: React.FC<CreateEditGameProps> = (props: CreateEditG
             <Select<IntegrationSource>
                 value={tagStreamIntegrationSource}
                 onChange={changeIntegrationSource}
-                toId={integrationSourceToNameOrId}
-                toName={integrationSourceToNameOrId}
                 noSelectionText={noSource}
                 options={integrationSources}
                 loadingText="Loading tag stream integrations..."
@@ -180,8 +170,6 @@ export const CreateEditGame: React.FC<CreateEditGameProps> = (props: CreateEditG
             <Select<IntegrationServer>
                 value={serverId}
                 onChange={changeDiscordServer}
-                toId={integrationServerToId}
-                toName={integrationServerToName}
                 options={servers}
                 loadingText="Loading servers..."
                 placeholderText="Select a server"
@@ -191,8 +179,6 @@ export const CreateEditGame: React.FC<CreateEditGameProps> = (props: CreateEditG
             <Select<TagStreamChannel>
                 value={channelId}
                 onChange={changeDiscordChannel}
-                toId={integrationChannelToId}
-                toName={integrationChannelToName}
                 options={channels}
                 loadingText="Loading channels..."
                 placeholderText="Select a channel"

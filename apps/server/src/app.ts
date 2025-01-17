@@ -16,11 +16,11 @@ app.use(
 );
 app.use(json());
 app.use(cors());
-app.use(function (_, __, next) {
-    sleep(500).then(() => {
-        next();
-    });
-});
+// app.use(function (_, __, next) {
+//     sleep(500).then(() => {
+//         next();
+//     });
+// });
 // app.use(app.router);
 
 RegisterRoutes(app);
