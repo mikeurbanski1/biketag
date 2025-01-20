@@ -136,18 +136,26 @@ export class TagService extends BaseService<TagDto, CreateTagParams, TagEntity, 
         if (!game.tagStreamIntegration) {
             throw new Error('Game must have a tag stream integration to post a message');
         }
+
+        let tagUrl = `${process.env.WEB_APP_URL!}/home/game/${game.id}/scroller`;
+        if (tag.isRoot) {
+            tagUrl = `${tagUrl}/${tag.id}`;
+        } else {
+            tagUrl = `${tagUrl}/${rootTag!.id}/${tag.id}`;
+        }
+
         const date = convertDateToRelativeDate(tag.forDate, false);
         let content: string;
         if (tag.isRoot) {
             if (tag.isPending) {
-                content = `${creatorName} has posted a new tag that will go live at midnight ${date}!`;
+                content = `${creatorName} has posted a [new tag](${tagUrl}) that will go live at midnight ${date}!`;
             } else {
-                content = `${creatorName} has posted the latest tag for ${date}! ${tag.imageUrl}`;
+                content = `${creatorName} has posted the [latest tag](${tagUrl}) for ${date}! ${tag.imageUrl}`;
             }
         } else {
             const rootDate = convertDateToRelativeDate(rootTag!.forDate, false);
             const rootTagCreator = await this.usersService.getRequired({ id: rootTag!.creatorId });
-            content = `${creatorName} has found ${rootTagCreator.name}'s spot from ${rootDate}! ${tag.imageUrl}`;
+            content = `${creatorName} has [found](${tagUrl}) ${rootTagCreator.name}'s spot from ${rootDate}! ${tag.imageUrl}`;
         }
 
         const discordService = await DiscordIntegrationService.getInstance();

@@ -11,7 +11,6 @@ import { CreateEditGame } from '../game/createEditGame';
 import { Game } from '../game/game';
 import { GameList } from '../game/gameList';
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const logger = new Logger({});
 
 interface HomeProps {

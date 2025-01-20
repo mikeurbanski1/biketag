@@ -14,7 +14,6 @@ import { Login } from '../login';
 import { Home } from './home';
 import { NavBar } from './navBar';
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const logger = new Logger({});
 
 const localStorageClientIdString = localStorage.getItem(LOCAL_STORAGE_CLIENT_ID_KEY);

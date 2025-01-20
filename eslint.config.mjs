@@ -65,6 +65,7 @@ export default [
                     caughtErrors: 'all',
                     caughtErrorsIgnorePattern: '^_',
                     destructuredArrayIgnorePattern: '^_',
+                    vars: 'all',
                     varsIgnorePattern: '^_',
                     ignoreRestSiblings: true,
                 },

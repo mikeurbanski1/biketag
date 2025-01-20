@@ -6,7 +6,6 @@ import { Logger } from '@biketag/utils';
 import { ApiManager } from '../../api';
 import { TagCard } from '../tag/tagCard';
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const logger = new Logger({ prefix: '' });
 
 type TagCardType = TagDto | EnrichedTagDto | 'addTag';

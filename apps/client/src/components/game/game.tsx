@@ -16,12 +16,9 @@ import { UserContext } from '../common/context';
 import { CreateEditGame } from './createEditGame';
 import { GameDetails } from './gameDetails';
 import { GameHeader } from './gameHeader';
-import { NewTagScroller } from './newTagScroller';
 import { TagCardView } from './tagCardView';
+import { TagScroller } from './tagScroller';
 
-// import { TagScroller } from './tagScroller';
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const logger = new Logger({ prefix: '[ViewGame]' });
 
 type PlayerTableRole = GameRoles | 'OWNER';
@@ -82,32 +79,30 @@ export const Game: React.FC<ViewGameProps> = ({ deleteGame, dateOverride, setUse
     const navigate = useNavigate();
 
     useEffect(() => {
-        if (!loadingGame) {
+        if (!loadingGame || (game && game.id === gameId)) {
             return;
         }
 
         ApiManager.gameApi.getGame({ id: gameId, convertPendingTagForOwner: true }).then((game) => {
             setGame(game);
-            setLoadingGame(false);
-            setPlayerDetailsTable(getPlayerDetailsTable(game));
-
-            const { latestRootTag } = game;
-            // the second condition will be true if we came here via direct URL
-            if (currentView === GameHeaderParentView.SCROLLER || pathname.includes('scroller')) {
-                // setCurrentRootTag(latestRootTag);
-                // setCurrentTag(latestRootTag);
-                // setShowingAddRootTag(latestRootTag === undefined);
-                // if (currentView !== GameHeaderParentView.SCROLLER) {
-                //     setCurrentView(GameHeaderParentView.SCROLLER);
-                // }
-            } else if (currentView === GameHeaderParentView.CARDS && !latestRootTag) {
-                // when starting the view, if there is no tag, go straight to add tag in tag scroller
-                navigate(`/home/game/${game.id}/scroller`);
+            const { latestRootTag, firstRootTag } = game;
+            if (!latestRootTag) {
+                setUserCanAddRootTag(true);
             } else {
-                logger.info('we are here');
+                // load this initially so we know whether to jump to the scroller
+                ApiManager.tagApi.canUserAddTag({ userId: user.id, gameId, dateOverride: dateOverride }).then(({ result }) => {
+                    setUserCanAddRootTag(result);
+                    setLoadingGame(false);
+                    setPlayerDetailsTable(getPlayerDetailsTable(game));
+
+                    // the second condition will be true if we came here via direct URL
+                    if (currentView === GameHeaderParentView.CARDS && (!latestRootTag || (!result && latestRootTag.id === firstRootTag!.id))) {
+                        navigate(`/home/game/${game.id}/scroller/${latestRootTag?.id ?? 'addTag'}`);
+                    }
+                });
             }
         });
-    }, [loadingGame, gameId, game?.latestRootTag, currentView, navigate, pathname]);
+    }, [loadingGame, gameId, currentView, navigate, pathname, user.id, dateOverride, game]);
 
     useEffect(() => {
         const tagToUse = game?.latestRootTag;
@@ -115,8 +110,6 @@ export const Game: React.FC<ViewGameProps> = ({ deleteGame, dateOverride, setUse
             ApiManager.tagApi.canUserAddTag({ userId: user.id, gameId, dateOverride: dateOverride }).then(({ result }) => {
                 setUserCanAddRootTag(result);
             });
-        } else if (!loadingGame) {
-            setUserCanAddRootTag(true);
         }
     }, [game?.latestRootTag, canAddRootTagRefreshKey, user.id, gameId, dateOverride, loadingGame]);
 
@@ -163,7 +156,7 @@ export const Game: React.FC<ViewGameProps> = ({ deleteGame, dateOverride, setUse
                         <Route
                             path="scroller/:rootTagId"
                             element={
-                                <NewTagScroller
+                                <TagScroller
                                     game={game}
                                     dateOverride={dateOverride}
                                     userCanAddRootTag={userCanAddRootTag}
@@ -175,7 +168,7 @@ export const Game: React.FC<ViewGameProps> = ({ deleteGame, dateOverride, setUse
                         <Route
                             path="scroller/:rootTagId/:subtagId"
                             element={
-                                <NewTagScroller
+                                <TagScroller
                                     game={game}
                                     dateOverride={dateOverride}
                                     userCanAddRootTag={userCanAddRootTag}

@@ -12,7 +12,6 @@ import { NavHeader } from '../common/navHeader';
 import { Select } from '../common/select';
 import UserSelection from '../userSelection';
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const logger = new Logger({ prefix: '[CreateEditGame]' });
 
 interface CreateEditGameProps {
