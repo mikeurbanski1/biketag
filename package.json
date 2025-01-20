@@ -12,7 +12,8 @@
         "start-all": "concurrently \"pnpm start-server\" \"pnpm start-client\"",
         "bootstrap": "cd apps/server && pnpm bootstrap",
         "test": "echo \"Error: no test specified\" && exit 1",
-        "lint": "eslint"
+        "lint": "eslint",
+        "delete-discord-messages": "cd apps/server && ts-node src/scripts/deleteDiscordMessages.ts"
     },
     "keywords": [],
     "author": "",

@@ -5,7 +5,6 @@ import { convertDateToRelativeDate, Logger } from '@biketag/utils';
 
 import { ClickableIcon } from '../common/clickableIcon';
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const logger = new Logger({ prefix: '' });
 
 interface GameCardProps {

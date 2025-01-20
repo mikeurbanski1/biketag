@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 
 import { isEarlierDate, Logger } from '@biketag/utils';
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const logger = new Logger({ prefix: '[AddTag]' });
 
 interface AddTagProps {
