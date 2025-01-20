@@ -9,10 +9,10 @@ import { PostTagStream } from '../common/models/enum';
 import { MongoDbProvider } from '../dal/providers/mongoProvider';
 import { QueueManager } from '../queue/manager';
 import { GameService } from '../services/games/gameService';
+import { DiscordIntegrationService } from '../services/integrations/services/discordIntegrationService';
 import { TagService } from '../services/tags/tagService';
 import { UserService } from '../services/users/userService';
 import { UserSettingsService } from '../services/userSettings/userSettingsService';
-import { DiscordIntegrationService } from '../services/integrations/services/discordIntegrationService';
 
 const logger = new Logger({ prefix: '[Bootstrap]' });
 
