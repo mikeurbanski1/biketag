@@ -1,18 +1,16 @@
 import { Dayjs } from 'dayjs';
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-
-// import { useParams } from 'react-router-dom';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import { GameDto, TagDto } from '@biketag/models';
 import { Logger } from '@biketag/utils';
-
-// import { gameHasTag } from '@biketag/utils';
 
 import { ApiManager } from '../../api';
 import { UserContext } from '../common/context';
 import { AddTag } from '../tag/addTag';
 import { Tag } from '../tag/tag';
+
+import '../../styles/tag.css';
 
 const logger = new Logger({ prefix: '' });
 
@@ -61,7 +59,7 @@ const getTagFromGame = ({ game, tagId }: { game: GameDto; tagId?: string }): Tag
 };
 
 const isTag = (tag?: TagDto | string): tag is TagDto => typeof tag === 'object';
-const isTagId = (tag: string) => tag !== 'addTag';
+const isTagId = (tag: string) => tag !== undefined && tag !== 'addTag';
 
 // const isSameTag = (tag1?: TagDto | string, tag2?: TagDto | string): boolean => {
 //     if (!tag1 || !tag2) {
@@ -89,8 +87,9 @@ export const TagScroller: React.FC<TagScrollerProps> = ({ game, dateOverride, us
 
     logger.info(`[NewTagScroller] initialized state`, { currentRootTag, currentTag, showingAddRootTag, showingAddSubtag });
 
+    // handle setting the intitial tag from the ID, as well as updating tags when we jump to the end using the links
     useEffect(() => {
-        if (rootTagId && !currentRootTag) {
+        if (isTagId(rootTagId) && (!currentRootTag || rootTagId !== currentRootTag.id)) {
             ApiManager.tagApi.getTag({ id: rootTagId }).then((tag) => {
                 setCurrentRootTag(tag);
                 if (!subtagId) {
@@ -98,7 +97,19 @@ export const TagScroller: React.FC<TagScrollerProps> = ({ game, dateOverride, us
                 }
             });
         }
-    }, [rootTagId, currentRootTag, subtagId]);
+
+        if (isTagId(subtagId) && (!isTag(currentTag) || subtagId !== currentTag.id)) {
+            ApiManager.tagApi.getTag({ id: subtagId }).then((tag) => {
+                setCurrentTag(tag);
+            });
+        } else if (subtagId === 'addTag') {
+            setShowingAddSubtag(true);
+        } else if (subtagId === undefined) {
+            // this specifically handles when we click the jump to top link (removing the subtag from the URL, need to reset the state accordingly)
+            setCurrentTag(currentRootTag);
+            setShowingAddSubtag(false);
+        }
+    }, [rootTagId, currentRootTag, subtagId, currentTag]);
 
     useEffect(() => {
         if (currentRootTag && !currentRootTag.isPending) {
@@ -243,6 +254,58 @@ export const TagScroller: React.FC<TagScrollerProps> = ({ game, dateOverride, us
         centerTagElement = getTagComponent({ tag: currentTag, isActive: true, activeTagIsLoaded: setCurrentTag });
     }
 
+    let jumpToLeft: React.ReactElement | undefined = undefined;
+    let jumpToRight: React.ReactElement | undefined = undefined;
+    let jumpToTop: React.ReactElement | undefined = undefined;
+    let jumpToBottom: React.ReactElement | undefined = undefined;
+
+    // we can see the left button if we are looking at addRootTag and there is a current root tag (the latest root tag), or if we are looking at a root tag which has a previous root tag
+    if ((showingAddRootTag && currentRootTag) || (isTag(currentTag) && currentTag.isRoot && currentTag.previousRootTagId)) {
+        jumpToLeft = (
+            <div className="tag-jump-button jump-left">
+                <Link to={`/home/game/${game.id}/scroller/${game.firstRootTag!.id}`}> ←</Link>
+            </div>
+        );
+    }
+
+    // we can see the right button if we are looking at a root tag and there is a next root tag, or if we can add a root tag
+    if (isTag(currentTag) && !showingAddRootTag && currentTag.isRoot && (currentTag.nextRootTagId || userCanAddRootTag)) {
+        const tagId = userCanAddRootTag ? 'addTag' : (game.pendingRootTag?.id ?? game.latestRootTag!.id);
+        jumpToRight = (
+            <div className="tag-jump-button jump-right">
+                <Link to={`/home/game/${game.id}/scroller/${tagId}`}> →</Link>
+            </div>
+        );
+    }
+
+    // we can see the top button if we are looking at a subtag or add subtag
+    if (currentRootTag && ((isTag(currentTag) && !currentTag.isRoot) || showingAddSubtag)) {
+        jumpToTop = (
+            <div className="tag-jump-button jump-top">
+                <Link to={`/home/game/${game.id}/scroller/${currentRootTag.id}`}> ↑</Link>
+            </div>
+        );
+    }
+
+    // we can see the bottom button if we are looking at a tag and there is a next tag or we can add a subtag
+    if (currentRootTag && !showingAddSubtag && !showingAddRootTag && isTag(currentTag) && (currentTag.nextTagId || userCanAddSubtag)) {
+        const tagId = userCanAddSubtag ? 'addTag' : currentRootTag!.lastTagInChainId!;
+        jumpToBottom = (
+            <div className="tag-jump-button jump-bottom">
+                <Link to={`/home/game/${game.id}/scroller/${currentRootTag.id}/${tagId}`}> ↓</Link>
+            </div>
+        );
+    }
+
+    const jumpButtons = (
+        <div className="tag-jump-buttons">
+            {jumpToLeft}
+            {jumpToRight}
+            {jumpToTop}
+            {jumpToBottom}
+        </div>
+    );
+
     return (
         <div className="tag-scroller">
             <div className="tag-scoller-tag top-tag">{topTagElement}</div>
@@ -250,6 +313,7 @@ export const TagScroller: React.FC<TagScrollerProps> = ({ game, dateOverride, us
             <div className="tag-scoller-tag center-tag">{centerTagElement}</div>
             <div className="tag-scoller-tag right-tag">{rightTagElement}</div>
             <div className="tag-scoller-tag bottom-tag">{bottomTagElement}</div>
+            {jumpButtons}
         </div>
     );
 };
