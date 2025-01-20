@@ -9,52 +9,6 @@
     text-align: center;
 }
 
-.tag-scroller {
-    position: relative;
-    height: 100%;
-    width: 100%;
-    overflow: hidden;
-
-    --tag-gap: 25px;
-}
-
-.tag-scoller-tag {
-    height: var(--tag-scroller-tag-width);
-    width: var(--tag-scroller-tag-width);
-    position: absolute;
-}
-
-.top-tag {
-    left: 50%;
-    bottom: calc(var(--tag-scroller-offset) + var(--tag-gap));
-    transform: translateX(-50%);
-}
-
-.center-tag {
-    z-index: 1;
-    left: 50%;
-    top: 50%;
-    transform: translateY(-50%) translateX(-50%);
-}
-
-.bottom-tag {
-    left: 50%;
-    top: calc(var(--tag-scroller-offset) + var(--tag-gap));
-    transform: translateX(-50%);
-}
-
-.left-tag {
-    right: calc(var(--tag-scroller-offset) + var(--tag-gap));
-    top: 50%;
-    transform: translateY(-50%);
-}
-
-.right-tag {
-    left: calc(var(--tag-scroller-offset) + var(--tag-gap));
-    top: 50%;
-    transform: translateY(-50%);
-}
-
 .game-details {
     display: flex;
     flex-direction: column;
